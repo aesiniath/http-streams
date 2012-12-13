@@ -33,7 +33,7 @@ data Method
     | CONNECT 
     | PATCH 
     | Method ByteString
-        deriving(Show, Read, Ord)
+        deriving (Show, Read, Ord)
 
 
 instance Eq Method where
@@ -61,6 +61,7 @@ instance Eq Method where
 
 data Request
     = Request
+        deriving (Show)
 
 data Response
     = Response

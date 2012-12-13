@@ -17,7 +17,10 @@ import Network.Http.Client
 -- already have an Apache server running).
 --
 
+import Network.Http.Builder
+
 main :: IO ()
 main = do 
-    q <- Request "http://localhost/"
-    
+    q <- buildRequest $ do
+        http GET "http://localhost/"
+    putStrLn $ show q
