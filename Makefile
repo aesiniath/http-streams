@@ -117,3 +117,4 @@ clean:
 	@echo "RM\ttemp files"
 	-rm -f *.hi *.o snippet check tags
 	-rm -rf $(BUILDDIR)
+	-rm -rf dist/
