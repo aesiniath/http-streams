@@ -1,4 +1,4 @@
-cabal-version:       >= 1.2
+cabal-version:       >= 1.10
 name:                http-streams
 version:             0.1.1
 synopsis:            An HTTP client using io-streams
@@ -24,12 +24,12 @@ library
 
   ghc-options:       -O2
                      -threaded
-	-Wall
-	-Werror
-	-fwarn-tabs
+                     -Wall
+                     -Werror
+                     -fwarn-tabs
                      -funbox-strict-fields
-	-fno-warn-missing-signatures
-	-fno-warn-unused-binds
+                     -fno-warn-missing-signatures
+                     -fno-warn-unused-binds
                      -fno-warn-unused-do-bind
 
 
