@@ -1,0 +1,36 @@
+cabal-version:       >= 1.2
+name:                http-streams
+version:             0.1.1
+synopsis:            An HTTP client using io-streams
+license:             BSD3
+license-file:        LICENCE
+author:              Andrew Cowie <andrew@operationaldynamics.com>
+maintainer:          Andrew Cowie <andrew@operationaldynamics.com>
+copyright:           © 2012 Operational Dynamics Consulting, Pty Ltd
+category:            Web
+tested-with:         GHC == 7.4
+
+build-type:          Simple
+
+library
+  default-language:  Haskell2010
+
+  build-depends:     base,
+                     bytestring
+
+  hs-source-dirs:    src
+  exposed-modules:   Network.Http.Client
+  other-modules:     Network.Http.Types
+
+  ghc-options:       -O2
+                     -threaded
+	-Wall
+	-Werror
+	-fwarn-tabs
+                     -funbox-strict-fields
+	-fno-warn-missing-signatures
+	-fno-warn-unused-binds
+                     -fno-warn-unused-do-bind
+
+
+-- vim: set tabstop=21 expandtab:
