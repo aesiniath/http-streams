@@ -1,4 +1,4 @@
-all: build-core
+all: build-junk
 
 BUILDDIR = /tmp/build/http-streams
 
@@ -9,7 +9,7 @@ MAKEFLAGS=-s -R
 REDIRECT=>/dev/null
 endif
 
-.PHONY: all dirs test build-core build-tests 
+.PHONY: all dirs test build-core build-junk build-tests
 
 #
 # Disable missing signatures so that you can actually do development and
@@ -113,14 +113,7 @@ test: build-tests run-data
 	@echo "EXEC\tcheck"
 	$(BUILDDIR)/tests/check.bin
 
-data: run-data
-run-data: tests/redis.pid
-tests/redis.pid:
-	tests/start.sh
-
 clean: 
 	@echo "RM\ttemp files"
-	-rm -f *.hi *.o client snippet check tags
+	-rm -f *.hi *.o snippet check tags
 	-rm -rf $(BUILDDIR)
-	tests/stop.sh
-	-rm -f tests/dump.rdb
