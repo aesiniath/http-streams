@@ -18,9 +18,29 @@ import Network.Http.Client
 --
 
 import Network.Http.Builder
+import Network.Http.Connection
 
 main :: IO ()
-main = do 
+main = do
+    basic
+    express
+
+
+basic :: IO ()
+basic = do
+    c <- openConnection "localhost" 80
+    
     q <- buildRequest $ do
-        http GET "http://localhost/"
-    putStrLn $ show q
+        http GET "/item/56"
+        setAccept "text/html"
+
+    p <- sendRequest c q    
+    
+    putStrLn $ show (p,q)
+
+express :: IO ()
+express = do
+    p <- get "http://localhost/item/56"
+    
+    putStrLn $ show (p)
+
