@@ -16,7 +16,8 @@
 module Network.Http.Builder (
     RequestBuilder,
     buildRequest,
-    http
+    http,
+    setAccept
 ) where 
 
 import Data.ByteString (ByteString)
@@ -33,12 +34,37 @@ newtype RequestBuilder m a = RequestBuilder (StateT Request m a)
   deriving (Monad, MonadIO, MonadState Request, MonadTrans)
 
 
-type Url = ByteString
-
-
 buildRequest :: MonadIO m => RequestBuilder m () -> m (Request)
-buildRequest = undefined
+buildRequest mm = do
+    let (RequestBuilder m) = (mm)
+    let q0 = Request {
+        qHost = "localhost",
+        qPort = 80,
+        qMethod = GET,
+        qPath = "/",
+        qAccept = ""    -- FIXME
+    }
+    execStateT m q0
 
-http :: MonadIO m => Method -> ByteString -> RequestBuilder m ()
-http = undefined
+
+-- | Begin constructing a Request, starting with the request line.
+--
+
+http :: MonadIO m => Method -> String -> RequestBuilder m ()
+http m p = do
+    q <- get
+    put q {
+        qMethod = m,
+        qPath = p
+    }
+
+setAccept :: MonadIO m => ByteString -> RequestBuilder m ()
+setAccept v = do
+    q <- get
+    put q {
+        qAccept = v
+    }
+
+        
+
 

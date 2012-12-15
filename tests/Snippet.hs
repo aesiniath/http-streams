@@ -36,7 +36,7 @@ basic = do
 
     p <- sendRequest c q    
     
-    putStrLn $ show (p,q)
+    putStrLn $ show (q,p)
 
 express :: IO ()
 express = do

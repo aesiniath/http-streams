@@ -13,8 +13,8 @@
 {-# LANGUAGE BangPatterns #-}
 
 module Network.Http.Types (
-    Request,
-    Response,
+    Request(..),
+    Response(..),
     Method(..)
 ) where 
 
@@ -60,9 +60,15 @@ instance Eq Method where
     _            == _                = False
 
 data Request
-    = Request
-        deriving (Show)
+    = Request {
+        qHost :: String,
+        qPort :: Int,
+        qMethod :: Method,
+        qPath :: String,    -- FIXME type
+        qAccept :: ByteString   -- FIXME Headers
+    } deriving (Show)
 
 data Response
     = Response
+        deriving (Show)
 

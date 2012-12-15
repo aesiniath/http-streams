@@ -33,9 +33,9 @@ data Connection = Connection
 
 
 openConnection :: Hostname -> Port -> IO (Connection)
-openConnection = undefined
+openConnection _ _ = return $ Connection
 
 sendRequest :: Connection -> Request -> IO (Response)
-sendRequest = undefined
+sendRequest _ _ = return $ Response
 
 
