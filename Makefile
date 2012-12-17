@@ -73,6 +73,7 @@ $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 		-outputdir $(BUILDDIR)/junk \
 		-i"$(BUILDDIR):src:tests" \
 		-o $@ \
+		-Wwarn -fno-warn-unused-imports \
 		tests/Snippet.hs
 	@echo "STRIP\t$@"
 	strip $@

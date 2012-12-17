@@ -13,12 +13,17 @@
 import Network.Http.Client
 
 --
+-- Otherwise redundent imports, but useful for testing in GHCi.
+--
+
+import Data.ByteString (ByteString)
+import System.IO.Streams (InputStream,OutputStream)
+import qualified System.IO.Streams as Streams
+
+--
 -- Experiment with a simple HTTP request against localhost (where we
 -- already have an Apache server running).
 --
-
-import Network.Http.Builder
-import Network.Http.Connection
 
 main :: IO ()
 main = do
@@ -33,10 +38,15 @@ basic = do
     q <- buildRequest $ do
         http GET "/item/56"
         setAccept "text/html"
-
-    p <- sendRequest c q    
+    
+    b <- emptyBody
+    
+    p <- sendRequest c q b
     
     putStrLn $ show (q,p)
+    
+    m <- Streams.read b
+    putStrLn $ show $ m
 
 express :: IO ()
 express = do
