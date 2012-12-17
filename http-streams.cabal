@@ -17,11 +17,15 @@ library
 
   build-depends:     base,
                      bytestring,
-                     network
+                     mtl,
+                     network,
+                     io-streams 
 
   hs-source-dirs:    src
   exposed-modules:   Network.Http.Client
-  other-modules:     Network.Http.Types
+  other-modules:     Network.Http.Types,
+                     Network.Http.Connection,
+                     Network.Http.Builder
 
   ghc-options:       -O2
                      -threaded
