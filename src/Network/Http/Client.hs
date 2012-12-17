@@ -17,6 +17,15 @@ module Network.Http.Client (
     Response,
     Method(..),
     Connection,
+    openConnection,
+    sendRequest,
+    receiveResponse,
+    emptyBody,
+    
+    buildRequest,
+    http,
+    setAccept,
+    
     get
 ) where 
 
@@ -25,6 +34,7 @@ import Data.String (IsString, fromString)
 
 import Network.Http.Types
 import Network.Http.Connection
+import Network.Http.Builder
 
 
 instance IsString URI where

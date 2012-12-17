@@ -15,10 +15,16 @@
 module Network.Http.Connection (
     Connection,
     openConnection,
-    sendRequest
+    sendRequest,
+    receiveResponse,
+    emptyBody
 ) where
 
 import Network.Http.Types
+import System.IO.Streams (InputStream, makeInputStream)
+import Data.ByteString (ByteString)
+
+--import qualified System.IO.Streams as Streams
 
 -- This is a String because that's what the uri package works in. There
 -- was a fairly detailed disucssion on haskell-cafe about this, with the
@@ -35,7 +41,12 @@ data Connection = Connection
 openConnection :: Hostname -> Port -> IO (Connection)
 openConnection _ _ = return $ Connection
 
-sendRequest :: Connection -> Request -> IO (Response)
-sendRequest _ _ = return $ Response
+sendRequest :: Connection -> Request -> InputStream ByteString -> IO ()
+sendRequest _ _ _ = return ()
 
+receiveResponse :: Connection -> IO (Response)
+receiveResponse _ = return $ Response
+
+emptyBody :: IO (InputStream ByteString)
+emptyBody = makeInputStream (return Nothing) 
 
