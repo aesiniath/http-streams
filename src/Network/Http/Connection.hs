@@ -20,11 +20,12 @@ module Network.Http.Connection (
     emptyBody
 ) where
 
-import Network.Http.Types
-import System.IO.Streams (InputStream, makeInputStream)
+import Network.Socket
+import System.IO.Streams (InputStream, OutputStream, makeInputStream)
+import System.IO.Streams.Network (socketToStreams)
 import Data.ByteString (ByteString)
 
---import qualified System.IO.Streams as Streams
+import Network.Http.Types
 
 -- This is a String because that's what the uri package works in. There
 -- was a fairly detailed disucssion on haskell-cafe about this, with the
@@ -34,18 +35,37 @@ type Hostname = String
 
 type Port = Int
 
-data Connection = Connection
-    deriving (Show)
+data Connection
+    = Connection {
+        cAddr :: SockAddr,
+        cOut :: OutputStream ByteString
+        cIn  :: InputStream ByteString,
+    }
+
+instance Show Connection where
+    show c = concat ["Connection {cAddr = \"", show $ cAddr c, "\"}"]
 
 
 openConnection :: Hostname -> Port -> IO (Connection)
-openConnection _ _ = return $ Connection
+openConnection h p = do
+    s <- socket AF_INET Stream defaultProtocol
 
-sendRequest :: Connection -> Request -> InputStream ByteString -> IO ()
-sendRequest _ _ _ = return ()
+    is <- getAddrInfo Nothing (Just h) (Just $ show p)
 
-receiveResponse :: Connection -> IO (Response)
-receiveResponse _ = return $ Response
+    let a = addrAddress $ head is
+    connect s a
+    (i,o) <- socketToStreams s
+    return $ Connection {
+        cAddr = a,
+        cOut = o,
+        cIn  = i
+    }
+
+sendRequest :: Connection -> Request -> InputStream ByteString -> IO (Response)
+sendRequest _ _ _ = return $ Response
+
+receiveResponse :: Connection -> IO (InputStream ByteString)
+receiveResponse _ = emptyBody
 
 emptyBody :: IO (InputStream ByteString)
 emptyBody = makeInputStream (return Nothing) 

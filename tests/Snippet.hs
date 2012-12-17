@@ -39,14 +39,19 @@ basic = do
         http GET "/item/56"
         setAccept "text/html"
     
-    b <- emptyBody
+    e <- emptyBody
     
-    p <- sendRequest c q b
+    p <- sendRequest c q e
     
-    putStrLn $ show (q,p)
+    b <- receiveResponse c
+
+    putStrLn $ show c
+    putStrLn $ show q
+    putStrLn $ show p
     
     m <- Streams.read b
     putStrLn $ show $ m
+
 
 express :: IO ()
 express = do
