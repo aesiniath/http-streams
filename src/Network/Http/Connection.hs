@@ -30,9 +30,12 @@ import Data.ByteString (ByteString)
 
 import Network.Http.Types
 
--- This is a String because that's what the uri package works in. There
--- was a fairly detailed disucssion on haskell-cafe about this, with the
--- conclusion that URLs are composed of characters, not octets.
+
+{-
+    This is a String because that's what the uri package works in. There
+    was a fairly detailed disucssion on haskell-cafe about this, with
+    the conclusion that URLs are composed of characters, not octets.
+-}
 
 type Hostname = String
 
@@ -49,7 +52,17 @@ data Connection
 instance Show Connection where
     show c = concat ["Connection {cAddr = \"", show $ cAddr c, "\"}"]
 
-
+--
+-- | Open a connection to webserver.
+--
+-- Usage is as follows:
+--
+-- > c <- openConnection "localhost" 80
+-- > ...
+--
+-- More properly, you'd use 'bracket' to wrap the call; see
+-- 'closeConnection' for an example.
+--
 openConnection :: Hostname -> Port -> IO (Connection)
 openConnection h p = do
     s <- socket AF_INET Stream defaultProtocol
@@ -110,14 +123,34 @@ emptyBody :: IO (OutputStream ByteString)
 emptyBody = nullOutput
 
 --
--- | Shutdown the connection. Use this in conjunction with
--- 'openConnection' in a call to 'bracket' to reliably release the
--- underlying socket file descriptor and related network resources.
+-- | Shutdown the connection. You need to call this release the
+-- underlying socket file descriptor and related network resources. To
+-- do so reliably, use this in conjunction with 'openConnection' in a
+-- call to 'bracket':
 --
--- > bracket,,,
+-- > --
+-- > -- Make connection, cleaning up afterward
+-- > --
+-- >
+-- > foo :: IO ByteString
+-- > foo = bracket
+-- >    (openConnection "localhost" 80)
+-- >    (closeConnection)
+-- >    (doStuff)
+-- >
+-- > --
+-- > -- Actually use Connection to send Request and receive Response
+-- > --
+-- >
+-- > doStuff :: Connection -> IO ByteString
+--
+-- While returning a ByteString is probably the most common use case,
+-- you could conceivably do more processing of the response in 'doStuff'
+-- and have it and 'foo' return a different type.
 --
 closeConnection :: Connection -> IO ()
 closeConnection c = do
-    let s = cSock c
     close s
+  where
+    s = cSock c
 

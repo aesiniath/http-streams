@@ -71,7 +71,7 @@ resource = bracket
     (openConnection "localhost" 80)
     (closeConnection)
     (doStuff)
-    
+
 doStuff :: Connection -> IO ByteString
 doStuff _ = do
     -- Now actually use the supplied Connection object to further
