@@ -49,8 +49,9 @@ basic = do
     putStrLn $ show q
     putStrLn $ show p
     
-    m <- Streams.read b
-    putStrLn $ show $ m
+    x <- Streams.read b
+    putStrLn $ show $ x
+    putStrLn "----"
 
 
 express :: IO ()

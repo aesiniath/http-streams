@@ -13,6 +13,8 @@
 {-# LANGUAGE BangPatterns #-}
 
 module Network.Http.Connection (
+    Hostname,
+    Port,
     Connection,
     openConnection,
     sendRequest,
@@ -21,7 +23,7 @@ module Network.Http.Connection (
 ) where
 
 import Network.Socket
-import System.IO.Streams (InputStream, OutputStream, makeInputStream)
+import System.IO.Streams (InputStream, OutputStream, nullInput, nullOutput)
 import System.IO.Streams.Network (socketToStreams)
 import Data.ByteString (ByteString)
 
@@ -38,8 +40,8 @@ type Port = Int
 data Connection
     = Connection {
         cAddr :: SockAddr,
-        cOut :: OutputStream ByteString
-        cIn  :: InputStream ByteString,
+        cOut :: OutputStream ByteString,
+        cIn  :: InputStream ByteString
     }
 
 instance Show Connection where
@@ -61,12 +63,46 @@ openConnection h p = do
         cIn  = i
     }
 
-sendRequest :: Connection -> Request -> InputStream ByteString -> IO (Response)
+--
+-- | Having composed a 'Request' object with the headers and metadata for
+-- this connection, you can now send the request to the server, along
+-- with the entity body, if there is one. For the rather common case of
+-- HTTP requests like GET that don't send data, use 'emptyBody' as the
+-- output stream:
+--
+-- > e <- emptyBody
+-- > p <- sendRequest c q e
+--
+sendRequest :: Connection -> Request -> OutputStream ByteString -> IO (Response)
 sendRequest _ _ _ = return $ Response
 
+--
+-- | Handle the response coming back from the server. This function
+-- returns you the 'OutputStream' containing the entity body.
+--
+-- For example, if you just wanted to print the response body:
+--
+-- > b <- receiveResponse c
+-- >
+-- > m <- Stream.read b
+-- > case m of
+-- >     Just bytes -> putStrLn bytes
+-- >     Nothing    -> return ()
+--
+-- Obviously, you can do more sophisticated things with the
+-- 'OutputStream', which is the whole point of having an @io-streams@
+-- based HTTP client library.
+--
 receiveResponse :: Connection -> IO (InputStream ByteString)
-receiveResponse _ = emptyBody
+receiveResponse _ = stub
+  where
+    stub = nullInput
 
-emptyBody :: IO (InputStream ByteString)
-emptyBody = makeInputStream (return Nothing) 
+{-
+    Is there a way we can make this static and so be reusable by
+    everyone, rather than an IO action?
+-}
+
+emptyBody :: IO (OutputStream ByteString)
+emptyBody = nullOutput
 

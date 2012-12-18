@@ -16,12 +16,16 @@ module Network.Http.Client (
     Request,
     Response,
     Method(..),
+
+    Hostname,
+    Port,
     Connection,
     openConnection,
     sendRequest,
     receiveResponse,
     emptyBody,
     
+    RequestBuilder,
     buildRequest,
     http,
     setAccept,
