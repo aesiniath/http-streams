@@ -34,17 +34,18 @@ newtype RequestBuilder m a = RequestBuilder (StateT Request m a)
   deriving (Monad, MonadIO, MonadState Request, MonadTrans)
 
 
-buildRequest :: MonadIO m => RequestBuilder m () -> m (Request)
-buildRequest mm = do
-    let (RequestBuilder m) = (mm)
-    let q0 = Request {
+blank = Request {
         qHost = "localhost",
         qPort = 80,
         qMethod = GET,
         qPath = "/",
         qAccept = ""    -- FIXME
     }
-    execStateT m q0
+
+buildRequest :: MonadIO m => RequestBuilder m () -> m (Request)
+buildRequest mm = do
+    let (RequestBuilder m) = (mm)
+    execStateT m blank
 
 
 -- | Begin constructing a Request, starting with the request line.
