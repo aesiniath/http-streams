@@ -21,6 +21,7 @@ module Network.Http.Client (
     Port,
     Connection,
     openConnection,
+    closeConnection,
     sendRequest,
     receiveResponse,
     emptyBody,

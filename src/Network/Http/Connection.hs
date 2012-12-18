@@ -17,6 +17,7 @@ module Network.Http.Connection (
     Port,
     Connection,
     openConnection,
+    closeConnection,
     sendRequest,
     receiveResponse,
     emptyBody
@@ -39,6 +40,7 @@ type Port = Int
 
 data Connection
     = Connection {
+        cSock :: Socket,
         cAddr :: SockAddr,
         cOut :: OutputStream ByteString,
         cIn  :: InputStream ByteString
@@ -58,6 +60,7 @@ openConnection h p = do
     connect s a
     (i,o) <- socketToStreams s
     return $ Connection {
+        cSock = s,
         cAddr = a,
         cOut = o,
         cIn  = i
@@ -78,7 +81,7 @@ sendRequest _ _ _ = return $ Response
 
 --
 -- | Handle the response coming back from the server. This function
--- returns you the 'OutputStream' containing the entity body.
+-- returns you the 'InputStream' containing the entity body.
 --
 -- For example, if you just wanted to print the response body:
 --
@@ -90,7 +93,7 @@ sendRequest _ _ _ = return $ Response
 -- >     Nothing    -> return ()
 --
 -- Obviously, you can do more sophisticated things with the
--- 'OutputStream', which is the whole point of having an @io-streams@
+-- 'InputStream', which is the whole point of having an @io-streams@
 -- based HTTP client library.
 --
 receiveResponse :: Connection -> IO (InputStream ByteString)
@@ -105,4 +108,16 @@ receiveResponse _ = stub
 
 emptyBody :: IO (OutputStream ByteString)
 emptyBody = nullOutput
+
+--
+-- | Shutdown the connection. Use this in conjunction with
+-- 'openConnection' in a call to 'bracket' to reliably release the
+-- underlying socket file descriptor and related network resources.
+--
+-- > bracket,,,
+--
+closeConnection :: Connection -> IO ()
+closeConnection c = do
+    let s = cSock c
+    close s
 
