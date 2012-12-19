@@ -19,13 +19,15 @@ module Network.Http.Connection (
     openConnection,
     closeConnection,
     sendRequest,
-    sendRequest2,
     receiveResponse,
-    emptyBody
+    emptyBody,
+    fileBody,
+    inputStreamBody
 ) where
 
 import Network.Socket
-import System.IO.Streams (InputStream, OutputStream, nullInput, nullOutput, write)
+import System.IO.Streams (InputStream, OutputStream)
+import qualified System.IO.Streams as Streams
 import System.IO.Streams.Network (socketToStreams)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
@@ -85,23 +87,24 @@ openConnection h p = do
 -- | Having composed a 'Request' object with the headers and metadata for
 -- this connection, you can now send the request to the server, along
 -- with the entity body, if there is one. For the rather common case of
--- HTTP requests like GET that don't send data, use 'emptyBody' as the
+-- HTTP requests like 'GET' that don't send data, use 'emptyBody' as the
 -- output stream:
 --
--- > e <- emptyBody
--- > p <- sendRequest c q e
+-- > p <- sendRequest c q emptyBody
 --
-sendRequest :: Connection -> Request -> OutputStream ByteString -> IO (Response)
-sendRequest _ _ _ = return $ Response
-
-{-
-    Try again; this time we'll hand you the stream to write to.
--}
-sendRequest2 :: Connection ->
-                Request ->
-                (OutputStream ByteString -> IO a) ->
-                IO (Response)
-sendRequest2 c q handler = do
+-- For 'PUT' and 'POST' requests, you can use 'fileBody' or
+-- 'inputStreamBody' to send content to the server, or you can work with
+-- the @io-streams@ API directly:
+--
+-- > p <- sendRequest c q (\o ->
+-- >             Streams.write (Just "Hello World\n") o)
+--
+sendRequest ::
+        Connection ->
+        Request ->
+        (OutputStream ByteString -> IO a) ->
+        IO Response
+sendRequest c q handler = do
     _ <- handler o
     S.putStrLn msg
     return $ Response
@@ -131,7 +134,7 @@ composeRequest q = S.concat
 --
 -- > b <- receiveResponse c
 -- >
--- > m <- Stream.read b
+-- > m <- Streams.read b
 -- > case m of
 -- >     Just bytes -> putStrLn bytes
 -- >     Nothing    -> return ()
@@ -143,15 +146,58 @@ composeRequest q = S.concat
 receiveResponse :: Connection -> IO (InputStream ByteString)
 receiveResponse _ = stub
   where
-    stub = nullInput
+    stub = Streams.nullInput
 
+--
+-- | Use this for the common case of the HTTP methods that only send
+-- headers and which have no entity body, i.e. 'GET' requests.
+--
 {-
     Is there a way we can make this static and so be reusable by
     everyone, rather than an IO action?
 -}
+emptyBody :: OutputStream ByteString -> IO ()
+emptyBody _ = return ()
 
-emptyBody :: IO (OutputStream ByteString)
-emptyBody = nullOutput
+--
+-- | Specify a local file to be sent to the server as the body of the
+-- request.
+--
+-- You use this partially applied:
+--
+-- > p <- sendRequest c q (fileBody "/etc/passwd")
+--
+-- Note that the type of @(fileBody \"\/path\/to\/file\")@ is just what
+-- you need for the third argument to 'sendRequest', namely
+--
+-- >>> :t filePath "hello.txt"
+-- :: OutputStream ByteString -> IO ()
+--
+{-
+    This is all very nice, but shouldn't we be using some sendfile(2)
+    trick as is done in Snap.Core's sendFile?
+-}
+fileBody :: FilePath -> OutputStream ByteString -> IO ()
+fileBody p o = do
+    Streams.withFileAsInput p (\i -> Streams.connect i o)
+
+
+--
+-- | Read from a pre-existing 'InputStream' and pipe that through to the
+-- connection to the server. This is useful in the general case where
+-- something else has handed you stream to read from and you want to use
+-- it as the entity body for the request.
+--
+-- Use it curried:
+--
+-- > i <- getStreamFromVault                    -- magic, clearly
+-- > p <- sendRequest c q (inputStreamBody i)
+--
+-- This function just calls 'Streams.connect' on the two streams.
+--
+inputStreamBody :: InputStream a -> OutputStream a -> IO ()
+inputStreamBody i o = do
+    Streams.connect i o
 
 --
 -- | Shutdown the connection. You need to call this release the

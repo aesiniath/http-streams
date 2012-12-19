@@ -23,9 +23,10 @@ module Network.Http.Client (
     openConnection,
     closeConnection,
     sendRequest,
-    sendRequest2,
     receiveResponse,
     emptyBody,
+    fileBody,
+    inputStreamBody,
     
     RequestBuilder,
     buildRequest,

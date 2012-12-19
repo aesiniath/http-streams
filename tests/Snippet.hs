@@ -49,9 +49,7 @@ basic = do
         http GET "/item/56"
         setAccept "text/html"
     
-    e <- emptyBody
-    
-    p <- sendRequest c q e
+    p <- sendRequest c q emptyBody
     
     b <- receiveResponse c
 
@@ -84,21 +82,26 @@ resource = bracket
     
 doStuff :: Connection -> IO ByteString
 doStuff c = do
-    q <- buildRequest $ do
+    q1 <- buildRequest $ do
         http PUT "/item/56"
         setAccept "text/plain"
         setContentType "application/json"
     
-    p <- sendRequest2 c q (\o ->
+    p1 <- sendRequest c q1 (\o ->
         Streams.write (Just "Hello") o)
+    
+    p2 <- sendRequest c q1 (fileBody "blog.json")
+    
     
     _ <- receiveResponse c
 
     putStrLn $ show c
-    putStrLn $ show q
-    putStrLn $ show p
+    putStrLn $ show q1
+    putStrLn $ show p1
     putStrLn ""
     return $ S.pack "TODO"
+
+
 
 {-
     Experiment with a convenience API. This is very much in flux,
