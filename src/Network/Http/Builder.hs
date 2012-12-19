@@ -17,7 +17,8 @@ module Network.Http.Builder (
     RequestBuilder,
     buildRequest,
     http,
-    setAccept
+    setAccept,
+    setContentType
 ) where 
 
 import Data.ByteString (ByteString)
@@ -39,7 +40,8 @@ blank = Request {
         qPort = 80,
         qMethod = GET,
         qPath = "/",
-        qAccept = ""    -- FIXME
+        qAccept = "",       -- FIXME
+        qContentType = ""   -- FIXME
     }
 
 buildRequest :: MonadIO m => RequestBuilder m () -> m (Request)
@@ -66,6 +68,12 @@ setAccept v = do
         qAccept = v
     }
 
-        
+setContentType :: MonadIO m => ByteString -> RequestBuilder m ()
+setContentType v = do
+    q <- get
+    put q {
+        qContentType = v
+    }
+
 
 

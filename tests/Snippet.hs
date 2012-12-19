@@ -18,14 +18,21 @@ import Control.Exception (bracket)
 --
 
 import Data.ByteString (ByteString)
-import qualified Data.ByteString as S
+import qualified Data.ByteString.Char8 as S
 import System.IO.Streams (InputStream,OutputStream)
 import qualified System.IO.Streams as Streams
 
 
 main :: IO ()
 main = do
+    putStrLn "basic:"
     basic
+    putStrLn "----"
+    putStrLn "resource:"
+    b' <- resource
+    S.putStrLn b'
+    putStrLn "----"
+    putStrLn "express:"
     express
 
 {-
@@ -54,7 +61,6 @@ basic = do
     
     x <- Streams.read b
     putStrLn $ show $ x
-    putStrLn "----"
 
     closeConnection c
 
@@ -72,11 +78,27 @@ resource = bracket
     (closeConnection)
     (doStuff)
 
+
+-- Now actually use the supplied Connection object to further
+-- exercise the API. We'll do a PUT this time.
+    
 doStuff :: Connection -> IO ByteString
-doStuff _ = do
-    -- Now actually use the supplied Connection object to further
-    -- exercise the API. TODO
-    return $ S.empty
+doStuff c = do
+    q <- buildRequest $ do
+        http PUT "/item/56"
+        setAccept "text/plain"
+        setContentType "application/json"
+    
+    p <- sendRequest2 c q (\o ->
+        Streams.write (Just "Hello") o)
+    
+    _ <- receiveResponse c
+
+    putStrLn $ show c
+    putStrLn $ show q
+    putStrLn $ show p
+    putStrLn ""
+    return $ S.pack "TODO"
 
 {-
     Experiment with a convenience API. This is very much in flux,

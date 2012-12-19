@@ -64,8 +64,9 @@ data Request
         qHost :: String,
         qPort :: Int,
         qMethod :: Method,
-        qPath :: String,    -- FIXME type
-        qAccept :: ByteString   -- FIXME Headers
+        qPath :: String,            -- FIXME type
+        qAccept :: ByteString,      -- FIXME Headers
+        qContentType :: ByteString  -- FIXME Headers
     } deriving (Show)
 
 data Response

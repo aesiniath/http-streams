@@ -23,6 +23,7 @@ module Network.Http.Client (
     openConnection,
     closeConnection,
     sendRequest,
+    sendRequest2,
     receiveResponse,
     emptyBody,
     
@@ -30,6 +31,7 @@ module Network.Http.Client (
     buildRequest,
     http,
     setAccept,
+    setContentType,
     
     get
 ) where 

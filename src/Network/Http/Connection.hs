@@ -19,14 +19,16 @@ module Network.Http.Connection (
     openConnection,
     closeConnection,
     sendRequest,
+    sendRequest2,
     receiveResponse,
     emptyBody
 ) where
 
 import Network.Socket
-import System.IO.Streams (InputStream, OutputStream, nullInput, nullOutput)
+import System.IO.Streams (InputStream, OutputStream, nullInput, nullOutput, write)
 import System.IO.Streams.Network (socketToStreams)
 import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as S
 
 import Network.Http.Types
 
@@ -91,6 +93,35 @@ openConnection h p = do
 --
 sendRequest :: Connection -> Request -> OutputStream ByteString -> IO (Response)
 sendRequest _ _ _ = return $ Response
+
+{-
+    Try again; this time we'll hand you the stream to write to.
+-}
+sendRequest2 :: Connection ->
+                Request ->
+                (OutputStream ByteString -> IO a) ->
+                IO (Response)
+sendRequest2 c q handler = do
+    _ <- handler o
+    S.putStrLn msg
+    return $ Response
+  where
+    o = cOut c
+    msg = composeRequest q
+
+{-
+    The bit that builds up the actual string to be transmitted.
+    See previous our previous Snap.Test work for a Show instance.
+    Should we be using a Builder here? Almost certainly.
+    Should we just be writing to the OutputStream here?!?
+-}
+
+composeRequest :: Request -> ByteString
+composeRequest q = S.concat
+    ["GET ",
+    S.pack (qPath q),   -- FIXME should already be ByteString?
+    " HTTP/1.1"
+    ]
 
 --
 -- | Handle the response coming back from the server. This function
