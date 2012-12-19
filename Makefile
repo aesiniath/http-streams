@@ -119,3 +119,6 @@ clean:
 	-rm -f *.hi *.o snippet check tags
 	-rm -rf $(BUILDDIR)
 	-rm -rf dist/
+
+doc: all
+	cabal haddock
