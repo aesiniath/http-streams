@@ -31,7 +31,7 @@ import Network.Http.Types
 newtype Builder m a = Builder (State Request a)
   deriving (Monad, MonadIO, MonadState Request)
 -}
-newtype RequestBuilder m a = RequestBuilder (StateT Request m a)
+newtype RequestBuilder μ α = RequestBuilder (StateT Request μ α)
   deriving (Monad, MonadIO, MonadState Request, MonadTrans)
 
 
@@ -44,7 +44,7 @@ blank = Request {
         qContentType = ""   -- FIXME
     }
 
-buildRequest :: MonadIO m => RequestBuilder m () -> m (Request)
+buildRequest :: MonadIO μ => RequestBuilder μ () -> μ (Request)
 buildRequest mm = do
     let (RequestBuilder m) = (mm)
     execStateT m blank
@@ -53,7 +53,7 @@ buildRequest mm = do
 -- | Begin constructing a Request, starting with the request line.
 --
 
-http :: MonadIO m => Method -> String -> RequestBuilder m ()
+http :: MonadIO μ => Method -> String -> RequestBuilder μ ()
 http m p = do
     q <- get
     put q {
@@ -61,14 +61,14 @@ http m p = do
         qPath = p
     }
 
-setAccept :: MonadIO m => ByteString -> RequestBuilder m ()
+setAccept :: MonadIO μ => ByteString -> RequestBuilder μ ()
 setAccept v = do
     q <- get
     put q {
         qAccept = v
     }
 
-setContentType :: MonadIO m => ByteString -> RequestBuilder m ()
+setContentType :: MonadIO μ => ByteString -> RequestBuilder μ ()
 setContentType v = do
     q <- get
     put q {

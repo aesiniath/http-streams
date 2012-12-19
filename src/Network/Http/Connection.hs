@@ -99,11 +99,7 @@ openConnection h p = do
 -- > p <- sendRequest c q (\o ->
 -- >             Streams.write (Just "Hello World\n") o)
 --
-sendRequest ::
-        Connection ->
-        Request ->
-        (OutputStream ByteString -> IO a) ->
-        IO Response
+sendRequest :: Connection -> Request -> (OutputStream ByteString -> IO α) -> IO Response
 sendRequest c q handler = do
     _ <- handler o
     S.putStrLn msg
@@ -195,7 +191,7 @@ fileBody p o = do
 --
 -- This function just calls 'Streams.connect' on the two streams.
 --
-inputStreamBody :: InputStream a -> OutputStream a -> IO ()
+inputStreamBody :: InputStream α -> OutputStream α -> IO ()
 inputStreamBody i o = do
     Streams.connect i o
 
