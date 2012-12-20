@@ -89,7 +89,6 @@ snippet:
 build-tests: dirs $(BUILDDIR)/tests/check.bin check
 
 $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
-	hasktags -cx .
 	@echo "GHC\t$@"
 	$(GHC) --make -O -threaded  \
 		-prof -fprof-auto \

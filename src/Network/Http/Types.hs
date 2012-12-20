@@ -80,7 +80,12 @@ data Request
 getHostname :: Request -> ByteString
 getHostname q = qHost q
 
+type StatusCode = Int
+
 data Response
-    = Response
-        deriving (Show)
+    = Response {
+        pStatusCode :: StatusCode,
+        pStatusMsg :: ByteString,
+        pContentType :: ByteString  -- FIXME Headers
+    } deriving (Show)
 
