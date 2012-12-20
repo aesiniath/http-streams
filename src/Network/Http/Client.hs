@@ -20,6 +20,7 @@ module Network.Http.Client (
     Hostname,
     Port,
     Connection,
+    getHostname,
     openConnection,
     closeConnection,
     sendRequest,
@@ -31,6 +32,7 @@ module Network.Http.Client (
     RequestBuilder,
     buildRequest,
     http,
+    setHostname,
     setAccept,
     setContentType,
     

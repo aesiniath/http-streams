@@ -15,7 +15,7 @@
 module Network.Http.Connection (
     Hostname,
     Port,
-    Connection,
+    Connection(cHost),
     openConnection,
     closeConnection,
     sendRequest,
@@ -45,8 +45,12 @@ type Hostname = String
 
 type Port = Int
 
+-- | A connection to a web server.
+--
 data Connection
     = Connection {
+        cHost :: ByteString,
+            -- will be used as the Host: header in the HTTP request.
         cSock :: Socket,
         cAddr :: SockAddr,
         cOut :: OutputStream ByteString,
@@ -77,11 +81,17 @@ openConnection h p = do
     connect s a
     (i,o) <- socketToStreams s
     return $ Connection {
+        cHost = h',
         cSock = s,
         cAddr = a,
         cOut = o,
         cIn  = i
     }
+  where
+    h' :: ByteString
+    h' = if p == 80
+        then S.pack h
+        else S.concat [ S.pack h, ":", S.pack $ show p ]
 
 --
 -- | Having composed a 'Request' object with the headers and metadata for

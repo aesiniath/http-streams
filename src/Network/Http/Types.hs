@@ -14,12 +14,13 @@
 
 module Network.Http.Types (
     Request(..),
+    getHostname,
     Response(..),
     Method(..)
 ) where 
 
 import Data.ByteString (ByteString)
-import Data.ByteString.Char8 ()
+import qualified Data.ByteString.Char8 as S
 
 -- | HTTP Methods, as per RFC 2616
 data Method
@@ -61,13 +62,23 @@ instance Eq Method where
 
 data Request
     = Request {
-        qHost :: String,
-        qPort :: Int,
         qMethod :: Method,
+        qHost :: ByteString,
         qPath :: String,            -- FIXME type
         qAccept :: ByteString,      -- FIXME Headers
         qContentType :: ByteString  -- FIXME Headers
     } deriving (Show)
+
+
+
+--
+-- | Get the virtual hostname that will be used as the @Host:@ header in
+-- the HTTP 1.1 request. Per RFC 2616 § 14.23, this will be of the form
+-- @hostname:port@ if the port number is other than the default, ie 80
+-- for HTTP.
+--
+getHostname :: Request -> ByteString
+getHostname q = qHost q
 
 data Response
     = Response

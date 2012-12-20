@@ -17,6 +17,7 @@ module Network.Http.Builder (
     RequestBuilder,
     buildRequest,
     http,
+    setHostname,
     setAccept,
     setContentType
 ) where 
@@ -26,6 +27,7 @@ import Data.ByteString.Char8 ()
 import Control.Monad.State
 
 import Network.Http.Types
+import Network.Http.Connection
 
 {-
 newtype Builder m a = Builder (State Request a)
@@ -35,19 +37,18 @@ newtype RequestBuilder μ α = RequestBuilder (StateT Request μ α)
   deriving (Monad, MonadIO, MonadState Request, MonadTrans)
 
 
-blank = Request {
-        qHost = "localhost",
-        qPort = 80,
+buildRequest :: MonadIO μ => Connection -> RequestBuilder μ () -> μ (Request)
+buildRequest c mm = do
+    let (RequestBuilder m) = (mm)
+    let h = cHost c
+    let q = Request {
+        qHost = h,
         qMethod = GET,
         qPath = "/",
         qAccept = "",       -- FIXME
         qContentType = ""   -- FIXME
     }
-
-buildRequest :: MonadIO μ => RequestBuilder μ () -> μ (Request)
-buildRequest mm = do
-    let (RequestBuilder m) = (mm)
-    execStateT m blank
+    execStateT m q
 
 
 -- | Begin constructing a Request, starting with the request line.
@@ -59,6 +60,19 @@ http m p = do
     put q {
         qMethod = m,
         qPath = p
+    }
+
+--
+-- | Set the [virtual] hostname for the request. In ordinary conditions
+-- you won't need to call this, as the @Host:@ header is a required
+-- header in HTTP 1.1 and is set directly from the name of the server
+-- you connected to when calling 'Network.Http.Connection.openConnection'.
+--
+setHostname :: MonadIO μ => ByteString -> RequestBuilder μ ()
+setHostname v = do
+    q <- get
+    put q {
+        qHost = v
     }
 
 setAccept :: MonadIO μ => ByteString -> RequestBuilder μ ()

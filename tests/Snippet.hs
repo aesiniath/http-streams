@@ -45,7 +45,7 @@ basic :: IO ()
 basic = do
     c <- openConnection "localhost" 80
     
-    q <- buildRequest $ do
+    q <- buildRequest c $ do
         http GET "/item/56"
         setAccept "text/html"
     
@@ -72,7 +72,7 @@ basic = do
 
 resource :: IO ByteString
 resource = bracket
-    (openConnection "localhost" 80)
+    (openConnection "www.httpbin.org" 80)
     (closeConnection)
     (doStuff)
 
@@ -82,22 +82,19 @@ resource = bracket
     
 doStuff :: Connection -> IO ByteString
 doStuff c = do
-    q1 <- buildRequest $ do
+    q <- buildRequest c $ do
         http PUT "/item/56"
-        setAccept "text/plain"
-        setContentType "application/json"
+        setAccept "*/*"
+        setContentType "text/plain"
     
-    p1 <- sendRequest c q1 (\o ->
-        Streams.write (Just "Hello") o)
-    
-    p2 <- sendRequest c q1 (fileBody "blog.json")
-    
+    p <- sendRequest c q (\o ->
+        Streams.write (Just "Hello World\n") o)
     
     _ <- receiveResponse c
 
     putStrLn $ show c
-    putStrLn $ show q1
-    putStrLn $ show p1
+    putStrLn $ show q
+    putStrLn $ show p
     putStrLn ""
     return $ S.pack "TODO"
 
