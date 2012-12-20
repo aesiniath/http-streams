@@ -56,4 +56,4 @@ instance IsString URI where
 get :: URI -> IO (Response)
 get u = do
     putStrLn $ show u
-    return $ Response
+    undefined

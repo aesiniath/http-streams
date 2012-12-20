@@ -25,13 +25,13 @@ module Network.Http.ResponseParser (
         -- for testing
 ) where
 
-import Data.ByteString (ByteString)
-import Data.ByteString.Char8 () -- for IsString instance
+import Prelude hiding (takeWhile)
 
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as S
 import System.IO.Streams (InputStream)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
-
 import Control.Applicative
 import Data.Attoparsec.ByteString (Parser)
 import Data.Attoparsec.ByteString.Char8
@@ -51,10 +51,14 @@ parseResponse :: Parser Response
 parseResponse = do
     (sc,sm) <- parseStatusLine
     
+    hs <- many parseHeader
+
+    _ <- crlf 
+    
     return Response {
         pStatusCode = sc,
         pStatusMsg = sm,
-        pContentType = "text/plain"
+        pContentType = snd $ head hs 
     }
 
 parseStatusLine :: Parser (Int,ByteString)
@@ -63,6 +67,23 @@ parseStatusLine = do
     sm <- takeTill (== '\r') <* crlf
     return (sc,sm)
 
+{-
+    Needs to be expanded to accept multi-line headers.
+-}
+parseHeader :: Parser (ByteString,ByteString)
+parseHeader = do
+    k <- key <* char ':' <* skipSpace
+    v <- takeTill (== '\r') <* crlf
+    return (k,v)
+
+{-
+    This is actually 'token' in the spec, but seriously?
+-}
+key :: Parser ByteString
+key = do
+    takeWhile token
+  where
+    token c = isAlpha_ascii c || isDigit c || (c == '_') || (c == '-')
 
 
 crlf :: Parser ByteString
