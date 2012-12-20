@@ -49,14 +49,19 @@ parseResponseBytes i = do
 
 parseResponse :: Parser Response
 parseResponse = do
-    sc <- string "HTTP/1.1 " *> decimal 
-    sm <- takeTill (== '\r') <* crlf
+    (sc,sm) <- parseStatusLine
     
     return Response {
         pStatusCode = sc,
         pStatusMsg = sm,
         pContentType = "text/plain"
     }
+
+parseStatusLine :: Parser (Int,ByteString)
+parseStatusLine = do
+    sc <- string "HTTP/1.1 " *> decimal <* char ' '
+    sm <- takeTill (== '\r') <* crlf
+    return (sc,sm)
 
 
 
