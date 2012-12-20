@@ -18,7 +18,8 @@ module Network.Http.Types (
     Response(..),
     Method(..),
     Headers,
-    setHeader,
+    emptyHeaders,
+    updateHeader,
     buildHeaders
 ) where 
 
@@ -70,8 +71,7 @@ data Request
         qMethod :: Method,
         qHost :: ByteString,
         qPath :: String,            -- FIXME type
-        qAccept :: ByteString,      -- FIXME Headers
-        qContentType :: ByteString  -- FIXME Headers
+        qHeaders :: Headers
     } deriving (Show)
 
 
@@ -124,13 +124,16 @@ combine k v acc =
     key = original k
     value = v
 
+emptyHeaders :: Headers
+emptyHeaders =
+    Wrap empty
 --
 -- | Set a header field to the specified value. This will overwrite
 -- any existing value for the field. Remember that HTTP fields names
 -- are case insensitive!
 --
-setHeader :: ByteString -> ByteString -> Headers -> Headers
-setHeader k v x =
+updateHeader :: ByteString -> ByteString -> Headers -> Headers
+updateHeader k v x =
     Wrap result
   where
     result = insert (mk k) v m

@@ -45,8 +45,7 @@ buildRequest c mm = do
         qHost = h,
         qMethod = GET,
         qPath = "/",
-        qAccept = "",       -- FIXME
-        qContentType = ""   -- FIXME
+        qHeaders = emptyHeaders
     }
     execStateT m q
 
@@ -75,19 +74,20 @@ setHostname v = do
         qHost = v
     }
 
+setHeader :: MonadIO μ => ByteString -> ByteString -> RequestBuilder μ ()
+setHeader k v = do
+    q <- get
+    let h0 = qHeaders q
+    let h1 = updateHeader k v h0
+    put q {
+        qHeaders = h1
+    }
+
 setAccept :: MonadIO μ => ByteString -> RequestBuilder μ ()
 setAccept v = do
-    q <- get
-    put q {
-        qAccept = v
-    }
+    setHeader "Accept" v
 
 setContentType :: MonadIO μ => ByteString -> RequestBuilder μ ()
 setContentType v = do
-    q <- get
-    put q {
-        qContentType = v
-    }
-
-
+    setHeader "Content-Type" v
 
