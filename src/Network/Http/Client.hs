@@ -16,6 +16,7 @@ module Network.Http.Client (
     Request,
     Response,
     Method(..),
+    Headers,
 
     Hostname,
     Port,

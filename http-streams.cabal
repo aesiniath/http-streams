@@ -19,13 +19,17 @@ library
                      bytestring,
                      mtl,
                      network,
+                     unordered-containers,
+                     case-insensitive,
+                     attoparsec,
                      io-streams 
 
   hs-source-dirs:    src
   exposed-modules:   Network.Http.Client
   other-modules:     Network.Http.Types,
                      Network.Http.Connection,
-                     Network.Http.Builder
+                     Network.Http.Builder,
+                     Network.Http.ResponseParser
 
   ghc-options:       -O2
                      -threaded

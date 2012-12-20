@@ -53,13 +53,16 @@ parseResponse = do
     
     hs <- many parseHeader
 
+    let hp = buildHeaders hs
+    
     _ <- crlf 
     
     return Response {
         pStatusCode = sc,
         pStatusMsg = sm,
-        pContentType = snd $ head hs 
+        pHeaders = hp
     }
+
 
 parseStatusLine :: Parser (Int,ByteString)
 parseStatusLine = do

@@ -16,11 +16,15 @@ module Network.Http.Types (
     Request(..),
     getHostname,
     Response(..),
-    Method(..)
+    Method(..),
+    Headers,
+    buildHeaders
 ) where 
 
 import Data.ByteString (ByteString)
-import Data.ByteString.Char8 ()
+import qualified Data.ByteString.Char8 as S
+import Data.HashMap.Strict (HashMap, empty, insert, foldrWithKey)
+import Data.CaseInsensitive (CI, mk, original)
 
 -- | HTTP Methods, as per RFC 2616
 data Method
@@ -86,6 +90,54 @@ data Response
     = Response {
         pStatusCode :: StatusCode,
         pStatusMsg :: ByteString,
-        pContentType :: ByteString  -- FIXME Headers
+        pHeaders :: Headers
     } deriving (Show)
 
+-- | The map of headers in a 'Request' or 'Response'. Note that HTTP
+-- header field names are case insensitive, so if you call 'setHeader'
+-- on a field that's already defined but with a different capitalization
+-- you will replace the existing value.
+{-
+    This is a fair bit of trouble just to avoid using a typedef here.
+    Probably worth it, though; every other HTTP client library out there
+    exposes the gory details of the underlying map implementation, and
+    to use it you need to figure out all kinds of crazy imports. Indeed,
+    this code used here in the Show instance for debugging has been
+    copied & pasted around various projects of mine since I started
+    writing Haskell. It's quite tedious, and very arcane! So, wrap it
+    up.
+-}
+newtype Headers = Wrap {
+    unWrap :: HashMap (CI ByteString) ByteString
+}
+instance Show Headers where
+    show x = S.unpack $ joinHeaders $ unWrap x
+
+joinHeaders :: HashMap (CI ByteString) ByteString -> ByteString
+joinHeaders m = foldrWithKey combine S.empty m
+
+combine :: CI ByteString -> ByteString -> ByteString -> ByteString
+combine k v acc =
+    S.concat [acc, key, ": ", value, "\n"]
+  where
+    key = original k
+    value = v
+
+
+{-
+    Given a list of key,value pairs, construct a 'Headers' map. This is
+    only going to be used by RequestBuilder and ResponseParser,
+    obviously. And yes, as usual, we go to a lot of trouble to splice
+    out the function doing the work, in the name of type sanity.
+-}
+buildHeaders :: [(ByteString,ByteString)] -> Headers
+buildHeaders hs =
+    Wrap result
+  where
+    result = foldr addHeader empty hs
+
+addHeader
+    :: (ByteString,ByteString)
+    -> HashMap (CI ByteString) ByteString
+    -> HashMap (CI ByteString) ByteString
+addHeader (k,v) acc = insert (mk k) v acc
