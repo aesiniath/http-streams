@@ -13,7 +13,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Network.Http.Builder (
+module Network.Http.RequestBuilder (
     RequestBuilder,
     buildRequest,
     http,

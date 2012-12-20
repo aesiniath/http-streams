@@ -45,7 +45,7 @@ import Data.String (IsString, fromString)
 
 import Network.Http.Types
 import Network.Http.Connection
-import Network.Http.Builder
+import Network.Http.RequestBuilder
 
 
 instance IsString URI where
