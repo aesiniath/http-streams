@@ -43,22 +43,21 @@ main = do
 
 basic :: IO ()
 basic = do
-    c <- openConnection "localhost" 80
+    c <- openConnection "localhost" 8000
+    putStrLn $ show c
     
     q <- buildRequest c $ do
-        http GET "/item/56"
-        setAccept "text/html"
+        http GET "/time"
+        setAccept "text/plain"
+    putStrLn $ show q
     
     p <- sendRequest c q emptyBody
-    
-    b <- receiveResponse c
-
-    putStrLn $ show c
-    putStrLn $ show q
     putStrLn $ show p
     
+    b <- receiveResponse c
+    
     x <- Streams.read b
-    putStrLn $ show $ x
+    S.putStrLn $ maybe "" id x
 
     closeConnection c
 
@@ -90,13 +89,12 @@ doStuff c = do
     p <- sendRequest c q (\o ->
         Streams.write (Just "Hello World\n") o)
     
-    _ <- receiveResponse c
+    b <- receiveResponse c
 
-    putStrLn $ show c
-    putStrLn $ show q
-    putStrLn $ show p
-    putStrLn ""
-    return $ S.pack "TODO"
+   
+    x <- Streams.read b
+
+    return $ maybe "" id x
 
 
 

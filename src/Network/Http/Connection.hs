@@ -33,6 +33,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 
 import Network.Http.Types
+import Network.Http.ResponseParser
 
 
 {-
@@ -109,28 +110,62 @@ openConnection h p = do
 -- > p <- sendRequest c q (\o ->
 -- >             Streams.write (Just "Hello World\n") o)
 --
+{-
+    Is it necessary to write Nothing to the output stream?  
+-}
 sendRequest :: Connection -> Request -> (OutputStream ByteString -> IO α) -> IO Response
 sendRequest c q handler = do
-    _ <- handler o
     S.putStrLn msg
-    return $ Response
+    Streams.write (Just msg) o
+    
+    -- write the body, if there is one
+    
+    _ <- handler o
+
+    Streams.write Nothing o
+    
+    -- now prepare to process the reply.
+    
+    p <- parseResponseBytes i
+    
+    return p
   where
     o = cOut c
-    msg = composeRequest q
+    i = cIn c
+    msg = composeRequestBytes q
 
 {-
-    The bit that builds up the actual string to be transmitted.
-    See previous our previous Snap.Test work for a Show instance.
+    The bit that builds up the actual string to be transmitted. This
+    is on the critical path for every request, so we'll want to revisit
+    this to improve performance.
+
     Should we be using a Builder here? Almost certainly.
     Should we just be writing to the OutputStream here?!?
+    Rewrite rule for Method?
 -}
 
-composeRequest :: Request -> ByteString
-composeRequest q = S.concat
-    ["GET ",
-    S.pack (qPath q),   -- FIXME should already be ByteString?
-    " HTTP/1.1"
-    ]
+composeRequestBytes :: Request -> ByteString
+composeRequestBytes q =
+    S.intercalate "\r\n"
+       [requestline,
+        hostLine,
+        headerFields,
+        ""]
+  where
+    requestline = S.concat
+       [method,
+        " ",
+        uri,
+        " ",
+        version]
+    method = S.pack $ show $ qMethod q
+    uri = S.pack $ qPath q
+    version = "HTTP/1.1"
+
+    hostLine = S.concat [ "Host: ", hostname]
+    hostname = qHost q
+
+    headerFields = ""
 
 --
 -- | Handle the response coming back from the server. This function
@@ -150,9 +185,10 @@ composeRequest q = S.concat
 -- based HTTP client library.
 --
 receiveResponse :: Connection -> IO (InputStream ByteString)
-receiveResponse _ = stub
+receiveResponse c = do
+    return i
   where
-    stub = Streams.nullInput
+    i = cIn c
 
 --
 -- | Use this for the common case of the HTTP methods that only send

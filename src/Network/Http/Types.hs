@@ -20,7 +20,7 @@ module Network.Http.Types (
 ) where 
 
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as S
+import Data.ByteString.Char8 ()
 
 -- | HTTP Methods, as per RFC 2616
 data Method
