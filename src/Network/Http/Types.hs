@@ -18,6 +18,7 @@ module Network.Http.Types (
     Response(..),
     Method(..),
     Headers,
+    setHeader,
     buildHeaders
 ) where 
 
@@ -123,6 +124,17 @@ combine k v acc =
     key = original k
     value = v
 
+--
+-- | Set a header field to the specified value. This will overwrite
+-- any existing value for the field. Remember that HTTP fields names
+-- are case insensitive!
+--
+setHeader :: ByteString -> ByteString -> Headers -> Headers
+setHeader k v x =
+    Wrap result
+  where
+    result = insert (mk k) v m
+    m = unWrap x
 
 {-
     Given a list of key,value pairs, construct a 'Headers' map. This is
@@ -140,4 +152,4 @@ addHeader
     :: (ByteString,ByteString)
     -> HashMap (CI ByteString) ByteString
     -> HashMap (CI ByteString) ByteString
-addHeader (k,v) acc = insert (mk k) v acc
+addHeader (k,v) m = insert (mk k) v m
