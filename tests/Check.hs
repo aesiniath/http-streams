@@ -14,6 +14,8 @@
 import Control.Exception (bracket)
 import Test.Hspec (Spec, hspec, describe, it)
 import Test.HUnit
+import Network.Socket (SockAddr(..))
+import Data.Bits
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -33,6 +35,7 @@ import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, parseTest)
 import Network.Http.Client
 import Network.Http.Types (composeRequestBytes)
 import Network.Http.ResponseParser (parseResponse)
+import Network.Http.Connection (Connection(..))
 
 main :: IO ()
 main = hspec suite
@@ -42,6 +45,10 @@ suite = do
     describe "Request, when serialized" $ do
         testRequestLineFormat
         testRequestTermination
+    
+    describe "Opening a connection" $ do
+        testConnectionLookup
+        testConnectionHost
 
 testRequestTermination =
     it "terminates with a blank line" $ do
@@ -71,6 +78,36 @@ testRequestLineFormat =
             let l' = S.takeWhile (/= '\r') e'
             
             assertEqual "Invalid HTTP request line" "GET /time HTTP/1.1" l')
+
+{-
+    This is a bit of a voodoo piece of code? Network byte order, yo.
+    Anyway, yes, using the Show instance is easier, and now having
+    written it we know it's reliable.
+-}
+
+testConnectionLookup =
+    it "successfully looks up IP address of server" $ bracket
+        (openConnection "localhost" 8000)
+        (closeConnection)
+        (\c -> do
+            let a = cAddr c
+            assertEqual "Incorrect lookup (1)"
+                (SockAddrInet 8000 (127 + shift 1 24)) a
+            assertEqual "Incorrect lookup (2)" "127.0.0.1:8000" (show a))
+
+
+testConnectionHost =
+    it "properly caches hostname and port" $ do
+       {bracket (openConnection "localhost" 8000) (closeConnection) (\c -> do
+            let h' = cHost c
+            assertEqual "Host value needs to be name, not IP address"
+                "localhost:8000" h');
+        
+        bracket (openConnection "localhost" 80) (closeConnection) (\c -> do
+            let h' = cHost c
+            assertEqual "Host value needs to be name only, given port 80"
+                "localhost" h')}
+
 
 other :: IO ()
 other = do

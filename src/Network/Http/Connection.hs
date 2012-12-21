@@ -15,7 +15,8 @@
 module Network.Http.Connection (
     Hostname,
     Port,
-    Connection(cHost),
+    Connection(..),
+        -- constructors only for testing
     openConnection,
     closeConnection,
     sendRequest,
