@@ -13,6 +13,7 @@
 import Network.Http.Client
 import Control.Exception (bracket)
 import Data.Maybe (fromMaybe)
+
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
 --
@@ -21,7 +22,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
-
+import Debug.Trace
 
 main :: IO ()
 main = do
@@ -31,7 +32,7 @@ main = do
     putStrLn "---- Resource cleanup ----"
     b' <- resource
     S.putStrLn b'
-
+    
     putStrLn "---- Convenience API ----"
     express
 
@@ -44,23 +45,23 @@ main = do
 basic :: IO ()
 basic = do
     c <- openConnection "localhost" 8000
-    putStrLn $ show c
+    traceIO $ show c
     
     q <- buildRequest c $ do
         http GET "/time"
         setAccept "text/plain"
-    putStr $ show q
+    traceIO $ show q
             -- Requests [headers] are terminated by a double newline
             -- already. We need a better way of emitting debug
             -- information mid-stream from this library.
     
     p <- sendRequest c q emptyBody
-    putStr $ show p
+    traceIO $ show p
     
     b <- receiveResponse c p
     
     x <- Streams.read b
-    S.putStr $ fromMaybe "" x
+    traceIO $ S.unpack $ fromMaybe "" x
 
     closeConnection c
 
@@ -85,7 +86,7 @@ resource = bracket
 doStuff :: Connection -> IO ByteString
 doStuff c = do
     q <- buildRequest c $ do
-        http PUT "/item/56"
+        http PUT "/put"
         setAccept "*/*"
         setContentType "text/plain"
     
@@ -94,18 +95,16 @@ doStuff c = do
     
     b <- receiveResponse c p
 
-   
     x <- Streams.read b
-
-    return $ maybe "" id x
-
+    return $ fromMaybe "" x
 
 
 {-
     Experiment with a convenience API. This is very much in flux,
     with the open question being what type to return; since there's
     no Connection object here (its use being wrapped) we possibly want
-    to run the entire Stream into memory. Or, we could a handler?
+    to run the entire Stream into memory? Or, we could use a handler,
+    as shown here.
 -}
 
 express :: IO ()
@@ -113,4 +112,4 @@ express = do
     get "http://kernel.operationaldynamics.com:58080/headers" (\p i -> do
         putStr $ show p
         Streams.connect i stdout)
-    
+
