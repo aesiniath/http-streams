@@ -20,7 +20,10 @@ module Network.Http.Types (
     Headers,
     emptyHeaders,
     updateHeader,
-    buildHeaders
+    buildHeaders,
+    
+    -- for testing
+    composeRequestBytes
 ) where 
 
 import Data.ByteString (ByteString)
@@ -72,8 +75,49 @@ data Request
         qHost :: ByteString,
         qPath :: String,            -- FIXME type
         qHeaders :: Headers
-    } deriving (Show)
+    }
 
+instance Show Request where
+    show q =
+        S.unpack $ S.filter (/= '\r') $ composeRequestBytes q
+
+{-
+    The bit that builds up the actual string to be transmitted. This
+    is on the critical path for every request, so we'll want to revisit
+    this to improve performance.
+    
+    - Should we be using a Builder here? Almost certainly.
+    - Should we just be writing to the OutputStream here?!?
+    - Rewrite rule for Method?
+    - How can serializing the Headers be made efficient?
+    
+    This code includes the RFC compliant CR-LF sequences as line
+    terminators, which is why the Show instance above has to bother
+    with removing them.
+-}
+
+composeRequestBytes :: Request -> ByteString
+composeRequestBytes q =
+    S.intercalate "\r\n"
+       [requestline,
+        hostLine,
+        headerFields,
+        ""]
+  where
+    requestline = S.concat
+       [method,
+        " ",
+        uri,
+        " ",
+        version]
+    method = S.pack $ show $ qMethod q
+    uri = S.pack $ qPath q
+    version = "HTTP/1.1"
+
+    hostLine = S.concat ["Host: ", hostname]
+    hostname = qHost q
+
+    headerFields = joinHeaders $ unWrap $ qHeaders q
 
 
 --
@@ -112,14 +156,14 @@ newtype Headers = Wrap {
     unWrap :: HashMap (CI ByteString) ByteString
 }
 instance Show Headers where
-    show x = S.unpack $ joinHeaders $ unWrap x
+    show x = S.unpack $ S.filter (/= '\r') $ joinHeaders $ unWrap x
 
 joinHeaders :: HashMap (CI ByteString) ByteString -> ByteString
 joinHeaders m = foldrWithKey combine S.empty m
 
 combine :: CI ByteString -> ByteString -> ByteString -> ByteString
 combine k v acc =
-    S.concat [acc, key, ": ", value, "\n"]
+    S.concat [acc, key, ": ", value, "\r\n"]
   where
     key = original k
     value = v

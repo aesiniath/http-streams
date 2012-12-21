@@ -115,7 +115,6 @@ openConnection h p = do
 -}
 sendRequest :: Connection -> Request -> (OutputStream ByteString -> IO α) -> IO Response
 sendRequest c q handler = do
-    S.putStrLn msg
     Streams.write (Just msg) o
     
     -- write the body, if there is one
@@ -135,37 +134,9 @@ sendRequest c q handler = do
     msg = composeRequestBytes q
 
 {-
-    The bit that builds up the actual string to be transmitted. This
-    is on the critical path for every request, so we'll want to revisit
-    this to improve performance.
-
-    Should we be using a Builder here? Almost certainly.
-    Should we just be writing to the OutputStream here?!?
-    Rewrite rule for Method?
+    The bit that builds up the actual string to be transmitted is now
+    in Network.Http.Types
 -}
-
-composeRequestBytes :: Request -> ByteString
-composeRequestBytes q =
-    S.intercalate "\r\n"
-       [requestline,
-        hostLine,
-        headerFields,
-        ""]
-  where
-    requestline = S.concat
-       [method,
-        " ",
-        uri,
-        " ",
-        version]
-    method = S.pack $ show $ qMethod q
-    uri = S.pack $ qPath q
-    version = "HTTP/1.1"
-
-    hostLine = S.concat [ "Host: ", hostname]
-    hostname = qHost q
-
-    headerFields = ""
 
 --
 -- | Handle the response coming back from the server. This function
@@ -173,7 +144,7 @@ composeRequestBytes q =
 --
 -- For example, if you just wanted to print the response body:
 --
--- > b <- receiveResponse c
+-- > b <- receiveResponse c p
 -- >
 -- > m <- Streams.read b
 -- > case m of
@@ -184,8 +155,18 @@ composeRequestBytes q =
 -- 'InputStream', which is the whole point of having an @io-streams@
 -- based HTTP client library.
 --
-receiveResponse :: Connection -> IO (InputStream ByteString)
-receiveResponse c = do
+{-
+    It was tempting to leave the Response out of the type signature for
+    this function, butit turns out we need to find out whether chunked
+    encoding is being used, which is in one of the response headers. So,
+    fine, no problem, and it actually has the benefit of making it clear
+    you're supposed to call this with the result of the sendRequest
+    call.
+    
+    TODO deal with transfer encoding!
+-}
+receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
+receiveResponse c _ = do
     return i
   where
     i = cIn c
