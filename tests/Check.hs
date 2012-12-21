@@ -49,6 +49,10 @@ suite = do
     describe "Opening a connection" $ do
         testConnectionLookup
         testConnectionHost
+    
+    describe "Parsing responses" $ do
+        testResponseParser1
+
 
 testRequestTermination =
     it "terminates with a blank line" $ do
@@ -108,11 +112,10 @@ testConnectionHost =
             assertEqual "Host value needs to be name only, given port 80"
                 "localhost" h')}
 
-
-other :: IO ()
-other = do
-    b' <- S.readFile "tests/example1.txt"
-    parseTest parseResponse b'
-    return ()
+testResponseParser1 = do
+    it "parses a simple 200 response" $ do
+        b' <- S.readFile "tests/example1.txt"
+        parseTest parseResponse b'
+        return ()
 
 
