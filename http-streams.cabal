@@ -28,13 +28,43 @@ library
   exposed-modules:   Network.Http.Client
   other-modules:     Network.Http.Types,
                      Network.Http.Connection,
-                     Network.Http.Builder,
-                     Network.Http.ResponseParser
+                     Network.Http.RequestBuilder,
+                     Network.Http.ResponseParser,
+                     Network.Http.Inconvenience
 
   ghc-options:       -O2
                      -threaded
                      -Wall
                      -Werror
+                     -fwarn-tabs
+                     -funbox-strict-fields
+                     -fno-warn-missing-signatures
+                     -fno-warn-unused-binds
+                     -fno-warn-unused-do-bind
+
+
+test-suite           check
+  type:              exitcode-stdio-1.0
+
+  default-language:  Haskell2010
+  
+  build-depends:     base,
+                     bytestring,
+                     mtl,
+                     network,
+                     unordered-containers,
+                     case-insensitive,
+                     attoparsec,
+                     io-streams,
+                     HUnit,
+                     hspec
+  hs-source-dirs:    src,tests
+  main-is:           Check.hs
+
+  ghc-options:       -O2
+                     -threaded
+                     -Wall
+                     -Wwarn
                      -fwarn-tabs
                      -funbox-strict-fields
                      -fno-warn-missing-signatures

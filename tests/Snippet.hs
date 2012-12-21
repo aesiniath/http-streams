@@ -12,14 +12,14 @@
 
 import Network.Http.Client
 import Control.Exception (bracket)
-
+import Data.Maybe (fromMaybe)
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
 --
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
-import System.IO.Streams (InputStream,OutputStream)
+import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 
 
@@ -54,10 +54,10 @@ basic = do
     p <- sendRequest c q emptyBody
     putStrLn $ show p
     
-    b <- receiveResponse c
+    b <- receiveResponse c p
     
     x <- Streams.read b
-    S.putStrLn $ maybe "" id x
+    S.putStrLn $ fromMaybe "" x
 
     closeConnection c
 
@@ -89,7 +89,7 @@ doStuff c = do
     p <- sendRequest c q (\o ->
         Streams.write (Just "Hello World\n") o)
     
-    b <- receiveResponse c
+    b <- receiveResponse c p
 
    
     x <- Streams.read b
@@ -107,7 +107,7 @@ doStuff c = do
 
 express :: IO ()
 express = do
-    p <- get "http://localhost/item/56"
+    get "http://kernel.operationaldynamics.com:58080/headers" (\p i -> do
+        putStrLn $ show p
+        Streams.connect i stdout)
     
-    putStrLn $ show (p)
-

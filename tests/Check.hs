@@ -12,6 +12,8 @@
 {-# OPTIONS -fno-warn-unused-imports #-}
 
 import Control.Exception (bracket)
+import Test.Hspec (Spec, hspec, describe, it)
+import Test.HUnit
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -29,10 +31,33 @@ import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, parseTest)
 --
 
 import Network.Http.Client
+import Network.Http.Types (composeRequestBytes)
 import Network.Http.ResponseParser (parseResponse)
 
 main :: IO ()
-main = do
+main = hspec suite
+
+suite :: Spec
+suite = do
+    describe "Requests, when serialized" $ do
+        testRequestTermination
+
+testRequestTermination =
+    it "terminate with a blank line" $ do
+        c <- openConnection "localhost" 8000
+        q <- buildRequest c $ do
+            http GET "/time"
+        let e' = composeRequestBytes q
+        let n = S.length e' - 4
+        let (a',b') = S.splitAt n e'
+        assertEqual "Termination not CRLF CRLF" "\r\n\r\n" b'
+        assertBool "only a single blank line at end of headers" ('\n' /= S.last a')
+
+
+other :: IO ()
+other = do
     b' <- S.readFile "tests/example1.txt"
     parseTest parseResponse b'
+    return ()
+
 
