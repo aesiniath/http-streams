@@ -53,7 +53,7 @@ get u handler = bracket
     host = uriRegName auth
     port = case uriPort auth of
         ""  -> 80
-        _   -> read $ init $ uriPort auth :: Int
+        _   -> read $ tail $ uriPort auth :: Int
     
     path = concat [uriPath u, uriQuery u, uriFragment u]
     

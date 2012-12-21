@@ -49,15 +49,18 @@ basic = do
     q <- buildRequest c $ do
         http GET "/time"
         setAccept "text/plain"
-    putStrLn $ show q
+    putStr $ show q
+            -- Requests [headers] are terminated by a double newline
+            -- already. We need a better way of emitting debug
+            -- information mid-stream from this library.
     
     p <- sendRequest c q emptyBody
-    putStrLn $ show p
+    putStr $ show p
     
     b <- receiveResponse c p
     
     x <- Streams.read b
-    S.putStrLn $ fromMaybe "" x
+    S.putStr $ fromMaybe "" x
 
     closeConnection c
 
@@ -108,6 +111,6 @@ doStuff c = do
 express :: IO ()
 express = do
     get "http://kernel.operationaldynamics.com:58080/headers" (\p i -> do
-        putStrLn $ show p
+        putStr $ show p
         Streams.connect i stdout)
     

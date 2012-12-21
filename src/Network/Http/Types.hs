@@ -136,7 +136,31 @@ data Response
         pStatusCode :: StatusCode,
         pStatusMsg :: ByteString,
         pHeaders :: Headers
-    } deriving (Show)
+    }
+
+instance Show Response where
+    show p = 
+        S.unpack $ composeResponseBytes p
+
+composeResponseBytes :: Response -> ByteString
+composeResponseBytes p =
+    S.intercalate "\r\n"
+       [statusline,
+        headerFields,
+        ""]
+  where
+    statusline = S.concat
+       [version,
+        " ",
+        code,
+        " ",
+        message]
+    code = S.pack $ show $ pStatusCode p
+    message = pStatusMsg p
+    version = "HTTP/1.1"
+
+    headerFields = joinHeaders $ unWrap $ pHeaders p
+
 
 -- | The map of headers in a 'Request' or 'Response'. Note that HTTP
 -- header field names are case insensitive, so if you call 'setHeader'

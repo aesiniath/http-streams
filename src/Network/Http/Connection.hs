@@ -149,7 +149,7 @@ sendRequest c q handler = do
 -- >
 -- > m <- Streams.read b
 -- > case m of
--- >     Just bytes -> putStrLn bytes
+-- >     Just bytes -> putStr bytes
 -- >     Nothing    -> return ()
 --
 -- Obviously, you can do more sophisticated things with the
