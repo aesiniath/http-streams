@@ -40,21 +40,8 @@ module Network.Http.Client (
     get
 ) where 
 
-import Network.URI (URI, parseURI, nullURI)
-import Data.String (IsString, fromString)
-
 import Network.Http.Types
 import Network.Http.Connection
 import Network.Http.RequestBuilder
+import Network.Http.Inconvenience
 
-
-instance IsString URI where
-    fromString str = case (parseURI str) of
-        Just uri    -> uri
-        Nothing     -> nullURI
-
-
-get :: URI -> IO (Response)
-get u = do
-    putStrLn $ show u
-    undefined
