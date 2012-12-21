@@ -39,20 +39,38 @@ main = hspec suite
 
 suite :: Spec
 suite = do
-    describe "Requests, when serialized" $ do
+    describe "Request, when serialized" $ do
+        testRequestLineFormat
         testRequestTermination
 
 testRequestTermination =
-    it "terminate with a blank line" $ do
+    it "terminates with a blank line" $ do
         c <- openConnection "localhost" 8000
         q <- buildRequest c $ do
             http GET "/time"
+        
         let e' = composeRequestBytes q
         let n = S.length e' - 4
         let (a',b') = S.splitAt n e'
+        
         assertEqual "Termination not CRLF CRLF" "\r\n\r\n" b'
-        assertBool "only a single blank line at end of headers" ('\n' /= S.last a')
+        assertBool "Must be only one blank line at end of headers"
+            ('\n' /= S.last a')
+        
+        closeConnection c
 
+testRequestLineFormat =
+    it "has a properly formatted request line" $ bracket
+        (openConnection "localhost" 8000)
+        (closeConnection)
+        (\c -> do
+            q <- buildRequest c $ do
+                http GET "/time"
+            
+            let e' = composeRequestBytes q
+            let l' = S.takeWhile (/= '\r') e'
+            
+            assertEqual "Invalid HTTP request line" "GET /time HTTP/1.1" l')
 
 other :: IO ()
 other = do

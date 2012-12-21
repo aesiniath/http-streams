@@ -9,7 +9,7 @@ MAKEFLAGS=-s -R
 REDIRECT=>/dev/null
 endif
 
-.PHONY: all dirs test build-core build-junk build-tests
+.PHONY: all dirs test build-core junk build-junk tests build-tests
 
 #
 # Disable missing signatures so that you can actually do development and
@@ -64,6 +64,7 @@ httpclient:
 	@echo "LN -s\t$@"
 	ln -s $(BUILDDIR)/core/client.bin $@
 
+junk: build-junk
 build-junk: dirs $(BUILDDIR)/junk/snippet.bin snippet
 
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
@@ -86,6 +87,7 @@ snippet:
 # Build test suite code
 #
 
+tests: build-tests
 build-tests: dirs $(BUILDDIR)/tests/check.bin check
 
 $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
@@ -106,10 +108,10 @@ check:
 #
 # Run tests directly. If using inotify, invoke instead as follows:
 #
-# $ inotifymake build-tests -- ./check
+# $ inotifymake tests -- ./check
 #
 
-test: build-tests run-data
+test: build-tests
 	@echo "EXEC\tcheck"
 	$(BUILDDIR)/tests/check.bin
 
