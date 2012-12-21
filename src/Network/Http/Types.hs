@@ -139,7 +139,7 @@ data Response
     }
 
 instance Show Response where
-    show p = 
+    show p =
         S.unpack $ composeResponseBytes p
 
 composeResponseBytes :: Response -> ByteString
@@ -195,6 +195,7 @@ combine k v acc =
 emptyHeaders :: Headers
 emptyHeaders =
     Wrap empty
+
 --
 -- | Set a header field to the specified value. This will overwrite
 -- any existing value for the field. Remember that HTTP fields names

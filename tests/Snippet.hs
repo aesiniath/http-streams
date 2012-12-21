@@ -25,14 +25,14 @@ import qualified System.IO.Streams as Streams
 
 main :: IO ()
 main = do
-    putStrLn "basic:"
+    putStrLn "---- Basic API ----"
     basic
-    putStrLn "----"
-    putStrLn "resource:"
+    
+    putStrLn "---- Resource cleanup ----"
     b' <- resource
     S.putStrLn b'
-    putStrLn "----"
-    putStrLn "express:"
+
+    putStrLn "---- Convenience API ----"
     express
 
 {-
