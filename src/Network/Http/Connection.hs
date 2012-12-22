@@ -169,6 +169,12 @@ sendRequest c q handler = do
 receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
 receiveResponse c _ = do
     return i
+{-
+    HERE TODO HERE
+    
+    This is where we need to process either Content-Length, or deal
+    with chunked transfer encoding. P
+-}
   where
     i = cIn c
 
@@ -227,7 +233,7 @@ inputStreamBody i o = do
 -- | Shutdown the connection. You need to call this release the
 -- underlying socket file descriptor and related network resources. To
 -- do so reliably, use this in conjunction with 'openConnection' in a
--- call to 'bracket':
+-- call to 'Control.Exception.bracket':
 --
 -- > --
 -- > -- Make connection, cleaning up afterward
