@@ -162,10 +162,12 @@ composeResponseBytes p =
     headerFields = joinHeaders $ unWrap $ pHeaders p
 
 
+--
 -- | The map of headers in a 'Request' or 'Response'. Note that HTTP
 -- header field names are case insensitive, so if you call 'setHeader'
 -- on a field that's already defined but with a different capitalization
 -- you will replace the existing value.
+--
 {-
     This is a fair bit of trouble just to avoid using a typedef here.
     Probably worth it, though; every other HTTP client library out there

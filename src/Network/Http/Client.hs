@@ -82,30 +82,43 @@ directly.
 -}
 
 module Network.Http.Client (
-    Request,
-    Response,
-    Method(..),
-    Headers,
-
+    -- * Connecting to server
     Hostname,
     Port,
     Connection,
-    getHostname,
     openConnection,
-    closeConnection,
-    sendRequest,
-    receiveResponse,
-    emptyBody,
-    fileBody,
-    inputStreamBody,
-    
+
+    -- * Building Requests
+    -- | You setup a request using the RequestBuilder monad, and
+    -- get the resultant Request object by running 'buildRequest'. The
+    -- first call doesn't have to be to 'http', but it looks better when
+    -- it is, don't you think?
+    Method(..),
     RequestBuilder,
     buildRequest,
     http,
     setHostname,
     setAccept,
     setContentType,
+    setHeader,
+
+    -- * Sending HTTP request
+    Request,
+    getHostname,
+    sendRequest,
+    emptyBody,
+    fileBody,
+    inputStreamBody,
     
+    -- * Processing HTTP response
+    receiveResponse,
+    Response,
+    Headers,
+
+    -- * Resource cleanup
+    closeConnection,
+    
+    -- * Convenience API
     get
 ) where 
 

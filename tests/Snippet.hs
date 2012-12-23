@@ -23,6 +23,15 @@ import qualified Data.ByteString.Char8 as S
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 import Debug.Trace
+import System.Exit (exitSuccess)
+
+ex :: IO ()
+ex = do
+    i <- Streams.fromList ["one", "two", "three" :: ByteString]
+    x <- Streams.readExactly 5 i
+    traceIO $ show $ x
+
+    exitSuccess
 
 main :: IO ()
 main = do
@@ -35,6 +44,8 @@ main = do
     
     putStrLn "---- Convenience API ----"
     express
+
+    putStrLn "---- Done ----"
 
 {-
     Explore with a simple HTTP request against localhost (where we
@@ -110,6 +121,6 @@ doStuff c = do
 express :: IO ()
 express = do
     get "http://kernel.operationaldynamics.com:58080/headers" (\p i -> do
-        putStr $ show p
+        traceIO $ show p
         Streams.connect i stdout)
 

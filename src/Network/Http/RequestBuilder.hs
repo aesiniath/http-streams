@@ -19,7 +19,8 @@ module Network.Http.RequestBuilder (
     http,
     setHostname,
     setAccept,
-    setContentType
+    setContentType,
+    setHeader
 ) where 
 
 import Data.ByteString (ByteString)
@@ -36,7 +37,17 @@ newtype Builder m a = Builder (State Request a)
 newtype RequestBuilder μ α = RequestBuilder (StateT Request μ α)
   deriving (Monad, MonadIO, MonadState Request, MonadTrans)
 
-
+-- | Run a RequestBuilder, yielding a Request object you can use on the
+-- given connection.
+--
+-- > q <- buildRequest c $ do
+-- >     http POST "/api/v1/messages"
+-- >     setContentType "application/json"
+-- >     setAccept "text/html; q=1.0, */*; q=0.0"
+-- >     setHeader "X-WhoDoneIt" "The Butler"
+--
+-- Obviously it's up to you to later actually /send/ JSON data.
+--
 buildRequest :: MonadIO μ => Connection -> RequestBuilder μ () -> μ (Request)
 buildRequest c mm = do
     let (RequestBuilder m) = (mm)
@@ -74,6 +85,7 @@ setHostname v = do
         qHost = v
     }
 
+-- | Set a generic header to be sent in the HTTP request.
 setHeader :: MonadIO μ => ByteString -> ByteString -> RequestBuilder μ ()
 setHeader k v = do
     q <- get
@@ -83,6 +95,11 @@ setHeader k v = do
         qHeaders = h1
     }
 
+{-
+    TODO Given the complex structure of the Accept: field, maybe
+    we should have a stronger API to help you build it. Perhaps
+    :: [(ByteString,Float)]?
+-}
 setAccept :: MonadIO μ => ByteString -> RequestBuilder μ ()
 setAccept v = do
     setHeader "Accept" v

@@ -60,18 +60,30 @@ data Connection
     }
 
 instance Show Connection where
-    show c = concat ["Connection {cAddr = \"", show $ cAddr c, "\"}"]
+    show c = concat
+       ["Connection {",
+        "cHost = \"", S.unpack $ cHost c, "\", ",
+        "cAddr = \"", show $ cAddr c, "\"",
+        "}"]
 
 --
--- | Open a connection to webserver.
+-- | In order to make a request you first establish the TCP
+-- connection to the server over which to send it.
+-- 
+-- Ordinarily you would supply the host part of the URL here and it will
+-- be used as the value of the HTTP 1.1 @Host:@ field. However, you can
+-- specify any server name or IP addresss and set the @Host:@ value
+-- later with 'Network.Http.Client.setHostname' when building the
+-- request.
 --
 -- Usage is as follows:
 --
 -- > c <- openConnection "localhost" 80
 -- > ...
 --
--- More properly, you'd use 'bracket' to wrap the call; see
--- 'closeConnection' for an example.
+-- More likely, you'll use 'Control.Exception.catch' or
+-- 'Control.Exception.bracket' to wrap the call in order to ensure
+-- finalization; see 'closeConnection' for an example.
 --
 openConnection :: Hostname -> Port -> IO (Connection)
 openConnection h p = do
