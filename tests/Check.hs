@@ -59,6 +59,7 @@ testRequestTermination =
         c <- openConnection "localhost" 8000
         q <- buildRequest c $ do
             http GET "/time"
+            setAccept "text/plain"
         
         let e' = composeRequestBytes q
         let n = S.length e' - 4

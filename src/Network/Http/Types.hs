@@ -101,23 +101,24 @@ instance Show Request where
 
 composeRequestBytes :: Request -> ByteString
 composeRequestBytes q =
-    S.intercalate "\r\n"
+    S.concat
        [requestline,
         hostLine,
         headerFields,
-        ""]
+        "\r\n"]
   where
     requestline = S.concat
        [method,
         " ",
         uri,
         " ",
-        version]
+        version,
+        "\r\n"]
     method = S.pack $ show $ qMethod q
     uri = S.pack $ qPath q
     version = "HTTP/1.1"
 
-    hostLine = S.concat ["Host: ", hostname]
+    hostLine = S.concat ["Host: ", hostname, "\r\n"]
     hostname = qHost q
 
     headerFields = joinHeaders $ unWrap $ qHeaders q
@@ -147,17 +148,18 @@ instance Show Response where
 
 composeResponseBytes :: Response -> ByteString
 composeResponseBytes p =
-    S.intercalate "\r\n"
+    S.concat
        [statusline,
         headerFields,
-        ""]
+        "\r\n"]
   where
     statusline = S.concat
        [version,
         " ",
         code,
         " ",
-        message]
+        message,
+        "\r\n"]
     code = S.pack $ show $ pStatusCode p
     message = pStatusMsg p
     version = "HTTP/1.1"
