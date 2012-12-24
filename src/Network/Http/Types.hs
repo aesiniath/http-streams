@@ -21,14 +21,17 @@ module Network.Http.Types (
     emptyHeaders,
     updateHeader,
     buildHeaders,
+    getHeader,
     
     -- for testing
     composeRequestBytes
-) where 
+) where
+
+import Prelude hiding (lookup)
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
-import Data.HashMap.Strict (HashMap, empty, insert, foldrWithKey)
+import Data.HashMap.Strict (HashMap, empty, insert, foldrWithKey, lookup)
 import Data.CaseInsensitive (CI, mk, original)
 
 -- | HTTP Methods, as per RFC 2616
@@ -198,13 +201,13 @@ emptyHeaders :: Headers
 emptyHeaders =
     Wrap empty
 
---
--- | Set a header field to the specified value. This will overwrite
--- any existing value for the field. Remember that HTTP fields names
--- are case insensitive!
---
-updateHeader :: ByteString -> ByteString -> Headers -> Headers
-updateHeader k v x =
+{-
+    Set a header field to the specified value. This will overwrite
+    any existing value for the field. Remember that HTTP fields names
+    are case insensitive!
+-}
+updateHeader :: Headers -> ByteString -> ByteString -> Headers
+updateHeader x k v =
     Wrap result
   where
     result = insert (mk k) v m
@@ -227,3 +230,13 @@ addHeader
     -> HashMap (CI ByteString) ByteString
     -> HashMap (CI ByteString) ByteString
 addHeader (k,v) m = insert (mk k) v m
+
+--
+-- | Lookup a header value.
+--
+getHeader :: Headers -> ByteString -> Maybe ByteString
+getHeader x k =
+    lookup (mk k) m
+  where
+    m = unWrap x
+

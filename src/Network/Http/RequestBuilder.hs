@@ -90,7 +90,7 @@ setHeader :: MonadIO μ => ByteString -> ByteString -> RequestBuilder μ ()
 setHeader k v = do
     q <- get
     let h0 = qHeaders q
-    let h1 = updateHeader k v h0
+    let h1 = updateHeader h0 k v
     put q {
         qHeaders = h1
     }
