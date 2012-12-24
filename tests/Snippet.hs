@@ -25,13 +25,6 @@ import qualified System.IO.Streams as Streams
 import Debug.Trace
 import System.Exit (exitSuccess)
 
-ex :: IO ()
-ex = do
-    i <- Streams.fromList ["one", "two", "three" :: ByteString]
-    x <- Streams.readExactly 5 i
-    traceIO $ show $ x
-
-    exitSuccess
 
 main :: IO ()
 main = do
@@ -124,3 +117,12 @@ express = do
         traceIO $ show p
         Streams.connect i stdout)
 
+
+
+ex :: IO ()
+ex = do
+    i <- Streams.fromList ["one", "two", "three" :: ByteString]
+    x <- Streams.readExactly 5 i
+    traceIO $ show $ x
+
+    exitSuccess

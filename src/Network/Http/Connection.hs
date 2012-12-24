@@ -179,8 +179,9 @@ sendRequest c q handler = do
     TODO deal with transfer encoding!
 -}
 receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
-receiveResponse c _ = do
+receiveResponse c p = do
     return i
+
 {-
     HERE TODO HERE
     
@@ -189,6 +190,17 @@ receiveResponse c _ = do
 -}
   where
     i = cIn c
+    
+    encoding = case header "Transfer-Encoding" of
+        Just ("chunked")
+                -> Chunked
+        Just _  -> None
+        Nothing -> None
+
+    header = getHeader (pHeaders p)
+
+
+data TransferEncoding = None | Chunked
 
 --
 -- | Use this for the common case of the HTTP methods that only send
