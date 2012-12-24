@@ -136,8 +136,7 @@ parseTransferChunk = do
 {-
     This is the exact type from Snap. Can we share them? Does it matter?
 -}
-data HttpParseException =
-    HttpParseException String
+data HttpParseException = HttpParseException String
         deriving (Typeable, Show)
 
 instance Exception HttpParseException

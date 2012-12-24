@@ -32,6 +32,7 @@ import qualified System.IO.Streams as Streams
 import System.IO.Streams.Network (socketToStreams)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
+import Data.CaseInsensitive (mk)
 
 import Network.Http.Types
 import Network.Http.ResponseParser
@@ -175,30 +176,23 @@ sendRequest c q handler = do
     fine, no problem, and it actually has the benefit of making it clear
     you're supposed to call this with the result of the sendRequest
     call.
-    
-    TODO deal with transfer encoding!
 -}
 receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
 receiveResponse c p = do
-    return i
-
-{-
-    HERE TODO HERE
+    case encoding of
+        Chunked -> readChunkedBody i
+        None    -> return i
     
-    This is where we need to process either Content-Length, or deal
-    with chunked transfer encoding. P
--}
   where
     i = cIn c
     
     encoding = case header "Transfer-Encoding" of
-        Just ("chunked")
-                -> Chunked
-        Just _  -> None
+        Just x'-> if (mk x') == "chunked"
+                    then Chunked
+                    else None
         Nothing -> None
-
+    
     header = getHeader (pHeaders p)
-
 
 data TransferEncoding = None | Chunked
 
