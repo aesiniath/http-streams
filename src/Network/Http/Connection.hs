@@ -138,7 +138,7 @@ sendRequest c q handler = do
     
     -- now prepare to process the reply.
     
-    p <- parseResponseBytes i
+    p <- readResponseHeader i
     
     return p
   where
@@ -201,6 +201,7 @@ receiveResponse c p = do
 
 
 data TransferEncoding = None | Chunked
+
 
 --
 -- | Use this for the common case of the HTTP methods that only send

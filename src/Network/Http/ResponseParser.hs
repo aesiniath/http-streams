@@ -17,15 +17,17 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# OPTIONS -Wwarn #-}
 
 module Network.Http.ResponseParser (
-    parseResponseBytes,
+    readResponseHeader,
+    readChunkedBody,
     parseResponse
         -- for testing
 ) where
 
-import Prelude hiding (takeWhile)
+import Prelude hiding (take, takeWhile)
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
@@ -35,6 +37,9 @@ import qualified System.IO.Streams.Attoparsec as Streams
 import Control.Applicative
 import Data.Attoparsec.ByteString (Parser)
 import Data.Attoparsec.ByteString.Char8
+import Control.Monad (void)
+import Control.Exception (Exception, throw)
+import Data.Typeable (Typeable)
 
 import Network.Http.Types
 
@@ -42,8 +47,8 @@ import Network.Http.Types
     Process the reply from the server up to the end of the headers as
     deliniated by a blank line.
 -}
-parseResponseBytes :: InputStream ByteString -> IO Response
-parseResponseBytes i = do
+readResponseHeader :: InputStream ByteString -> IO Response
+readResponseHeader i = do
     p <- Streams.parseFromStream parseResponse i
     return p
 
@@ -92,4 +97,47 @@ key = do
 crlf :: Parser ByteString
 crlf = string "\r\n"
 
+---------------------------------------------------------------------
 
+{-
+    Process a response body in chunked transfer encoding, taking the
+    resultant bytes and reproducing them as an InputStream 
+-}
+readChunkedBody :: InputStream ByteString -> IO (InputStream ByteString)
+readChunkedBody i = do
+    i2 <- Streams.makeInputStream action
+    return i2
+  where
+    action = Streams.parseFromStream parseTransferChunk i
+
+
+{-
+    Treat chunks larger than 256kB as a denial-of-service attack.
+-}
+mAX_CHUNK_SIZE :: Int
+mAX_CHUNK_SIZE = (2::Int)^(18::Int)
+
+parseTransferChunk :: Parser (Maybe ByteString)
+parseTransferChunk = do
+    !n <- hexadecimal
+    void (takeTill (== '\r'))
+    void crlf
+    if n >= mAX_CHUNK_SIZE
+      then return $! throw $! HttpParseException $!
+           "parseTransferChunk: chunk of size " ++ show n ++ " too long."
+      else if n <= 0
+        then return Nothing
+        else do
+            -- now safe to take this many bytes.
+            !x' <- take n
+            void crlf
+            return $! Just x'
+
+{-
+    This is the exact type from Snap. Can we share them? Does it matter?
+-}
+data HttpParseException =
+    HttpParseException String
+        deriving (Typeable, Show)
+
+instance Exception HttpParseException
