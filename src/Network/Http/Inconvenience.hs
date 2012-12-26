@@ -27,7 +27,7 @@ import Network.Http.Connection
 import Network.Http.RequestBuilder
 
 instance IsString URI where
-    fromString str = case (parseURI str) of
+    fromString str = case parseURI str of
         Just uri    -> uri
         Nothing     -> nullURI
 

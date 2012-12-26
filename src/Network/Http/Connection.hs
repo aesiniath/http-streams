@@ -95,7 +95,7 @@ openConnection h p = do
     let a = addrAddress $ head is
     connect s a
     (i,o) <- socketToStreams s
-    return $ Connection {
+    return Connection {
         cHost = h',
         cSock = s,
         cAddr = a,
@@ -171,7 +171,7 @@ sendRequest c q handler = do
 --
 {-
     It was tempting to leave the Response out of the type signature for
-    this function, butit turns out we need to find out whether chunked
+    this function, but it turns out we need to find out whether chunked
     encoding is being used, which is in one of the response headers. So,
     fine, no problem, and it actually has the benefit of making it clear
     you're supposed to call this with the result of the sendRequest
@@ -187,7 +187,7 @@ receiveResponse c p = do
     i = cIn c
     
     encoding = case header "Transfer-Encoding" of
-        Just x'-> if (mk x') == "chunked"
+        Just x'-> if mk x' == "chunked"
                     then Chunked
                     else None
         Nothing -> None
