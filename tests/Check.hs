@@ -16,6 +16,7 @@ import Test.Hspec (Spec, hspec, describe, it)
 import Test.HUnit
 import Network.Socket (SockAddr(..))
 import Data.Bits
+import Data.Maybe (fromJust)
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -53,6 +54,7 @@ suite = do
     describe "Parsing responses" $ do
         testResponseParser1
         testChunkedEncoding
+        testContentLength
 
 
 testRequestTermination =
@@ -141,6 +143,31 @@ testChunkedEncoding = do
         assertEqual "Incorrect number of bytes read" 29 len
 
 
+testContentLength = do
+    it "recognzies fixed length message" $ do
+        c <- openConnection "www.operationaldynamics.com" 80
+        
+        q <- buildRequest c $ do
+            http GET "/images/logo/logo-130x167-fs8.png"
+        
+        p <- sendRequest c q emptyBody
+        
+        let nm = getHeader p "Content-Length"
+        let n = read $ S.unpack $ fromJust nm :: Int
+        assertEqual "Should be a fixed length message!" 3466 n
+        
+        i <- receiveResponse c p
+        
+        (i2, getCount) <- Streams.countInput i
+        x' <- Streams.readExactly 3466 i2
+
+        len <- getCount
+        assertEqual "Incorrect number of bytes read" 3466 len
+        assertBool "Incorrect length" (3466 == S.length x')
+
+        end <- Streams.atEOF i2
+        assertBool "Expected end of stream" end
+
 
 {-
     Copied from System.IO.Streams.Tutorial examples. Isn't there an
@@ -157,6 +184,3 @@ drain is =
             Just _  -> go
 
 
--- HERE TODO HERE
--- Now test chuncked encoding
--- Now test Content-Length

@@ -23,6 +23,7 @@
 module Network.Http.ResponseParser (
     readResponseHeader,
     readChunkedBody,
+    readFixedLength,
     parseResponse
         -- for testing
 ) where
@@ -40,6 +41,7 @@ import Data.Attoparsec.ByteString.Char8
 import Control.Monad (void)
 import Control.Exception (Exception, throw)
 import Data.Typeable (Typeable)
+import Data.Int (Int64)
 
 import Network.Http.Types
 
@@ -140,3 +142,19 @@ data HttpParseException = HttpParseException String
         deriving (Typeable, Show)
 
 instance Exception HttpParseException
+
+
+---------------------------------------------------------------------
+
+{-
+    This has the rather crucial side effect of terminating the stream
+    after the requested number of bytes. Otherwise, code handling
+    responses waits on more imput until an HTTP timeout occurs.
+-}
+readFixedLength :: InputStream ByteString -> Int -> IO (InputStream ByteString)
+readFixedLength i n = do
+    i2 <- Streams.takeBytes (fromIntegral n :: Int64) i
+    return i2
+
+
+

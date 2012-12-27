@@ -181,7 +181,7 @@ receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
 receiveResponse c p = do
     case encoding of
         Chunked -> readChunkedBody i
-        None    -> return i
+        None    -> readFixedLength i len
     
   where
     i = cIn c
@@ -193,6 +193,10 @@ receiveResponse c p = do
         Nothing -> None
     
     header = getHeader p
+    
+    len = case header "Content-Length" of
+        Just x' -> read $ S.unpack x' :: Int
+        Nothing -> 0
 
 data TransferEncoding = None | Chunked
 
