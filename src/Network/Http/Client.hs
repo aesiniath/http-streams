@@ -114,6 +114,7 @@ module Network.Http.Client (
     receiveResponse,
     Response,
     Headers,
+    getHeader,
 
     -- * Resource cleanup
     closeConnection,

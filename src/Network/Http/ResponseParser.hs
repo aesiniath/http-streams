@@ -18,7 +18,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# OPTIONS -Wwarn #-}
+{-# OPTIONS -fno-warn-unused-imports #-}
 
 module Network.Http.ResponseParser (
     readResponseHeader,

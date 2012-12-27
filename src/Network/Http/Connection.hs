@@ -192,7 +192,7 @@ receiveResponse c p = do
                     else None
         Nothing -> None
     
-    header = getHeader (pHeaders p)
+    header = getHeader p
 
 data TransferEncoding = None | Chunked
 

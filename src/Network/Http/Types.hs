@@ -16,12 +16,13 @@ module Network.Http.Types (
     Request(..),
     getHostname,
     Response(..),
+    getHeader,
     Method(..),
     Headers,
     emptyHeaders,
     updateHeader,
     buildHeaders,
-    getHeader,
+    lookupHeader,
     
     -- for testing
     composeRequestBytes
@@ -146,6 +147,31 @@ instance Show Response where
     show p =
         S.unpack $ composeResponseBytes p
 
+--
+-- | Get the HTTP response status code.
+--
+getStatusCode :: Response -> StatusCode
+getStatusCode = pStatusCode
+{-# INLINE getStatusCode #-}
+
+--
+-- | Get the HTTP response status message. Keep in mind that this is
+-- /not/ normative; whereas 'getStatusCode' values are authoritative.
+--
+getStatusMsg :: Response -> ByteString
+getStatusMsg = pStatusMsg
+{-# INLINE getStatusMsg #-}
+
+--
+-- | Lookup a header in the response.
+--
+getHeader :: Response -> ByteString -> Maybe ByteString
+getHeader p k =
+    lookupHeader h k
+  where
+    h = pHeaders p
+
+
 composeResponseBytes :: Response -> ByteString
 composeResponseBytes p =
     S.concat
@@ -233,11 +259,8 @@ addHeader
     -> HashMap (CI ByteString) ByteString
 addHeader (k,v) m = insert (mk k) v m
 
---
--- | Lookup a header value.
---
-getHeader :: Headers -> ByteString -> Maybe ByteString
-getHeader x k =
+lookupHeader :: Headers -> ByteString -> Maybe ByteString
+lookupHeader x k =
     lookup (mk k) m
   where
     m = unWrap x
