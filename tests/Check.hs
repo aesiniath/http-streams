@@ -52,6 +52,7 @@ suite = do
     
     describe "Parsing responses" $ do
         testResponseParser1
+        testChunkedEncoding
 
 
 testRequestTermination =
@@ -119,4 +120,43 @@ testResponseParser1 = do
         parseTest parseResponse b'
         return ()
 
+testChunkedEncoding = do
+    it "recognzies chunked transfer encoding" $ do
+        c <- openConnection "localhost" 8000
+        
+        q <- buildRequest c $ do
+            http GET "/time"
+        
+        p <- sendRequest c q emptyBody
+        
+        let cm = getHeader p "Transfer-Encoding"
+        assertEqual "Should be chunked encoding!" (Just "chunked") cm
+        
+        i <- receiveResponse c p
+        
+        (i2, getCount) <- Streams.countInput i
+        drain i2
 
+        len <- getCount
+        assertEqual "Incorrect number of bytes read" 29 len
+
+
+
+{-
+    Copied from System.IO.Streams.Tutorial examples. Isn't there an
+    easier way to do this?
+-}
+drain :: InputStream a -> IO ()
+drain is =
+    go
+  where
+    go = do
+        m <- Streams.read is
+        case m of
+            Nothing -> return ()
+            Just _  -> go
+
+
+-- HERE TODO HERE
+-- Now test chuncked encoding
+-- Now test Content-Length
