@@ -16,6 +16,9 @@ module Network.Http.Types (
     Request(..),
     getHostname,
     Response(..),
+    StatusCode,
+    getStatusCode,
+    getStatusMessage,
     getHeader,
     Method(..),
     Headers,
@@ -158,12 +161,26 @@ getStatusCode = pStatusCode
 -- | Get the HTTP response status message. Keep in mind that this is
 -- /not/ normative; whereas 'getStatusCode' values are authoritative.
 --
-getStatusMsg :: Response -> ByteString
-getStatusMsg = pStatusMsg
-{-# INLINE getStatusMsg #-}
+getStatusMessage :: Response -> ByteString
+getStatusMessage = pStatusMsg
+{-# INLINE getStatusMessage #-}
 
 --
--- | Lookup a header in the response.
+-- | Lookup a header in the response. HTTP header field names are
+-- case-insensitive, so you can specify the name to lookup however you
+-- like. If the header is not present @Nothing@ will be returned.
+--
+-- > let n = case getHeader p "Content-Length" of
+-- >            Just x' -> read x' :: Int
+-- >            Nothing -> 0
+--
+-- which of course is essentially what goes on inside the library when
+-- @http-streams@ receives a response from the server and has to figure
+-- out how many bytes to read.
+--
+-- There is a fair bit of complexity in some of the other HTTP response
+-- fields, so there are a number of specialized functions for reading
+-- those values where we've found them useful.
 --
 getHeader :: Response -> ByteString -> Maybe ByteString
 getHeader p k =

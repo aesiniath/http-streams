@@ -24,6 +24,7 @@ module Network.Http.ResponseParser (
     readResponseHeader,
     readChunkedBody,
     readFixedLength,
+    
     parseResponse
         -- for testing
 ) where
@@ -155,6 +156,4 @@ readFixedLength :: InputStream ByteString -> Int -> IO (InputStream ByteString)
 readFixedLength i n = do
     i2 <- Streams.takeBytes (fromIntegral n :: Int64) i
     return i2
-
-
 

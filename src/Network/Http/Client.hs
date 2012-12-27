@@ -104,6 +104,7 @@ module Network.Http.Client (
 
     -- * Sending HTTP request
     Request,
+    Response,
     getHostname,
     sendRequest,
     emptyBody,
@@ -112,10 +113,11 @@ module Network.Http.Client (
     
     -- * Processing HTTP response
     receiveResponse,
-    Response,
-    Headers,
+    StatusCode,
+    getStatusCode,
+    getStatusMessage,
     getHeader,
-
+    
     -- * Resource cleanup
     closeConnection,
     
