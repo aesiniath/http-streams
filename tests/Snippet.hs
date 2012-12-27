@@ -23,7 +23,6 @@ import qualified Data.ByteString.Char8 as S
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 import Debug.Trace
-import System.Exit (exitSuccess)
 
 
 main :: IO ()
@@ -49,23 +48,23 @@ main = do
 basic :: IO ()
 basic = do
     c <- openConnection "localhost" 8000
-    traceIO $ show c
+    putStrLn $ show c
     
     q <- buildRequest c $ do
         http GET "/time"
         setAccept "text/plain"
-    traceIO $ show q
+    putStr $ show q
             -- Requests [headers] are terminated by a double newline
             -- already. We need a better way of emitting debug
             -- information mid-stream from this library.
     
     p <- sendRequest c q emptyBody
-    traceIO $ show p
+    putStr $ show p
     
     b <- receiveResponse c p
     
     x <- Streams.read b
-    traceIO $ S.unpack $ fromMaybe "" x
+    putStr $ S.unpack $ fromMaybe "" x
 
     closeConnection c
 
@@ -113,16 +112,7 @@ doStuff c = do
 
 express :: IO ()
 express = do
-    get "http://kernel.operationaldynamics.com:58080/headers" (\p i -> do
-        traceIO $ show p
+    get "http://kernel.operationaldynamics.com/yaminabe" (\p i -> do
+        putStr $ show p
         Streams.connect i stdout)
 
-
-
-ex :: IO ()
-ex = do
-    i <- Streams.fromList ["one", "two", "three" :: ByteString]
-    x <- Streams.readExactly 5 i
-    traceIO $ show $ x
-
-    exitSuccess
