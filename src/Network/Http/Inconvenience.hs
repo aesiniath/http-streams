@@ -13,13 +13,15 @@
 {-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Inconvenience (
-    get
+    get,
+    post,
+    put
 ) where 
 
 import Network.URI (URI(..), URIAuth(..), parseURI, nullURI)
 import Data.String (IsString, fromString)
 import Control.Exception (bracket)
-import System.IO.Streams (InputStream)
+import System.IO.Streams (InputStream, OutputStream)
 import Data.ByteString (ByteString)
 
 import Network.Http.Types
@@ -31,6 +33,9 @@ instance IsString URI where
         Just uri    -> uri
         Nothing     -> nullURI
 
+
+-- | Issue an HTTP GET request and pass the resultant response to the
+-- supplied handler function.
 
 get :: URI -> (Response -> InputStream ByteString -> IO α) -> IO ()
 get u handler = bracket
@@ -71,4 +76,12 @@ get u handler = bracket
 
         _ <- handler p b
         return ()
+
+-- | TODO
+post :: URI -> (OutputStream ByteString -> IO α) -> (Response -> InputStream ByteString -> IO α) -> IO ()
+post = undefined
+
+-- | TODO
+put  :: URI -> (OutputStream ByteString -> IO α) -> (Response -> InputStream ByteString -> IO α) -> IO ()
+put = undefined
 

@@ -105,6 +105,7 @@ module Network.Http.Client (
     -- * Sending HTTP request
     Request,
     Response,
+    Headers,
     getHostname,
     sendRequest,
     emptyBody,
@@ -121,9 +122,14 @@ module Network.Http.Client (
     -- * Resource cleanup
     closeConnection,
     
-    -- * Convenience API
-    get
-) where 
+    -- * Convenience APIs
+    -- | Some simple functions for making requests with useful defaults.
+    -- There's no @head@ function for the usual reason of avoiding
+    -- collision with @Prelude@.
+    get,
+    post,
+    put
+) where
 
 import Network.Http.Types
 import Network.Http.Connection
