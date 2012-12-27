@@ -67,9 +67,13 @@ buildRequest c mm = do
 http :: MonadIO μ => Method -> String -> RequestBuilder μ ()
 http m p = do
     q <- get
+    let h0 = qHeaders q
+    let h1 = updateHeader h0 "User-Agent" "http-streams/0.1.1"
+
     put q {
         qMethod = m,
-        qPath = p
+        qPath = p,
+        qHeaders = h1
     }
 
 --
