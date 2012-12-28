@@ -181,7 +181,9 @@ receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
 receiveResponse c p = do
     case encoding of
         Chunked -> readChunkedBody i
-        None    -> readFixedLength i len
+        None    -> case compression of
+                    Gzip        -> readCompressedBody i len
+                    Identity    -> readFixedLength i len
     
   where
     i = cIn c
@@ -192,14 +194,22 @@ receiveResponse c p = do
                     else None
         Nothing -> None
     
+    compression = case header "Content-Encoding" of
+        Just x'-> if mk x' == "gzip"
+                    then Gzip
+                    else Identity
+        Nothing -> Identity
+    
     header = getHeader p
     
     len = case header "Content-Length" of
         Just x' -> read $ S.unpack x' :: Int
         Nothing -> 0
 
+
 data TransferEncoding = None | Chunked
 
+data ContentEncoding = Identity | Gzip
 
 --
 -- | Use this for the common case of the HTTP methods that only send

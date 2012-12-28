@@ -55,6 +55,7 @@ suite = do
         testResponseParser1
         testChunkedEncoding
         testContentLength
+        testCompressedResponse
 
 
 testRequestTermination =
@@ -116,13 +117,13 @@ testConnectionHost =
             assertEqual "Host value needs to be name only, given port 80"
                 "localhost" h')}
 
-testResponseParser1 = do
+testResponseParser1 =
     it "parses a simple 200 response" $ do
         b' <- S.readFile "tests/example1.txt"
         parseTest parseResponse b'
         return ()
 
-testChunkedEncoding = do
+testChunkedEncoding =
     it "recognzies chunked transfer encoding" $ do
         c <- openConnection "localhost" 8000
         
@@ -143,7 +144,7 @@ testChunkedEncoding = do
         assertEqual "Incorrect number of bytes read" 29 len
 
 
-testContentLength = do
+testContentLength =
     it "recognzies fixed length message" $ do
         c <- openConnection "www.operationaldynamics.com" 80
         
@@ -168,6 +169,34 @@ testContentLength = do
         end <- Streams.atEOF i2
         assertBool "Expected end of stream" end
 
+{-
+    Content length numbers as reported by HTTPie.
+-}
+testCompressedResponse =
+    it "recognizes gzip encoding and decompresses" $ do
+        c <- openConnection "www.laptop" 80
+
+        q <- buildRequest c $ do
+            http GET "/"
+            setHeader "Accept-Encoding" "gzip"
+        
+        p <- sendRequest c q emptyBody
+        
+        let nm = getHeader p "Content-Length"
+        let n = read $ S.unpack $ fromJust nm :: Int
+        assertEqual "Should be a fixed length message!" 1488 n
+        
+        i <- receiveResponse c p
+        
+        (i2, getCount) <- Streams.countInput i
+        x' <- Streams.readExactly 3510 i2
+
+        len <- getCount
+        assertEqual "Incorrect number of bytes read" 3510 len
+        assertBool "Incorrect length" (3510 == S.length x')
+
+        end <- Streams.atEOF i2
+        assertBool "Expected end of stream" end
 
 {-
     Copied from System.IO.Streams.Tutorial examples. Isn't there an

@@ -24,6 +24,7 @@ module Network.Http.ResponseParser (
     readResponseHeader,
     readChunkedBody,
     readFixedLength,
+    readCompressedBody,
     
     parseResponse
         -- for testing
@@ -157,3 +158,11 @@ readFixedLength i n = do
     i2 <- Streams.takeBytes (fromIntegral n :: Int64) i
     return i2
 
+
+---------------------------------------------------------------------
+
+readCompressedBody :: InputStream ByteString -> Int -> IO (InputStream ByteString)
+readCompressedBody i n = do
+    i2 <- readFixedLength i n
+    i3 <- Streams.gunzip i2
+    return i3
