@@ -19,6 +19,7 @@ module Network.Http.RequestBuilder (
     http,
     setHostname,
     setAccept,
+    ContentType,
     setContentType,
     setHeader
 ) where 
@@ -108,6 +109,13 @@ setHeader k v = do
 setAccept :: MonadIO μ => ByteString -> RequestBuilder μ ()
 setAccept v = do
     setHeader "Accept" v
+
+--
+-- | The MIME type corresponding to the body of the request you are
+-- sending. Defaults to @\"text\/plain\"@, so usually you need to set
+-- this if 'PUT'ing.
+--
+type ContentType = ByteString
 
 setContentType :: MonadIO μ => ByteString -> RequestBuilder μ ()
 setContentType v = do
