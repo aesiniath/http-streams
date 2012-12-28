@@ -124,7 +124,7 @@ testResponseParser1 =
         return ()
 
 testChunkedEncoding =
-    it "recognzies chunked transfer encoding" $ do
+    it "recognzies chunked transfer encoding and decodes" $ do
         c <- openConnection "localhost" 8000
         
         q <- buildRequest c $ do
@@ -170,10 +170,11 @@ testContentLength =
         assertBool "Expected end of stream" end
 
 {-
-    Content length numbers as reported by HTTPie.
+    Content length numbers as reported by HTTPie: 1488 gzipped and 3510
+    uncompressed.
 -}
 testCompressedResponse =
-    it "recognizes gzip encoding and decompresses" $ do
+    it "recognizes gzip content encoding and decompresses" $ do
         c <- openConnection "www.laptop" 80
 
         q <- buildRequest c $ do

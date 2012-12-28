@@ -11,6 +11,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module Network.Http.Connection (
     Hostname,
@@ -33,7 +34,8 @@ import System.IO.Streams.Network (socketToStreams)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.CaseInsensitive (mk)
-
+import Control.Exception (Exception, throwIO)
+import Data.Typeable (Typeable)
 import Network.Http.Types
 import Network.Http.ResponseParser
 
@@ -180,10 +182,14 @@ sendRequest c q handler = do
 receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
 receiveResponse c p = do
     case encoding of
-        Chunked -> readChunkedBody i
+        Chunked -> case compression of
+                    Identity    -> readChunkedBody i
+                    _           -> throwIO (UnexpectedCompression $ show compression)
+                                        -- Should we be handling these?!?
         None    -> case compression of
-                    Gzip        -> readCompressedBody i len
                     Identity    -> readFixedLength i len
+                    Gzip        -> readCompressedBody i len
+                    Deflate     -> throwIO (UnexpectedCompression $ show compression)
     
   where
     i = cIn c
@@ -209,7 +215,13 @@ receiveResponse c p = do
 
 data TransferEncoding = None | Chunked
 
-data ContentEncoding = Identity | Gzip
+data ContentEncoding = Identity | Gzip | Deflate
+    deriving (Show)
+
+data UnexpectedCompression = UnexpectedCompression String
+        deriving (Typeable, Show)
+
+instance Exception UnexpectedCompression
 
 --
 -- | Use this for the common case of the HTTP methods that only send
