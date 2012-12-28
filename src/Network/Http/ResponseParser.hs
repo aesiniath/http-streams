@@ -23,7 +23,7 @@
 module Network.Http.ResponseParser (
     readResponseHeader,
     readChunkedBody,
-    readFixedLength,
+    readFixedLengthBody,
     readCompressedBody,
     
     parseResponse
@@ -108,11 +108,11 @@ crlf = string "\r\n"
     resultant bytes and reproducing them as an InputStream 
 -}
 readChunkedBody :: InputStream ByteString -> IO (InputStream ByteString)
-readChunkedBody i = do
+readChunkedBody i1 = do
     i2 <- Streams.makeInputStream action
     return i2
   where
-    action = Streams.parseFromStream parseTransferChunk i
+    action = Streams.parseFromStream parseTransferChunk i1
 
 
 {-
@@ -152,16 +152,15 @@ instance Exception HttpParseException
     after the requested number of bytes. Otherwise, code handling
     responses waits on more imput until an HTTP timeout occurs.
 -}
-readFixedLength :: InputStream ByteString -> Int -> IO (InputStream ByteString)
-readFixedLength i n = do
-    i2 <- Streams.takeBytes (fromIntegral n :: Int64) i
+readFixedLengthBody :: InputStream ByteString -> Int -> IO (InputStream ByteString)
+readFixedLengthBody i1 n = do
+    i2 <- Streams.takeBytes (fromIntegral n :: Int64) i1
     return i2
 
 
 ---------------------------------------------------------------------
 
-readCompressedBody :: InputStream ByteString -> Int -> IO (InputStream ByteString)
-readCompressedBody i n = do
-    i2 <- readFixedLength i n
-    i3 <- Streams.gunzip i2
-    return i3
+readCompressedBody :: InputStream ByteString -> IO (InputStream ByteString)
+readCompressedBody i1 = do
+    i2 <- Streams.gunzip i1
+    return i2

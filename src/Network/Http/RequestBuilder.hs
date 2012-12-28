@@ -69,11 +69,12 @@ http m p = do
     q <- get
     let h0 = qHeaders q
     let h1 = updateHeader h0 "User-Agent" "http-streams/0.1.1"
+    let h2 = updateHeader h1 "Accept-Encoding" "gzip"
 
     put q {
         qMethod = m,
         qPath = p,
-        qHeaders = h1
+        qHeaders = h2
     }
 
 --

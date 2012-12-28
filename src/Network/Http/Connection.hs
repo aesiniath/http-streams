@@ -181,19 +181,20 @@ sendRequest c q handler = do
 -}
 receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
 receiveResponse c p = do
-    case encoding of
-        Chunked -> case compression of
-                    Identity    -> readChunkedBody i
-                    _           -> throwIO (UnexpectedCompression $ show compression)
-                                        -- Should we be handling these?!?
-        None    -> case compression of
-                    Identity    -> readFixedLength i len
-                    Gzip        -> readCompressedBody i len
-                    Deflate     -> throwIO (UnexpectedCompression $ show compression)
+    i1 <- return $ cIn c
     
+    i2 <- case encoding of
+        None        -> readFixedLengthBody i1 n
+        Chunked     -> readChunkedBody i1
+    
+    i3 <- case compression of
+        Identity    -> return i2
+        Gzip        -> readCompressedBody i2
+        Deflate     -> throwIO (UnexpectedCompression $ show compression)
+    
+    return i3
   where
-    i = cIn c
-    
+
     encoding = case header "Transfer-Encoding" of
         Just x'-> if mk x' == "chunked"
                     then Chunked
@@ -208,7 +209,7 @@ receiveResponse c p = do
     
     header = getHeader p
     
-    len = case header "Content-Length" of
+    n = case header "Content-Length" of
         Just x' -> read $ S.unpack x' :: Int
         Nothing -> 0
 
