@@ -99,6 +99,7 @@ module Network.Http.Client (
     http,
     setHostname,
     setAccept,
+    setAccept',
     ContentType,
     setContentType,
     setHeader,

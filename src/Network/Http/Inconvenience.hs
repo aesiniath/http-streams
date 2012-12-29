@@ -164,8 +164,9 @@ runBody body = do
 -- > assert (getStatusCode p == 201)
 -- 
 -- or something to that effect; the key being that you can set the
--- @Content-Length@ header correctly, and then stream the content using
--- (in this example) 'fileBody'.
+-- @Content-Length@ header correctly, and then write the content using
+-- (in this example) 'fileBody' which will let @io-streams@ stream
+-- the content in more-or-less constant space.
 --
 put :: URI
     -> ContentType

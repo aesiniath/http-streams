@@ -34,7 +34,7 @@ import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, parseTest)
 --
 
 import Network.Http.Client
-import Network.Http.Types (composeRequestBytes)
+import Network.Http.Types (composeRequestBytes, Request(..), lookupHeader)
 import Network.Http.ResponseParser (parseResponse)
 import Network.Http.Connection (Connection(..))
 
@@ -46,6 +46,7 @@ suite = do
     describe "Request, when serialized" $ do
         testRequestLineFormat
         testRequestTermination
+        testAcceptHeaderFormat
     
     describe "Opening a connection" $ do
         testConnectionLookup
@@ -88,6 +89,30 @@ testRequestLineFormat =
             
             assertEqual "Invalid HTTP request line" "GET /time HTTP/1.1" l')
 
+
+fakeConnection :: IO Connection
+fakeConnection = do
+    i <- Streams.nullInput
+    o <- Streams.nullOutput
+    return $ Connection {
+        cHost = "www.example.com",
+        cAddr = (SockAddrInet 8000 (203 + shift 113 16 + shift 15 24)),
+        cSock = undefined,
+        cIn = i,
+        cOut = o
+    }
+
+
+testAcceptHeaderFormat =
+    it "has a properly formatted Accept header" $ do
+        c <- fakeConnection
+        q <- buildRequest c $ do
+            setAccept' [("text/html", 1),("*/*", 0.0)]
+        
+        let h = qHeaders q
+        let (Just a) = lookupHeader h "Accept"
+        assertEqual "Failed to format header" "text/html; q=1.0, */*; q=0.0" a
+        
 {-
     This is a bit of a voodoo piece of code? Network byte order, yo.
     Anyway, yes, using the Show instance is easier, and now having

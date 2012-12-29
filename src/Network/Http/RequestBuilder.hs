@@ -19,12 +19,14 @@ module Network.Http.RequestBuilder (
     http,
     setHostname,
     setAccept,
+    setAccept',
     ContentType,
     setContentType,
     setHeader
 ) where 
 
 import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as S
 import Data.ByteString.Char8 ()
 import Control.Monad.State
 
@@ -43,7 +45,7 @@ newtype RequestBuilder a = RequestBuilder (State Request a)
 -- > q <- buildRequest c $ do
 -- >     http POST "/api/v1/messages"
 -- >     setContentType "application/json"
--- >     setAccept "text/html; q=1.0, */*; q=0.0"
+-- >     setAccept "text/html"
 -- >     setHeader "X-WhoDoneIt" "The Butler"
 --
 -- Obviously it's up to you to later actually /send/ JSON data.
@@ -90,7 +92,12 @@ setHostname v = do
         qHost = v
     }
 
--- | Set a generic header to be sent in the HTTP request.
+--
+-- | Set a generic header to be sent in the HTTP request. The other
+-- methods in the RequestBuilder API are expressed in terms of this 
+-- function, but we recommend you use them where offered for their
+-- stronger types.
+--
 setHeader :: ByteString -> ByteString -> RequestBuilder ()
 setHeader k v = do
     q <- get
@@ -103,11 +110,33 @@ setHeader k v = do
 --
 -- | Indicate the content type you are willing to receive in a reply
 -- from the server. For more complex @Accept:@ headers, use
--- 'setAccept\''
+-- 'setAccept''.
 --
 setAccept :: ByteString -> RequestBuilder ()
 setAccept v = do
     setHeader "Accept" v
+
+--
+-- | Indicate the content types you are willing to receive in a reply 
+-- from the server in order of preference. A call of the form:
+-- 
+-- >     setAccept' [("text/html", 1.0),
+-- >                 ("application/xml", 0.8),
+-- >                 ("*/*", 0)]
+-- 
+-- will result in an @Accept:@ header value of
+-- @text\/html; q=1.0, application\/xml; q=0.8, *\/*; q=0.0@ as you
+-- would expect.
+--
+setAccept' :: [(ByteString,Float)] -> RequestBuilder ()
+setAccept' tqs = do
+    setHeader "Accept" v
+  where
+    v = S.intercalate ", " $ map format tqs
+    
+    format :: (ByteString,Float) -> ByteString
+    format (t,q) =
+        S.concat [t, "; q=", S.pack $ show q]
 
 type ContentType = ByteString
 
