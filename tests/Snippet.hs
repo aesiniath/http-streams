@@ -9,6 +9,8 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS -fno-warn-unused-do-bind #-}
+
 
 import Network.Http.Client
 import Control.Exception (bracket)
@@ -23,10 +25,11 @@ import qualified Data.ByteString.Char8 as S
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 import Debug.Trace
+import System.Exit (exitSuccess)
 
 
 main :: IO ()
-main = do
+main = do        
     putStrLn "---- Basic API ----"
     basic
     
@@ -37,7 +40,7 @@ main = do
     putStrLn "---- Convenience API ----"
     express
 
-    putStrLn "---- Done ----"
+    putStrLn "\n---- Done ----"
 
 {-
     Explore with a simple HTTP request against localhost (where we
@@ -92,6 +95,7 @@ doStuff c = do
         http PUT "/put"
         setAccept "*/*"
         setContentType "text/plain"
+        setContentLength 12
     
     p <- sendRequest c q (\o ->
         Streams.write (Just "Hello World\n") o)
@@ -104,15 +108,16 @@ doStuff c = do
 
 {-
     Experiment with a convenience API. This is very much in flux,
-    with the open question being what type to return; since there's
-    no Connection object here (its use being wrapped) we possibly want
-    to run the entire Stream into memory? Or, we could use a handler,
-    as shown here.
+    with the open question being what type to return, if any.
 -}
 
 express :: IO ()
 express = do
     get "http://kernel.operationaldynamics.com/yaminabe" (\p i -> do
+        putStr $ show p
+        Streams.connect i stdout)
+
+    put "http://httpbin.org/put" "text/plain" (fileBody "tests/hello.txt") (\p i -> do
         putStr $ show p
         Streams.connect i stdout)
 
