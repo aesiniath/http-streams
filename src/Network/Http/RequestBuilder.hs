@@ -31,12 +31,11 @@ import Control.Monad.State
 import Network.Http.Types
 import Network.Http.Connection
 
-{-
-newtype Builder m a = Builder (State Request a)
-  deriving (Monad, MonadIO, MonadState Request)
--}
-newtype RequestBuilder μ α = RequestBuilder (StateT Request μ α)
-  deriving (Monad, MonadIO, MonadState Request, MonadTrans)
+--
+-- | The RequestBuilder monad allows you to abuse do notation to conveniently build up
+--
+newtype RequestBuilder a = RequestBuilder (State Request a)
+  deriving (Monad, MonadState Request)
 
 -- | Run a RequestBuilder, yielding a Request object you can use on the
 -- given connection.
@@ -49,9 +48,9 @@ newtype RequestBuilder μ α = RequestBuilder (StateT Request μ α)
 --
 -- Obviously it's up to you to later actually /send/ JSON data.
 --
-buildRequest :: MonadIO μ => Connection -> RequestBuilder μ () -> μ (Request)
+buildRequest :: Connection -> RequestBuilder a -> IO Request
 buildRequest c mm = do
-    let (RequestBuilder m) = (mm)
+    let (RequestBuilder s) = (mm)
     let h = cHost c
     let q = Request {
         qHost = h,
@@ -59,13 +58,13 @@ buildRequest c mm = do
         qPath = "/",
         qHeaders = emptyHeaders
     }
-    execStateT m q
+    return $ execState s q
 
 
 -- | Begin constructing a Request, starting with the request line.
 --
 
-http :: MonadIO μ => Method -> String -> RequestBuilder μ ()
+http :: Method -> String -> RequestBuilder ()
 http m p = do
     q <- get
     let h0 = qHeaders q
@@ -84,7 +83,7 @@ http m p = do
 -- header in HTTP 1.1 and is set directly from the name of the server
 -- you connected to when calling 'Network.Http.Connection.openConnection'.
 --
-setHostname :: MonadIO μ => ByteString -> RequestBuilder μ ()
+setHostname :: ByteString -> RequestBuilder ()
 setHostname v = do
     q <- get
     put q {
@@ -92,7 +91,7 @@ setHostname v = do
     }
 
 -- | Set a generic header to be sent in the HTTP request.
-setHeader :: MonadIO μ => ByteString -> ByteString -> RequestBuilder μ ()
+setHeader :: ByteString -> ByteString -> RequestBuilder ()
 setHeader k v = do
     q <- get
     let h0 = qHeaders q
@@ -101,23 +100,23 @@ setHeader k v = do
         qHeaders = h1
     }
 
-{-
-    TODO Given the complex structure of the Accept: field, maybe
-    we should have a stronger API to help you build it. Perhaps
-    :: [(ByteString,Float)]?
--}
-setAccept :: MonadIO μ => ByteString -> RequestBuilder μ ()
+--
+-- | Indicate the content type you are willing to receive in a reply
+-- from the server. For more complex @Accept:@ headers, use
+-- 'setAccept\''
+--
+setAccept :: ByteString -> RequestBuilder ()
 setAccept v = do
     setHeader "Accept" v
 
---
--- | The MIME type corresponding to the body of the request you are
--- sending. Defaults to @\"text\/plain\"@, so usually you need to set
--- this if 'PUT'ing.
---
 type ContentType = ByteString
 
-setContentType :: MonadIO μ => ByteString -> RequestBuilder μ ()
+--
+-- | Set the MIME type corresponding to the body of the request you are
+-- sending. Defaults to @\"text\/plain\"@, so usually you need to set
+-- this if 'PUT'ting.
+--
+setContentType :: ContentType -> RequestBuilder ()
 setContentType v = do
     setHeader "Content-Type" v
 
