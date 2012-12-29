@@ -102,6 +102,7 @@ module Network.Http.Client (
     setAccept',
     ContentType,
     setContentType,
+    setContentLength,
     setHeader,
 
     -- * Sending HTTP request

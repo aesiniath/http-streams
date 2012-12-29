@@ -22,6 +22,7 @@ module Network.Http.RequestBuilder (
     setAccept',
     ContentType,
     setContentType,
+    setContentLength,
     setHeader
 ) where 
 
@@ -148,4 +149,13 @@ type ContentType = ByteString
 setContentType :: ContentType -> RequestBuilder ()
 setContentType v = do
     setHeader "Content-Type" v
+
+--
+-- | Specify the length of the request body, in bytes. This needs to be
+-- accurate; and most servers will assume @0@ if you don't send it with
+-- a PUT or POST request.
+--
+setContentLength :: Int -> RequestBuilder ()
+setContentLength n = do
+    setHeader "Content-Length" (S.pack $ show n)
 
