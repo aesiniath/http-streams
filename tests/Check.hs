@@ -37,9 +37,12 @@ import Network.Http.Client
 import Network.Http.Types (composeRequestBytes, Request(..), lookupHeader)
 import Network.Http.ResponseParser (parseResponse)
 import Network.Http.Connection (Connection(..))
+import TestServer (runTestServer)
 
 main :: IO ()
-main = hspec suite
+main = do
+    runTestServer
+    hspec suite
 
 suite :: Spec
 suite = do
@@ -142,11 +145,13 @@ testConnectionHost =
             assertEqual "Host value needs to be name only, given port 80"
                 "localhost" h')}
 
+
 testResponseParser1 =
     it "parses a simple 200 response" $ do
         b' <- S.readFile "tests/example1.txt"
         parseTest parseResponse b'
         return ()
+
 
 testChunkedEncoding =
     it "recognzies chunked transfer encoding and decodes" $ do
@@ -171,57 +176,60 @@ testChunkedEncoding =
 
 testContentLength =
     it "recognzies fixed length message" $ do
-        c <- openConnection "www.operationaldynamics.com" 80
+        c <- openConnection "localhost" 56981
         
         q <- buildRequest c $ do
-            http GET "/images/logo/logo-130x167-fs8.png"
+            http GET "/static/statler.jpg"
         
         p <- sendRequest c q emptyBody
         
         let nm = getHeader p "Content-Length"
+        assertMaybe "Should be a Content-Length header!" nm
+
         let n = read $ S.unpack $ fromJust nm :: Int
-        assertEqual "Should be a fixed length message!" 3466 n
+        assertEqual "Should be a fixed length message!" 4611 n
         
         i <- receiveResponse c p
         
         (i2, getCount) <- Streams.countInput i
-        x' <- Streams.readExactly 3466 i2
+        x' <- Streams.readExactly 4611 i2
 
         len <- getCount
-        assertEqual "Incorrect number of bytes read" 3466 len
-        assertBool "Incorrect length" (3466 == S.length x')
+        assertEqual "Incorrect number of bytes read" 4611 len
+        assertBool "Incorrect length" (4611 == S.length x')
 
         end <- Streams.atEOF i2
         assertBool "Expected end of stream" end
 
 {-
-    Content length numbers as reported by HTTPie: 1488 gzipped and 3510
-    uncompressed.
+    This had to change when we moved to an internal test server; seems
+    Snap is doing something funny when gzipping and switching to chunked
+    encoding no matter what I do.
 -}
 testCompressedResponse =
     it "recognizes gzip content encoding and decompresses" $ do
-        c <- openConnection "www.laptop" 80
+        c <- openConnection "localhost" 56981
 
         q <- buildRequest c $ do
-            http GET "/"
+            http GET "/static/hello.html"
             setHeader "Accept-Encoding" "gzip"
         
         p <- sendRequest c q emptyBody
         
-        let nm = getHeader p "Content-Length"
-        let n = read $ S.unpack $ fromJust nm :: Int
-        assertEqual "Should be a fixed length message!" 1488 n
-        
         i <- receiveResponse c p
         
+        let nm = getHeader p "Content-Encoding"
+        assertMaybe "Should be a Content-Encoding header!" nm
+        assertEqual "Content-Encoding header should be 'gzip'!" (Just "gzip") nm
+        
         (i2, getCount) <- Streams.countInput i
-        x' <- Streams.readExactly 3510 i2
+        x' <- Streams.readExactly 102 i2
 
         len <- getCount
-        assertEqual "Incorrect number of bytes read" 3510 len
-        assertBool "Incorrect length" (3510 == S.length x')
+        assertEqual "Incorrect number of bytes read" 102 len
+        assertBool "Incorrect length" (102 == S.length x')
 
-        end <- Streams.atEOF i2
+        end <- Streams.atEOF i
         assertBool "Expected end of stream" end
 
 {-
@@ -238,4 +246,10 @@ drain is =
             Nothing -> return ()
             Just _  -> go
 
+
+assertMaybe :: String -> Maybe a -> Assertion
+assertMaybe prefix m0 =
+    case m0 of
+        Nothing -> assertFailure prefix
+        Just _  -> assertBool "" True
 

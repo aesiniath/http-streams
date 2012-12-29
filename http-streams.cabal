@@ -67,6 +67,10 @@ test-suite           check
                      case-insensitive,
                      attoparsec,
                      io-streams,
+                     MonadCatchIO-transformers,
+                     snap-core < 1.0,
+                     snap-server < 1.0,
+                     snap < 1.0,
                      HUnit,
                      hspec
   hs-source-dirs:    src,tests
