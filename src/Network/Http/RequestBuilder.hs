@@ -68,7 +68,7 @@ buildRequest c mm = do
 -- | Begin constructing a Request, starting with the request line.
 --
 
-http :: Method -> String -> RequestBuilder ()
+http :: Method -> ByteString -> RequestBuilder ()
 http m p = do
     q <- get
     let h0 = qHeaders q

@@ -80,7 +80,7 @@ data Request
     = Request {
         qMethod :: Method,
         qHost :: ByteString,
-        qPath :: String,            -- FIXME type
+        qPath :: ByteString,
         qHeaders :: Headers
     }
 
@@ -119,7 +119,7 @@ composeRequestBytes q =
         version,
         "\r\n"]
     method = S.pack $ show $ qMethod q
-    uri = S.pack $ qPath q
+    uri = qPath q
     version = "HTTP/1.1"
 
     hostLine = S.concat ["Host: ", hostname, "\r\n"]

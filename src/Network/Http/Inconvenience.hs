@@ -13,10 +13,11 @@
 {-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Inconvenience (
-    ParameterName,
-    ParameterValue,
+    URL,
     get,
     post,
+    ParameterName,
+    ParameterValue,
     postForm,
     put
 ) where 
@@ -39,46 +40,61 @@ instance IsString URI where
         Just uri    -> uri
         Nothing     -> nullURI
 
+type URL = ByteString
 
 establish :: URI -> IO (Connection)
 establish u =
-    case uriScheme u of
-        "http:"  -> openConnection host port
-        "https:" -> undefined        -- set up a secure connection
-        _       -> error ("Unknown URI scheme " ++ uriScheme u)
+    case scheme of
+        "http:" -> openConnection host port
+        "https:"-> error ("SSL support not yet implemented")
+        _       -> error ("Unknown URI scheme " ++ scheme)
   where
+    scheme = uriScheme u
+    
     auth = case uriAuthority u of
         Just x  -> x
         Nothing -> URIAuth "" "localhost" ""
-
+    
     host = uriRegName auth
     port = case uriPort auth of
         ""  -> 80
         _   -> read $ tail $ uriPort auth :: Int
 
+
+parseURL :: URL -> URI
+parseURL r' =
+    case parseURI r of
+        Just u  -> u
+        Nothing -> error ("Can't parse URI " ++ r)
+  where
+    r = S.unpack r'
+
+path :: URI -> ByteString
+path u = S.pack $ concat [uriPath u, uriQuery u, uriFragment u]
+
 --
 -- | Issue an HTTP GET request and pass the resultant response to the
 -- supplied handler function.
 --
-get :: URI
-    -- ^ URL to GET from.
+get :: URL
+    -- ^ Resource to GET from.
     -> (Response -> InputStream ByteString -> IO α)
     -- ^ Handler function to receive the response from the server.
     -> IO ()
-get u handler = bracket
+get r' handler = bracket
     (establish u)
     (teardown)
     (process)
 
   where    
     teardown = closeConnection
-
-    path = concat [uriPath u, uriQuery u, uriFragment u]
-
+    
+    u = parseURL r'
+    
     process :: Connection -> IO ()
     process c = do
         q <- buildRequest c $ do
-            http GET path
+            http GET (path u)
             setAccept "*/*"
         
         p <- sendRequest c q emptyBody
@@ -95,8 +111,8 @@ get u handler = bracket
 -- body needing to fit into memory. If that is inconvenient, just use
 -- the underlying "Network.Http.Client" API directly.
 --
-post :: URI
-    -- ^ URL to POST to.
+post :: URL
+    -- ^ Resource to POST to.
     -> ContentType
     -- ^ MIME type of the request body being sent.
     -> (OutputStream ByteString -> IO α)
@@ -104,21 +120,21 @@ post :: URI
     -> (Response -> InputStream ByteString -> IO α)
     -- ^ Handler function to receive the response from the server.
     -> IO ()
-post u t body handler = bracket
+post r' t body handler = bracket
     (establish u)
     (teardown)
     (process)
   where
     teardown = closeConnection
-
-    path = concat [uriPath u, uriQuery u, uriFragment u]
-
+    
+    u = parseURL r'
+    
     process :: Connection -> IO ()
     process c = do
         (e,n) <- runBody body
         
         q <- buildRequest c $ do
-            http POST path
+            http POST (path u)
             setAccept "*/*"
             setContentType t
             setContentLength n
@@ -157,22 +173,22 @@ type ParameterValue = ByteString
 -- with an arbitrary Content-Type, use 'post'.
 --
 postForm
-    :: URI
-    -- ^ URL to POST to.
+    :: URL
+    -- ^ Resource to POST to.
     -> [(ParameterName, ParameterValue)]
     -- ^ List of name=value pairs. Will be sent URL-encoded.
     -> (Response -> InputStream ByteString -> IO α)
     -- ^ Handler function to receive the response from the server.
     -> IO ()
-postForm u nvs handler = bracket
+postForm r' nvs handler = bracket
     (establish u)
     (teardown)
     (process)
   where
     teardown = closeConnection
     
-    path = concat [uriPath u, uriQuery u, uriFragment u]
-
+    u = parseURL r'
+    
     b' = S.intercalate "&" $ map combine nvs
     
     combine :: (ParameterName,ParameterValue) -> ByteString
@@ -187,7 +203,7 @@ postForm u nvs handler = bracket
         (e,n) <- runBody parameters
         
         q <- buildRequest c $ do
-            http POST path
+            http POST (path u)
             setAccept "*/*"
             setContentType "application/x-www-form-urlencoded"
             setContentLength n
@@ -217,11 +233,14 @@ postForm u nvs handler = bracket
 -- instead. For example:
 -- 
 -- > n <- getSize "hello.txt"
+-- > 
 -- > c <- openConnection "s3.example.com" 80
+-- > 
 -- > q <- buildRequest c $ do
 -- >     http PUT "/bucket42/object149"
 -- >     setContentType "text/plain"
 -- >     setContentLength n
+-- > 
 -- > p <- sendRequest c q (fileBody "hello.txt")
 -- >
 -- > closeConnection c
@@ -232,8 +251,8 @@ postForm u nvs handler = bracket
 -- (in this example) 'fileBody' which will let @io-streams@ stream
 -- the content in more-or-less constant space.
 --
-put :: URI
-    -- ^ URL to PUT to.
+put :: URL
+    -- ^ Resource to PUT to.
     -> ContentType
     -- ^ MIME type of the request body being sent.
     -> (OutputStream ByteString -> IO α)
@@ -241,14 +260,14 @@ put :: URI
     -> (Response -> InputStream ByteString -> IO α)
     -- ^ Handler function to receive the response from the server.
     -> IO ()
-put u t body handler = bracket
+put r' t body handler = bracket
     (establish u)
     (teardown)
     (process)
   where
     teardown = closeConnection
     
-    path = concat [uriPath u, uriQuery u, uriFragment u]
+    u = parseURL r'
     
     process :: Connection -> IO ()
     process c = do
@@ -257,7 +276,7 @@ put u t body handler = bracket
         let len = S.pack $ show (n :: Int)
         
         q <- buildRequest c $ do
-            http PUT path
+            http PUT (path u)
             setAccept "*/*"
             setHeader "Content-Type" t
             setHeader "Content-Length" len

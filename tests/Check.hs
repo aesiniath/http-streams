@@ -294,7 +294,7 @@ testPostWithForm = do
         assertBool "Expected end of stream" end
 -}
     it "POST with form data correctly encodes parameters" $ do
-        let (Just url) = parseURI $ S.unpack $ S.concat ["http://", localhost, "/postbox"]
+        let url = S.concat ["http://", localhost, "/postbox"]
         
         postForm url [("name","Kermit"),("role","Stagehand")] (\p i -> do
             putStr $ show p

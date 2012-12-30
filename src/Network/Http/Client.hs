@@ -129,6 +129,7 @@ module Network.Http.Client (
     -- | Some simple functions for making requests with useful defaults.
     -- There's no @head@ function for the usual reason of needing to
     -- avoid collision with @Prelude@.
+    URL,
     get,
     post,
     ParameterName,
