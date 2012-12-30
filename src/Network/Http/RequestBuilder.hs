@@ -35,7 +35,8 @@ import Network.Http.Types
 import Network.Http.Connection
 
 --
--- | The RequestBuilder monad allows you to abuse do notation to conveniently build up
+-- | The RequestBuilder monad allows you to abuse do-notation to
+-- conveniently setup a 'Request' object.
 --
 newtype RequestBuilder a = RequestBuilder (State Request a)
   deriving (Monad, MonadState Request)

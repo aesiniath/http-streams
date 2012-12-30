@@ -17,6 +17,8 @@ import Test.HUnit
 import Network.Socket (SockAddr(..))
 import Data.Bits
 import Data.Maybe (fromJust)
+import Data.String
+import Network.URI (parseURI)
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -44,6 +46,8 @@ main = do
     runTestServer
     hspec suite
 
+localhost = S.pack ("localhost:" ++ show localPort)
+
 suite :: Spec
 suite = do
     describe "Request, when serialized" $ do
@@ -60,6 +64,9 @@ suite = do
         testChunkedEncoding
         testContentLength
         testCompressedResponse
+    
+    describe "Convenience API" $ do
+        testPostWithForm
 
 
 testRequestTermination =
@@ -81,8 +88,8 @@ testRequestTermination =
 
 testRequestLineFormat =
     it "has a properly formatted request line" $ bracket
-        (openConnection "localhost" localPort)
-        (closeConnection)
+        (fakeConnection)
+        (return)
         (\c -> do
             q <- buildRequest c $ do
                 http GET "/time"
@@ -138,7 +145,7 @@ testConnectionHost =
        {bracket (openConnection "localhost" localPort) (closeConnection) (\c -> do
             let h' = cHost c
             assertEqual "Host value needs to be name, not IP address"
-                (S.pack ("localhost:" ++ show localPort)) h');
+                localhost h');
         
         bracket (openConnection "localhost" 80) (closeConnection) (\c -> do
             let h' = cHost c
@@ -252,4 +259,45 @@ assertMaybe prefix m0 =
     case m0 of
         Nothing -> assertFailure prefix
         Just _  -> assertBool "" True
+
+
+
+testPostWithForm = do
+{-
+    it "recognizes gzip content #2" $ do
+        c <- openConnection "localhost" 80
+
+        q <- buildRequest c $ do
+            http POST "/postbox"
+            setHeader "Accept-Encoding" "gzip"
+        
+        p <- sendRequest c q emptyBody
+        
+        i <- receiveResponse c p
+        
+        let em = getHeader p "Content-Encoding"
+        assertMaybe "Should be a Content-Encoding header!" em
+        assertEqual "Content-Encoding header should be 'gzip'!" (Just "gzip") em
+        
+        let nm = getHeader p "Content-Length"
+        assertMaybe "Should be a Content-Length header!" nm
+        let n = read $ S.unpack $ fromJust nm :: Int
+        assertEqual "Should be a fixed length message!" 233 n
+        
+        (i2, getCount) <- Streams.countInput i
+        drain i2
+
+        len <- getCount
+        assertEqual "Incorrect number of bytes read" 280 len
+
+        end <- Streams.atEOF i
+        assertBool "Expected end of stream" end
+-}
+    it "POST with form data correctly encodes parameters" $ do
+        let (Just url) = parseURI $ S.unpack $ S.concat ["http://", localhost, "/postbox"]
+        
+        postForm url [("name","Kermit"),("role","Stagehand")] (\p i -> do
+            putStr $ show p
+            Streams.connect i Streams.stdout)
+        
 

@@ -15,7 +15,7 @@
 import Network.Http.Client
 import Control.Exception (bracket)
 import Data.Maybe (fromMaybe)
-
+import Network.URI (parseURI)
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
 --
@@ -29,14 +29,15 @@ import System.Exit (exitSuccess)
 
 
 main :: IO ()
-main = do        
+main = do
+
     putStrLn "---- Basic API ----"
     basic
     
     putStrLn "---- Resource cleanup ----"
     b' <- resource
     S.putStrLn b'
-    
+
     putStrLn "---- Convenience API ----"
     express
 
@@ -50,7 +51,7 @@ main = do
 
 basic :: IO ()
 basic = do
-    c <- openConnection "localhost" 8000
+    c <- openConnection "kernel.operationaldynamics.com" 58080
     putStrLn $ show c
     
     q <- buildRequest c $ do
@@ -113,11 +114,16 @@ doStuff c = do
 
 express :: IO ()
 express = do
-    get "http://kernel.operationaldynamics.com/yaminabe" (\p i -> do
+    get "http://kernel.operationaldynamics.com/yaminabe/" (\p i -> do
         putStr $ show p
         Streams.connect i stdout)
 
     put "http://httpbin.org/put" "text/plain" (fileBody "tests/hello.txt") (\p i -> do
         putStr $ show p
         Streams.connect i stdout)
+
+    postForm "http://requestb.in/14ff5121" [("name","Kermit"),("role","Stage & Screen")] (\p i -> do
+        putStr $ show p
+        Streams.connect i Streams.stdout)
+        
 

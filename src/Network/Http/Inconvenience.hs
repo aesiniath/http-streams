@@ -28,6 +28,7 @@ import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
+import Snap.Core (urlEncode)
 
 import Network.Http.Types
 import Network.Http.Connection
@@ -116,16 +117,14 @@ post u t body handler = bracket
     process c = do
         (e,n) <- runBody body
         
-        let len = S.pack $ show (n :: Int)
-
         q <- buildRequest c $ do
             http POST path
             setAccept "*/*"
-            setHeader "Content-Type" t
-            setHeader "Content-Length" len
-
+            setContentType t
+            setContentLength n
+        
         p <- sendRequest c q e
-
+        
         b <- receiveResponse c p
         
         _ <- handler p b
@@ -165,8 +164,40 @@ postForm
     -> (Response -> InputStream ByteString -> IO α)
     -- ^ Handler function to receive the response from the server.
     -> IO ()
-postForm = undefined
+postForm u nvs handler = bracket
+    (establish u)
+    (teardown)
+    (process)
+  where
+    teardown = closeConnection
+    
+    path = concat [uriPath u, uriQuery u, uriFragment u]
 
+    b' = S.intercalate "&" $ map combine nvs
+    
+    combine :: (ParameterName,ParameterValue) -> ByteString
+    combine (n',v') = S.concat [urlEncode n', "=", urlEncode v']
+    
+    parameters :: OutputStream ByteString -> IO ()
+    parameters o = do
+        Streams.write (Just b') o
+        
+    process :: Connection -> IO ()
+    process c = do
+        (e,n) <- runBody parameters
+        
+        q <- buildRequest c $ do
+            http POST path
+            setAccept "*/*"
+            setContentType "application/x-www-form-urlencoded"
+            setContentLength n
+        
+        p <- sendRequest c q e
+        
+        b <- receiveResponse c p
+        
+        _ <- handler p b
+        return ()
 
 
 --
@@ -216,23 +247,23 @@ put u t body handler = bracket
     (process)
   where
     teardown = closeConnection
-
+    
     path = concat [uriPath u, uriQuery u, uriFragment u]
-
+    
     process :: Connection -> IO ()
     process c = do
         (e,n) <- runBody body
         
         let len = S.pack $ show (n :: Int)
-
+        
         q <- buildRequest c $ do
             http PUT path
             setAccept "*/*"
             setHeader "Content-Type" t
             setHeader "Content-Length" len
-
+        
         p <- sendRequest c q e
-
+        
         b <- receiveResponse c p
         
         _ <- handler p b

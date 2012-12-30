@@ -33,7 +33,8 @@ library
                      unordered-containers,
                      case-insensitive,
                      attoparsec,
-                     io-streams 
+                     snap-core < 1.0,
+                     io-streams
 
   hs-source-dirs:    src
   exposed-modules:   Network.Http.Client

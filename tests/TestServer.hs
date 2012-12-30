@@ -62,7 +62,8 @@ routeRequests =
     route
             [("resource/:id", serveResource),
              ("static/:id", method GET serveStatic),
-             ("time", serveTime)]
+             ("time", serveTime),
+             ("postbox", method POST handlePostMethod)]
     <|> serveNotFound
 
 
