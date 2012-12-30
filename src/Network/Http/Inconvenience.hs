@@ -13,8 +13,11 @@
 {-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Inconvenience (
+    ParameterName,
+    ParameterValue,
     get,
     post,
+    postForm,
     put
 ) where 
 
@@ -56,7 +59,11 @@ establish u =
 -- | Issue an HTTP GET request and pass the resultant response to the
 -- supplied handler function.
 --
-get :: URI -> (Response -> InputStream ByteString -> IO α) -> IO ()
+get :: URI
+    -- ^ URL to GET from.
+    -> (Response -> InputStream ByteString -> IO α)
+    -- ^ Handler function to receive the response from the server.
+    -> IO ()
 get u handler = bracket
     (establish u)
     (teardown)
@@ -88,9 +95,13 @@ get u handler = bracket
 -- the underlying "Network.Http.Client" API directly.
 --
 post :: URI
+    -- ^ URL to POST to.
     -> ContentType
+    -- ^ MIME type of the request body being sent.
     -> (OutputStream ByteString -> IO α)
+    -- ^ Handler function to write content to server.
     -> (Response -> InputStream ByteString -> IO α)
+    -- ^ Handler function to receive the response from the server.
     -> IO ()
 post u t body handler = bracket
     (establish u)
@@ -135,6 +146,28 @@ runBody body = do
     i3 <- Streams.fromList l
     return (inputStreamBody i3, fromIntegral n)
 
+type ParameterName = ByteString
+
+type ParameterValue = ByteString
+
+--
+-- | Send form data to a server via an HTTP POST request. This is the 
+-- usual use case; most services expect the body to be MIME type
+-- @application/x-www-form-urlencoded@ as this is what conventional
+-- web browsers send on form submission. If you want to POST to a URL
+-- with an arbitrary Content-Type, use 'post'.
+--
+postForm
+    :: URI
+    -- ^ URL to POST to.
+    -> [(ParameterName, ParameterValue)]
+    -- ^ List of name=value pairs. Will be sent URL-encoded.
+    -> (Response -> InputStream ByteString -> IO α)
+    -- ^ Handler function to receive the response from the server.
+    -> IO ()
+postForm = undefined
+
+
 
 --
 -- | Place content on the server at the given URL via an HTTP PUT
@@ -169,9 +202,13 @@ runBody body = do
 -- the content in more-or-less constant space.
 --
 put :: URI
+    -- ^ URL to PUT to.
     -> ContentType
+    -- ^ MIME type of the request body being sent.
     -> (OutputStream ByteString -> IO α)
+    -- ^ Handler function to write content to server.
     -> (Response -> InputStream ByteString -> IO α)
+    -- ^ Handler function to receive the response from the server.
     -> IO ()
 put u t body handler = bracket
     (establish u)

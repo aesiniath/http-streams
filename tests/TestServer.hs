@@ -30,6 +30,7 @@ import System.IO (stderr, hPutStrLn, hFlush)
 import Filesystem (getSize)
 import Filesystem.Path.CurrentOS (decodeString)
 
+
 main :: IO ()
 main = do
     httpServe c site
@@ -39,6 +40,7 @@ main = do
         setHostname "127.0.0.1" $
         setPort 56981 $
         setVerbose False emptyConfig
+
 
 runTestServer :: IO ()
 runTestServer = do

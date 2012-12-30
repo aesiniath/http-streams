@@ -127,10 +127,13 @@ module Network.Http.Client (
     
     -- * Convenience APIs
     -- | Some simple functions for making requests with useful defaults.
-    -- There's no @head@ function for the usual reason of avoiding
-    -- collision with @Prelude@.
+    -- There's no @head@ function for the usual reason of needing to
+    -- avoid collision with @Prelude@.
     get,
     post,
+    ParameterName,
+    ParameterValue,
+    postForm,
     put
 ) where
 
