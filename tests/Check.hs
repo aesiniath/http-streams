@@ -37,7 +37,7 @@ import Network.Http.Client
 import Network.Http.Types (composeRequestBytes, Request(..), lookupHeader)
 import Network.Http.ResponseParser (parseResponse)
 import Network.Http.Connection (Connection(..))
-import TestServer (runTestServer)
+import TestServer (runTestServer, localPort)
 
 main :: IO ()
 main = do
@@ -64,7 +64,7 @@ suite = do
 
 testRequestTermination =
     it "terminates with a blank line" $ do
-        c <- openConnection "localhost" 8000
+        c <- openConnection "localhost" localPort
         q <- buildRequest c $ do
             http GET "/time"
             setAccept "text/plain"
@@ -81,7 +81,7 @@ testRequestTermination =
 
 testRequestLineFormat =
     it "has a properly formatted request line" $ bracket
-        (openConnection "localhost" 8000)
+        (openConnection "localhost" localPort)
         (closeConnection)
         (\c -> do
             q <- buildRequest c $ do
@@ -124,21 +124,21 @@ testAcceptHeaderFormat =
 
 testConnectionLookup =
     it "successfully looks up IP address of server" $ bracket
-        (openConnection "localhost" 8000)
+        (openConnection "localhost" localPort)
         (closeConnection)
         (\c -> do
             let a = cAddr c
             assertEqual "Incorrect lookup (1)"
-                (SockAddrInet 8000 (127 + shift 1 24)) a
-            assertEqual "Incorrect lookup (2)" "127.0.0.1:8000" (show a))
+                (SockAddrInet (fromIntegral localPort) (127 + shift 1 24)) a
+            assertEqual "Incorrect lookup (2)" ("127.0.0.1:"++show localPort) (show a))
 
 
 testConnectionHost =
     it "properly caches hostname and port" $ do
-       {bracket (openConnection "localhost" 8000) (closeConnection) (\c -> do
+       {bracket (openConnection "localhost" localPort) (closeConnection) (\c -> do
             let h' = cHost c
             assertEqual "Host value needs to be name, not IP address"
-                "localhost:8000" h');
+                (S.pack ("localhost:" ++ show localPort)) h');
         
         bracket (openConnection "localhost" 80) (closeConnection) (\c -> do
             let h' = cHost c
@@ -154,8 +154,8 @@ testResponseParser1 =
 
 
 testChunkedEncoding =
-    it "recognzies chunked transfer encoding and decodes" $ do
-        c <- openConnection "localhost" 8000
+    it "recognizes chunked transfer encoding and decodes" $ do
+        c <- openConnection "localhost" localPort
         
         q <- buildRequest c $ do
             http GET "/time"

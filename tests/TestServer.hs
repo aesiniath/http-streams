@@ -10,7 +10,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module TestServer (runTestServer) where
+module TestServer (runTestServer, localPort) where
 
 import Prelude hiding (catch)
 
@@ -30,6 +30,7 @@ import System.IO (stderr, hPutStrLn, hFlush)
 import Filesystem (getSize)
 import Filesystem.Path.CurrentOS (decodeString)
 
+localPort = 56981
 
 main :: IO ()
 main = do
@@ -38,7 +39,7 @@ main = do
     c = setAccessLog ConfigNoLog $
         setErrorLog ConfigNoLog $
         setHostname "127.0.0.1" $
-        setPort 56981 $
+        setPort localPort $
         setVerbose False emptyConfig
 
 
@@ -60,7 +61,8 @@ routeRequests :: Snap ()
 routeRequests =
     route
             [("resource/:id", serveResource),
-             ("static/:id", method GET serveStatic)]
+             ("static/:id", method GET serveStatic),
+             ("time", serveTime)]
     <|> serveNotFound
 
 
@@ -92,7 +94,11 @@ serveStatic = do
     b' <- liftIO $ S.readFile f
     writeBS b'
 
-    
+
+serveTime :: Snap ()
+serveTime = do
+    writeBS "Sun 30 Dec 12, 05:39:56.746Z\n"
+
 
 --
 -- Dispatch normal GET requests based on MIME type.
