@@ -28,5 +28,5 @@ main = do
     defaultMain
        [bench "http-streams" (sampleViaHttpStreams),
         bench "http-conduit" (sampleViaHttpConduit)]
-    return ()
+    putStrLn "Complete."
 

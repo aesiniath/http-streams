@@ -28,11 +28,11 @@ main = do
     
 sampleViaHttpStreams :: IO ()
 sampleViaHttpStreams = do
-    c <- openConnection "localhost" 80
+    c <- openConnection "kernel.operationaldynamics.com" 80
     
     q <- buildRequest c $ do
         http GET "/"
-        setAccept "text/plain"
+        setAccept "text/html"
         
     p <- sendRequest c q emptyBody
     
@@ -44,6 +44,6 @@ sampleViaHttpStreams = do
         (\o -> do
             Streams.write (Just (S.pack $ show p)) o
             Streams.connect b o)
-
+    
     closeConnection c
 

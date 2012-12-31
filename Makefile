@@ -72,7 +72,7 @@ build-junk: dirs $(BUILDDIR)/junk/snippet.bin snippet
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
 	$(GHC) --make -O -threaded  \
-		-prof -fprof-auto \
+		-prof -fprof-auto -rtsopts \
 		-outputdir $(BUILDDIR)/junk \
 		-i"$(BUILDDIR):src:tests" \
 		-o $@ \
