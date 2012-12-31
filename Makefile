@@ -9,7 +9,7 @@ MAKEFLAGS=-s -R
 REDIRECT=>/dev/null
 endif
 
-.PHONY: all dirs test build-core junk build-junk tests build-tests
+.PHONY: all dirs test build-core junk build-junk tests build-tests benchmark benchmarks build-benchmarks
 
 #
 # Disable missing signatures so that you can actually do development and
@@ -41,6 +41,8 @@ $(BUILDDIR)/.dir:
 	mkdir $(BUILDDIR)/tests
 	@echo "MKDIR\t$(BUILDDIR)/junk"
 	mkdir $(BUILDDIR)/junk
+	@echo "MKDIR\t$(BUILDDIR)/bench"
+	mkdir $(BUILDDIR)/bench
 	touch $(BUILDDIR)/.dir
 
 #
@@ -115,9 +117,36 @@ test: build-tests
 	@echo "EXEC\tcheck"
 	$(BUILDDIR)/tests/check.bin
 
+#
+# Benchmarking code
+#
+
+benchmarks: build-bench
+build-benchmarks: dirs $(BUILDDIR)/bench/bench.bin bench
+
+$(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
+	@echo "GHC\t$@"
+	$(GHC) --make -O -threaded  \
+		-prof -fprof-auto \
+		-outputdir $(BUILDDIR)/bench \
+		-i"$(BUILDDIR):src:tests" \
+		-o $@ \
+		tests/Benchmark.hs
+	@echo "STRIP\t$@"
+	strip $@
+
+bench:
+	@echo "LN -s\t$@"
+	ln -s $(BUILDDIR)/bench/bench.bin $@
+
+benchmark: build-benchmarks
+	@echo "EXEC\tbench"
+	$(BUILDDIR)/bench/bench.bin
+
+
 clean: 
 	@echo "RM\ttemp files"
-	-rm -f *.hi *.o snippet check tags
+	-rm -f *.hi *.o snippet check tags benchmark
 	-rm -rf $(BUILDDIR)
 	-rm -rf dist/
 
