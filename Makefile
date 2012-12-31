@@ -121,5 +121,5 @@ clean:
 	-rm -rf $(BUILDDIR)
 	-rm -rf dist/
 
-doc: all
+doc:
 	cabal haddock
