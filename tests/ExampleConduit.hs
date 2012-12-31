@@ -15,63 +15,65 @@ module ExampleConduit (sampleViaHttpConduit) where
 import Network.HTTP.Conduit
 import Network.HTTP.Types
 import qualified Data.ByteString.Char8 as S
+import qualified Data.ByteString.Lazy.Char8 as L
 import Data.CaseInsensitive (CI, original)
 import Data.Conduit
-import Data.Conduit.Binary (sinkFile)
+import Data.Conduit.Binary (sinkHandle, sourceLbs)
 import Control.Monad.Trans (liftIO)
-
+import System.IO (openFile, hClose, IOMode(..))
 
 main :: IO ()
 main = do
     sampleViaHttpConduit
-    
+
 sampleViaHttpConduit :: IO ()
 sampleViaHttpConduit = do
 
     runResourceT $ do
-    
+
         manager <- liftIO $ newManager def
         
-        req <- parseUrl "http://localhost:80/"
+        req <- parseUrl "http://kernel.operationaldynamics.com/"
         let req2 = req {
-            checkStatus = \_ _ -> Nothing
+            checkStatus = \_ _ -> Nothing,
+            requestHeaders = [(hAccept, "text/html")]
         }
-    
+        
         res <- http req2 manager
-
+        
         let sta = responseStatus res
             ver = responseVersion res
             hdr = responseHeaders res
-            src = responseBody res
+        
+        handle <- liftIO $ openFile "/tmp/build/http-streams/bench/http-conduit.out" WriteMode
+        
+        sourceLbs (joinStatus sta ver) $$ sinkHandle handle
+        sourceLbs (join hdr) $$ sinkHandle handle
+        responseBody res $$+- sinkHandle handle
+        liftIO $ hClose handle
 
-{-
-        _ <- liftIO $ do 
-                S.putStrLn $ joinStatus sta ver
-                S.putStrLn $ join hdr
--}
-        responseBody res $$+- sinkFile "/tmp/build/http-streams/bench/http-conduit.out"
 
- 
-joinStatus :: Status -> HttpVersion -> S.ByteString
+joinStatus :: Status -> HttpVersion -> L.ByteString
 joinStatus sta ver =
-    S.pack $
-    (show ver) ++ " " ++
-    (show $ statusCode sta) ++ " " ++
-    (S.unpack $ statusMessage sta)
+    L.concat $ map L.pack
+        [ show ver, " "
+        , show $ statusCode sta, " "
+        , S.unpack $ statusMessage sta
+        , "\n"
+        ]
 
 --
 -- Process headers into a single string
 --
 
-join :: ResponseHeaders -> S.ByteString
+join :: ResponseHeaders -> L.ByteString
 join m =
     foldr combineHeaders "" m
 
 
-combineHeaders :: (CI S.ByteString, S.ByteString) -> S.ByteString -> S.ByteString
+combineHeaders :: (CI S.ByteString, S.ByteString) -> L.ByteString -> L.ByteString
 combineHeaders (k,v) acc =
-    S.append acc $ S.concat [key, ": ", value, "\n"]
+    L.append acc $ L.fromChunks [key, ": ", value, "\n"]
   where
     key = original k
     value = v
-
