@@ -9,7 +9,7 @@ MAKEFLAGS=-s -R
 REDIRECT=>/dev/null
 endif
 
-.PHONY: all dirs test build-core junk build-junk tests build-tests benchmark benchmarks build-benchmarks
+.PHONY: all dirs test build-core junk build-junk tests build-tests benchmarks build-benchmarks
 
 #
 # Disable missing signatures so that you can actually do development and
@@ -121,7 +121,7 @@ test: build-tests
 # Benchmarking code
 #
 
-benchmarks: build-bench
+benchmarks: build-benchmarks
 build-benchmarks: dirs $(BUILDDIR)/bench/bench.bin bench
 
 $(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
