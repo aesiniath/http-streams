@@ -139,14 +139,11 @@ bench:
 	@echo "LN -s\t$@"
 	ln -s $(BUILDDIR)/bench/bench.bin $@
 
-benchmark: build-benchmarks
-	@echo "EXEC\tbench"
-	$(BUILDDIR)/bench/bench.bin
-
 
 clean: 
 	@echo "RM\ttemp files"
 	-rm -f *.hi *.o snippet check tags benchmark
+	-rm -f *.prof
 	-rm -rf $(BUILDDIR)
 	-rm -rf dist/
 

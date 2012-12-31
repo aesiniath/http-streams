@@ -63,11 +63,12 @@ data Connection
     }
 
 instance Show Connection where
-    show c = concat
-       ["Connection {",
-        "cHost = \"", S.unpack $ cHost c, "\", ",
-        "cAddr = \"", show $ cAddr c, "\"",
-        "}"]
+    show c = {-# SCC "Connection.show" #-}
+        S.unpack $ S.concat
+           ["Connection {",
+            "cHost = \"", cHost c, "\", ",
+            "cAddr = \"", S.pack $ show $ cAddr c, "\"",
+            "}"]
 
 --
 -- | In order to make a request you first establish the TCP

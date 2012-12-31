@@ -85,7 +85,7 @@ data Request
     }
 
 instance Show Request where
-    show q =
+    show q = {-# SCC "Request.show" #-}
         S.unpack $ S.filter (/= '\r') $ composeRequestBytes q
 
 {-
@@ -147,7 +147,7 @@ data Response
     }
 
 instance Show Response where
-    show p =
+    show p =     {-# SCC "Response.show" #-}
         S.unpack $ composeResponseBytes p
 
 --

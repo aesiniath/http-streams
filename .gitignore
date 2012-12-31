@@ -2,3 +2,5 @@ dist/
 snippet
 check
 bench
+report.html
+*.prof
