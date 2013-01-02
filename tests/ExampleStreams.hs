@@ -20,7 +20,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
-import System.IO (IOMode(..))
+import System.IO (IOMode(..), BufferMode(..))
 
 main :: IO ()
 main = do
@@ -41,6 +41,7 @@ sampleViaHttpStreams = do
     Streams.withFileAsOutput
         "/tmp/build/http-streams/bench/http-streams.out" 
         WriteMode 
+        (BlockBuffering Nothing)
         (\o -> do
             Streams.write (Just (S.pack $ show p)) o
             Streams.connect b o)
