@@ -241,6 +241,7 @@ combine k v acc =
   where
     key = original k
     value = v
+{-# INLINE combine #-}
 
 emptyHeaders :: Headers
 emptyHeaders =
