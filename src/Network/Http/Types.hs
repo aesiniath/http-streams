@@ -1,7 +1,7 @@
 --
 -- HTTP client for use with io-streams
 --
--- Copyright © 2012 Operational Dynamics Consulting, Pty Ltd
+-- Copyright © 2012-2013 Operational Dynamics Consulting, Pty Ltd
 --
 -- The code in this file, and the program it is a part of, is
 -- made available to you by its authors as open source software:
@@ -76,6 +76,16 @@ instance Eq Method where
     m@(Method _) == other            = other == m
     _            == _                = False
 
+--
+-- | A description of the request that will be sent to the server. Note
+-- unlike other HTTP libraries, the request body is /not/ a part of this
+-- object; that will be streamed out by you when actually sending the
+-- request with 'sendRequest'.
+-- 
+-- 'Request' has a useful @Show@ instance that will output the request
+-- line and headers (as it will be sent over the wire but with the @\\r@
+-- characters stripped) which can be handy for debugging.
+--
 data Request
     = Request {
         qMethod :: Method,
@@ -139,6 +149,16 @@ getHostname q = qHost q
 
 type StatusCode = Int
 
+--
+-- | A description of the response received from the server. Note
+-- unlike other HTTP libraries, the response body is /not/ a part
+-- of this object; that will be streamed in by you when calling
+-- 'receiveResponse'.
+-- 
+-- Like 'Request', 'Response' has a @Show@ instance that will output
+-- the status line and response headers as they were received from the
+-- server.
+--
 data Response
     = Response {
         pStatusCode :: StatusCode,
@@ -148,7 +168,7 @@ data Response
 
 instance Show Response where
     show p =     {-# SCC "Response.show" #-}
-        S.unpack $ composeResponseBytes p
+        S.unpack $ S.filter (/= '\r') $ composeResponseBytes p
 
 --
 -- | Get the HTTP response status code.
