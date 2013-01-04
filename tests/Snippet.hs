@@ -53,9 +53,6 @@ basic = do
     putStr $ show p
     
     b <- receiveResponse c p
-    
-    x <- Streams.read b
-
-    S.putStr $ fromMaybe "" x
+    Streams.connect b stdout
 
     closeConnection c
