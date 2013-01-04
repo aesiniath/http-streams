@@ -4,3 +4,4 @@ check
 bench
 report.html
 *.prof
+tags
