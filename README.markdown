@@ -4,9 +4,9 @@ An HTTP client
 Work in progress, very preliminary.
 
 An HTTP client library for Haskell using the Snap Framework's
-[io-streams](https://github.com/snapframework/io-streams) <!-- replace
-with link to hackage when it is released --> library to hande the
-streaming IO.
+[io-streams](https://github.com/snapframework/io-streams) library to
+handle the streaming IO.
+<!-- replace with link to hackage when it is released -->
 
 Background
 ----------
@@ -14,7 +14,7 @@ Background
 One of the original motivations for writing http-streams was wanting
 something that would be usable in RESTful web services. Those working in
 Yesod have the powerful http-conduit package, but that implies having to
-use Conduits. Instead I wanted something that would be compatible with
+use conduits. Instead I wanted something that would be compatible with
 the Snap Framework that I could use within a web service front-end to
 make onward calls to further servers.
 
@@ -45,7 +45,8 @@ Status
 Please make no mistake; http-streams is at an early stage. We will
 strive for protocol correctness, so if there's a bug in our HTTP code
 don't hesitate to raise an issue. It's not even close to being optimized
-yet, but ensuring decent performance will be important, of course.
+yet, but initial performance benchmarks seem to show it's off to a good
+start.
 
 I would expect a lot of API churn in the near future; I'm aiming for
 something pleasant to use while exposing the power of io-streams when
