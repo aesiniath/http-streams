@@ -72,7 +72,7 @@ build-junk: dirs $(BUILDDIR)/junk/snippet.bin snippet
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
 	$(GHC) --make -O -threaded  \
-		-prof -fprof-auto -rtsopts \
+		-prof -fprof-auto-top \
 		-outputdir $(BUILDDIR)/junk \
 		-i"$(BUILDDIR):src:tests" \
 		-o $@ \
@@ -147,5 +147,10 @@ clean:
 	-rm -rf $(BUILDDIR)
 	-rm -rf dist/
 
-doc: all
+doc: dist/setup-config
+	@echo "CABAL\thaddock"
 	cabal haddock
+
+dist/setup-config:
+	@echo "CABAL\tconfigure"
+	cabal configure
