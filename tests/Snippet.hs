@@ -16,6 +16,10 @@ import Control.Exception (bracket)
 import Control.Monad
 import System.Environment (getArgs)
 
+import Network.Socket (SockAddr(..))
+import Data.Bits
+import Network.Http.Connection (Connection(..))
+
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
 --
@@ -31,18 +35,20 @@ import System.Exit (exitSuccess)
 
 main :: IO ()
 main = do
+    l <- Streams.withFileAsInput "tests/example2.txt" (\i -> Streams.toList i)
+    
     as <- getArgs
     let a = head as
     let n = read a :: Int
-    forM_ (replicate n True) (\_ -> basic)
+    forM_ (replicate n True) (\_ -> basic l)
 
 
-basic :: IO ()
-basic = do
-    c <- openConnection "research.laptop" 80
+basic :: [ByteString] -> IO ()
+basic l = do
+    c <- fakeConnection l
     
     q <- buildRequest c $ do
-        http GET "/~andrew/talks/TheWebProblem,SolvingItInHaskell/"
+        http GET "/bucket42/object149"
         setAccept "text/plain"
     putStr $ show q
     
@@ -52,4 +58,17 @@ basic = do
     b <- receiveResponse c p
     Streams.connect b stdout
     
-    closeConnection c
+
+fakeConnection :: [ByteString] -> IO Connection
+fakeConnection l = do
+    o <- Streams.nullOutput
+    i <- Streams.fromList l
+    
+    return $ Connection {
+        cHost = "s3.example.com",
+        cAddr = (SockAddrInet 80 (203 + shift 113 16 + shift 15 24)),
+        cSock = undefined,
+        cIn = i,
+        cOut = o
+    }
+
