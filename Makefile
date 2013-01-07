@@ -67,7 +67,7 @@ httpclient:
 	ln -s $(BUILDDIR)/core/client.bin $@
 
 junk: build-junk
-build-junk: dirs $(BUILDDIR)/junk/snippet.bin snippet
+build-junk: dirs $(BUILDDIR)/junk/snippet.bin snippet tags
 
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -81,6 +81,10 @@ $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "STRIP\t$@"
 	strip $@
 
+tags: $(CORE_SOURCES) $(TEST_SOURCES)
+	@echo "CTAGS\tsrc tests"
+	hasktags -cx src tests
+
 snippet:
 	@echo "LN -s\t$@"
 	ln -s $(BUILDDIR)/junk/snippet.bin $@
@@ -90,7 +94,7 @@ snippet:
 #
 
 tests: build-tests
-build-tests: dirs $(BUILDDIR)/tests/check.bin check
+build-tests: dirs $(BUILDDIR)/tests/check.bin check tags
 
 $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -121,8 +125,9 @@ test: build-tests
 # Benchmarking code
 #
 
+benchmark: build-benchmarks
 benchmarks: build-benchmarks
-build-benchmarks: dirs $(BUILDDIR)/bench/bench.bin bench
+build-benchmarks: dirs $(BUILDDIR)/bench/bench.bin bench tags
 
 $(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
