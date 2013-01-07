@@ -36,6 +36,7 @@ import qualified Data.ByteString.Char8 as S
 import Data.CaseInsensitive (mk)
 import Control.Exception (Exception, throwIO)
 import Data.Typeable (Typeable)
+import Data.ByteString.Lex.Integral (readDecimal_)
 import Network.Http.Types
 import Network.Http.ResponseParser
 
@@ -211,7 +212,7 @@ receiveResponse c p = do
     header = getHeader p
     
     n = case header "Content-Length" of
-        Just x' -> read $ S.unpack x' :: Int
+        Just x' -> readDecimal_ x' :: Int
         Nothing -> 0
 
 
