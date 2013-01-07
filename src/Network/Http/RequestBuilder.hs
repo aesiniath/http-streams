@@ -41,6 +41,7 @@ import Network.Http.Connection
 newtype RequestBuilder a = RequestBuilder (State Request a)
   deriving (Monad, MonadState Request)
 
+--
 -- | Run a RequestBuilder, yielding a Request object you can use on the
 -- given connection.
 --
@@ -65,9 +66,9 @@ buildRequest c mm = do
     return $ execState s q
 
 
+--
 -- | Begin constructing a Request, starting with the request line.
 --
-
 http :: Method -> ByteString -> RequestBuilder ()
 http m p = do
     q <- get

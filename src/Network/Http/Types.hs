@@ -295,7 +295,8 @@ addHeader
     :: (ByteString,ByteString)
     -> HashMap (CI ByteString) ByteString
     -> HashMap (CI ByteString) ByteString
-addHeader (k,v) m = insert (mk k) v m
+addHeader (k,v) m =
+    insert (mk k) v m
 
 lookupHeader :: Headers -> ByteString -> Maybe ByteString
 lookupHeader x k =
