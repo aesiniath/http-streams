@@ -83,7 +83,7 @@ $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 
 tags: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "CTAGS\tsrc tests"
-	hasktags -cx src tests
+	hasktags -c src tests
 
 snippet:
 	@echo "LN -s\t$@"
