@@ -11,6 +11,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
+{-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Types (
     Request(..),
@@ -37,6 +38,12 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.HashMap.Strict (HashMap, empty, insert, foldrWithKey, lookup)
 import Data.CaseInsensitive (CI, mk, original)
+import Blaze.ByteString.Builder (Builder, toByteString, copyByteString)
+import qualified Blaze.ByteString.Builder.Char8 as Builder
+import Data.Monoid (mconcat, mempty)
+import Data.String (IsString, fromString)
+import Data.Maybe (fromMaybe)
+import Data.ByteString.Lex.Integral (packDecimal)
 
 -- | HTTP Methods, as per RFC 2616
 data Method
@@ -115,25 +122,25 @@ instance Show Request where
 
 composeRequestBytes :: Request -> ByteString
 composeRequestBytes q =
-    S.concat
+    toByteString $ mconcat
        [requestline,
         hostLine,
         headerFields,
         "\r\n"]
   where
-    requestline = S.concat
+    requestline = mconcat
        [method,
         " ",
         uri,
         " ",
         version,
         "\r\n"]
-    method = S.pack $ show $ qMethod q
-    uri = qPath q
+    method = fromString $ show $ qMethod q
+    uri = copyByteString $ qPath q
     version = "HTTP/1.1"
 
-    hostLine = S.concat ["Host: ", hostname, "\r\n"]
-    hostname = qHost q
+    hostLine = mconcat ["Host: ", hostname, "\r\n"]
+    hostname = copyByteString $ qHost q
 
     headerFields = joinHeaders $ unWrap $ qHeaders q
 
@@ -211,24 +218,26 @@ getHeader p k =
 
 composeResponseBytes :: Response -> ByteString
 composeResponseBytes p =
-    S.concat
+    toByteString $ mconcat
        [statusline,
         headerFields,
         "\r\n"]
   where
-    statusline = S.concat
+    statusline = mconcat
        [version,
         " ",
         code,
         " ",
         message,
         "\r\n"]
-    code = S.pack $ show $ pStatusCode p
-    message = pStatusMsg p
+    code = copyByteString $ fromMaybe "599" $ packDecimal $ pStatusCode p
+    message = copyByteString $ pStatusMsg p
     version = "HTTP/1.1"
-
     headerFields = joinHeaders $ unWrap $ pHeaders p
 
+
+instance IsString Builder where
+    fromString x = Builder.fromString x
 
 --
 -- | The map of headers in a 'Request' or 'Response'. Note that HTTP
@@ -249,18 +258,19 @@ composeResponseBytes p =
 newtype Headers = Wrap {
     unWrap :: HashMap (CI ByteString) ByteString
 }
+
 instance Show Headers where
-    show x = S.unpack $ S.filter (/= '\r') $ joinHeaders $ unWrap x
+    show x = S.unpack $ S.filter (/= '\r') $ toByteString $ joinHeaders $ unWrap x
 
-joinHeaders :: HashMap (CI ByteString) ByteString -> ByteString
-joinHeaders m = foldrWithKey combine S.empty m
+joinHeaders :: HashMap (CI ByteString) ByteString -> Builder
+joinHeaders m = foldrWithKey combine mempty m
 
-combine :: CI ByteString -> ByteString -> ByteString -> ByteString
+combine :: CI ByteString -> ByteString -> Builder -> Builder
 combine k v acc =
-    S.concat [acc, key, ": ", value, "\r\n"]
+    mconcat [acc, key, ": ", value, "\r\n"]
   where
-    key = original k
-    value = v
+    key = copyByteString $ original k
+    value = copyByteString v
 {-# INLINE combine #-}
 
 emptyHeaders :: Headers
