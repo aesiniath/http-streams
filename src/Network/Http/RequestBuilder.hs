@@ -38,7 +38,7 @@ import Network.Http.Connection
 -- | The RequestBuilder monad allows you to abuse do-notation to
 -- conveniently setup a 'Request' object.
 --
-newtype RequestBuilder a = RequestBuilder (State Request a)
+newtype RequestBuilder α = RequestBuilder (State Request α)
   deriving (Monad, MonadState Request)
 
 --
@@ -53,7 +53,7 @@ newtype RequestBuilder a = RequestBuilder (State Request a)
 --
 -- Obviously it's up to you to later actually /send/ JSON data.
 --
-buildRequest :: Connection -> RequestBuilder a -> IO Request
+buildRequest :: Connection -> RequestBuilder α -> IO Request
 buildRequest c mm = do
     let (RequestBuilder s) = (mm)
     let h = cHost c
