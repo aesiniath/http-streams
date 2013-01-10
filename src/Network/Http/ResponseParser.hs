@@ -32,12 +32,10 @@ module Network.Http.ResponseParser (
 import Prelude hiding (take, takeWhile)
 
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as S
 import System.IO.Streams (InputStream)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
 import Control.Applicative
-import Data.Attoparsec.ByteString (Parser)
 import Data.Attoparsec.ByteString.Char8
 import Control.Monad (void)
 import Control.Exception (Exception, throw)
