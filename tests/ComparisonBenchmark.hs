@@ -1,7 +1,7 @@
 --
--- Benchmark code: sample request using http-streams
+-- Benchmark code: compare http-streams and http-conduit
 --
--- Copyright © 2012 Operational Dynamics Consulting, Pty Ltd
+-- Copyright © 2012-2013 Operational Dynamics Consulting, Pty Ltd
 --
 -- The code in this file, and the program it is a part of, is made
 -- available to you by its authors as open source software: you can
