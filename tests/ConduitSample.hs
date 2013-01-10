@@ -1,7 +1,7 @@
 --
 -- Benchmark code: sample request using http-condiuit
 --
--- Copyright © 2012 Operational Dynamics Consulting, Pty Ltd and Others
+-- Copyright © 2012-2013 Operational Dynamics Consulting, Pty Ltd and Others
 --
 -- The code in this file, and the program it is a part of, is made
 -- available to you by its authors as open source software: you can
@@ -10,7 +10,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module ExampleConduit (sampleViaHttpConduit) where
+module ConduitSample (sampleViaHttpConduit) where
 
 import Network.HTTP.Conduit
 import Network.HTTP.Types
@@ -33,7 +33,7 @@ sampleViaHttpConduit = do
 
         manager <- liftIO $ newManager def
         
-        req <- parseUrl "http://kernel.operationaldynamics.com/"
+        req <- parseUrl "http://localhost/"
         let req2 = req {
             checkStatus = \_ _ -> Nothing,
             requestHeaders = [(hAccept, "text/html")]

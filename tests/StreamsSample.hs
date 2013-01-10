@@ -1,7 +1,7 @@
 --
 -- Benchmark code: sample request using http-streams
 --
--- Copyright © 2012 Operational Dynamics Consulting, Pty Ltd
+-- Copyright © 2012-2013 Operational Dynamics Consulting, Pty Ltd
 --
 -- The code in this file, and the program it is a part of, is made
 -- available to you by its authors as open source software: you can
@@ -11,7 +11,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
-module ExampleStreams (sampleViaHttpStreams) where
+module StreamsSample (sampleViaHttpStreams) where
 
 import Network.Http.Client
 import Data.Maybe (fromMaybe)
@@ -28,7 +28,7 @@ main = do
     
 sampleViaHttpStreams :: IO ()
 sampleViaHttpStreams = do
-    c <- openConnection "kernel.operationaldynamics.com" 80
+    c <- openConnection "localhost" 80
     
     q <- buildRequest c $ do
         http GET "/"

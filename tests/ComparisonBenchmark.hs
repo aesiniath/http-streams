@@ -19,8 +19,8 @@ import GHC.Conc
     namespace collision nightmares.
 -}
 
-import ExampleStreams (sampleViaHttpStreams)
-import ExampleConduit (sampleViaHttpConduit)
+import StreamsSample (sampleViaHttpStreams)
+import ConduitSample (sampleViaHttpConduit)
 
 main :: IO () 
 main = do
