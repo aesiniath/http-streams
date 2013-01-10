@@ -32,6 +32,8 @@ library
                      network,
                      unordered-containers,
                      case-insensitive,
+                     bytestring-lexing,
+                     blaze-builder,
                      attoparsec,
                      snap-core < 1.0,
                      io-streams
@@ -69,6 +71,8 @@ test-suite           check
                      unordered-containers,
                      bytestring-lexing,
                      case-insensitive,
+                     bytestring-lexing,
+                     blaze-builder,
                      attoparsec,
                      io-streams,
                      MonadCatchIO-transformers,
