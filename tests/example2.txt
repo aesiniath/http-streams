@@ -3,7 +3,7 @@ Content-Type: text/html; charset=UTF-8
 Server: Apache/2.2.22
 Expires: Fri, 04 Jan 2013 06:48:57 GMT
 Date: Fri, 04 Jan 2013 06:48:56 GMT
-Content-Length: 161
+Content-Length: 133
 Cache-Control: max-age=1
 
 <html>
@@ -13,9 +13,5 @@ Cache-Control: max-age=1
 <body>
 <h1>Hello!</h1>
 <p>Hello world. <span class="FIXME">□</span></p>
-</body>
-</html>
-</p>
-</div>
 </body>
 </html>

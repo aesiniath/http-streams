@@ -26,8 +26,8 @@ GHC=ghc \
 	-fno-warn-missing-signatures \
 	-fno-warn-unused-binds
 
-CORE_SOURCES=$(shell find src -name '*.hs')
-TEST_SOURCES=$(shell find tests -name '*.hs')
+CORE_SOURCES=$(shell find src -name '*.hs' -type f)
+TEST_SOURCES=$(shell find tests -name '*.hs' -type f)
 
 
 dirs: $(BUILDDIR)/.dir
@@ -76,14 +76,14 @@ $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 		-outputdir $(BUILDDIR)/junk \
 		-i"$(BUILDDIR):src:tests" \
 		-o $@ \
-		-Wwarn -fno-warn-unused-imports \
+		-Wwarn \
 		tests/Snippet.hs
 	@echo "STRIP\t$@"
 	strip $@
 
 tags: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "CTAGS\tsrc tests"
-	hasktags -c src tests
+	hothasktags $^ > tags
 
 snippet:
 	@echo "LN -s\t$@"

@@ -10,12 +10,12 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -fno-warn-unused-do-bind #-}
+{-# OPTIONS -fno-warn-unused-imports #-}
 
 
 import Network.Http.Client
 import Control.Exception (bracket)
-import Data.Maybe (fromMaybe)
-import Network.URI (parseURI)
+
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
 --
