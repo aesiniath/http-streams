@@ -1,3 +1,7 @@
+{-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE CPP                #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings  #-}
 --
 -- HTTP client for use with io-streams
 --
@@ -9,8 +13,6 @@
 -- the BSD licence.
 --
 
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE OverloadedStrings  #-}
 
 module Network.Http.Connection (
     Hostname,
@@ -28,18 +30,19 @@ module Network.Http.Connection (
     inputStreamBody
 ) where
 
-import           Control.Exception            (Exception, bracket, throwIO)
-import           Data.ByteString              (ByteString)
-import qualified Data.ByteString.Char8        as S
-import           Data.ByteString.Lex.Integral (readDecimal_)
-import           Data.CaseInsensitive         (mk)
-import           Data.Typeable                (Typeable)
+import           Control.Exception           (Exception, bracket, throwIO)
+import           Data.Bits                   (Bits (..))
+import           Data.ByteString             (ByteString)
+import qualified Data.ByteString.Char8       as S
+import           Data.CaseInsensitive        (mk)
+import           Data.Char                   (ord)
+import           Data.Typeable               (Typeable)
 import           Network.Http.ResponseParser
 import           Network.Http.Types
 import           Network.Socket
-import           System.IO.Streams            (InputStream, OutputStream)
-import qualified System.IO.Streams            as Streams
-import           System.IO.Streams.Network    (socketToStreams)
+import           System.IO.Streams           (InputStream, OutputStream)
+import qualified System.IO.Streams           as Streams
+import           System.IO.Streams.Network   (socketToStreams)
 
 
 {-
@@ -236,8 +239,19 @@ receiveResponse c p = do
     header = getHeader p
 
     n = case header "Content-Length" of
-        Just x' -> readDecimal_ x' :: Int
+        Just x' -> readDecimal x' :: Int
         Nothing -> 0
+
+readDecimal :: (Enum a, Num a, Bits a) => ByteString -> a
+readDecimal = S.foldl' f 0
+  where
+    f !cnt !i = cnt * 10 + digitToInt i
+
+    {-# INLINE digitToInt #-}
+    digitToInt :: (Enum a, Num a, Bits a) => Char -> a
+    digitToInt c | c >= '0' && c <= '9' = toEnum $! ord c - ord '0'
+                 | otherwise = error $ "'" ++ [c] ++ "' is not an ascii digit"
+{-# INLINE readDecimal #-}
 
 
 data TransferEncoding = None | Chunked
@@ -325,4 +339,3 @@ inputStreamBody i o = do
 --
 closeConnection :: Connection -> IO ()
 closeConnection c = cClose c
-
