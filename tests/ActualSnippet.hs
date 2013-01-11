@@ -12,6 +12,8 @@
 {-# OPTIONS -fno-warn-unused-do-bind #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
+module Snippet where
+
 import Network.Http.Client
 import Control.Exception (bracket)
 

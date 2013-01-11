@@ -12,9 +12,11 @@
 {-# OPTIONS -fno-warn-unused-do-bind #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
+module Snippet where
 
 import Network.Http.Client
 import Control.Exception (bracket)
+import Data.Maybe (fromMaybe)
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.

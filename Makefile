@@ -77,6 +77,7 @@ $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 		-i"$(BUILDDIR):src:tests" \
 		-o $@ \
 		-Wwarn \
+		-main-is Snippet.main \
 		tests/Snippet.hs
 	@echo "STRIP\t$@"
 	strip $@
