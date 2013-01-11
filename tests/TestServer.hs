@@ -12,40 +12,41 @@
 
 module TestServer (runTestServer, localPort) where
 
-import Prelude hiding (catch)
+import           Prelude                    hiding (catch)
 
-import Snap.Core
-import Snap.Http.Server
-import Snap.Util.FileServe
-import Control.Concurrent (forkIO)
-import Control.Applicative
-import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as S
+import           Control.Applicative
+import           Control.Concurrent         (forkIO, threadDelay)
+import           Control.Exception          (SomeException)
+import           Control.Monad.CatchIO      (catch)
+import           Control.Monad.Trans        (liftIO)
+import           Data.ByteString            (ByteString)
+import qualified Data.ByteString.Char8      as S
 import qualified Data.ByteString.Lazy.Char8 as L
-import Data.Maybe (fromMaybe)
-import Control.Monad.CatchIO (catch)
-import Control.Monad.Trans (liftIO)
-import Control.Exception (SomeException)
-import System.IO (stderr, hPutStrLn, hFlush)
-import Filesystem (getSize)
-import Filesystem.Path.CurrentOS (decodeString)
+import           Data.Maybe                 (fromMaybe)
+import           Filesystem                 (getSize)
+import           Filesystem.Path.CurrentOS  (decodeString)
+import           Snap.Core
+import           Snap.Http.Server
+import           Snap.Util.FileServe
+import           System.IO                  (hFlush, hPutStrLn, stderr)
 
 localPort = 56981
 
-main :: IO ()
-main = do
-    httpServe c site
+go :: IO ()
+go = httpServe c site
   where
     c = setAccessLog ConfigNoLog $
         setErrorLog ConfigNoLog $
         setHostname "127.0.0.1" $
+        setBind "127.0.0.1" $
         setPort localPort $
-        setVerbose False emptyConfig
+        setVerbose True emptyConfig
 
 
 runTestServer :: IO ()
 runTestServer = do
-    _ <- forkIO $ main
+    _ <- forkIO go
+    threadDelay 2000000
     return ()
 
 --
@@ -86,9 +87,9 @@ serveStatic = do
     let i' = fromMaybe "" im'
     let f' = S.concat ["tests/", i']
     let f = S.unpack f'
-    
+
     l <- liftIO $ getSize $ decodeString f
-    
+
     let t = fileType defaultMimeTypes f
     modifyResponse $ setContentType t
     modifyResponse $ setContentLength $ fromIntegral l
@@ -120,10 +121,10 @@ handleAsREST :: Snap ()
 handleAsREST = do
     im' <- getParam "id"
     om' <- getParam "other"
-    
+
     let e' = S.concat [fromMaybe "" im', fromMaybe "" om']
     let l  = fromIntegral $ S.length e'
-    
+
     modifyResponse $ setContentType "application/json"
     modifyResponse $ setHeader "Cache-Control" "max-age=42"
     modifyResponse $ setContentLength $ l
@@ -154,7 +155,7 @@ handlePutMethod :: Snap ()
 handlePutMethod = do
     r <- getRequest
     let mime0 = getHeader "Content-Type" r
-    
+
     case mime0 of
         Just "application/json" -> updateResource
         _                       -> serveUnsupported
@@ -164,12 +165,12 @@ updateResource :: Snap ()
 updateResource = do
     bs' <- readRequestBody 4096
     let b' = fromLazy bs'
-    
+
     im' <- getParam "id"
     let i' = fromMaybe "0" im'
-    
+
     -- TODO something
-    
+
     modifyResponse $ setResponseStatus 204 "Updated" -- "No Content"
     modifyResponse $ setHeader "Cache-Control" "no-cache"
     modifyResponse $ setContentLength 0
@@ -195,7 +196,7 @@ serveBadRequest :: Snap ()
 serveBadRequest = do
     modifyResponse $ setResponseStatus 400 "Bad Request"
     writeBS "400 Bad Request\n"
-    
+
 
 serveMethodNotAllowed :: Snap ()
 serveMethodNotAllowed = do
@@ -218,7 +219,7 @@ serveUnsupported = do
 --
 -- The exception will be dumped to the server's stdout, while the supplied
 -- message will be sent out with the response (ideally only for debugging
--- purposes, but easier than looking in log/error.log for details). 
+-- purposes, but easier than looking in log/error.log for details).
 --
 
 serveError :: ByteString -> SomeException -> Snap ()
