@@ -133,8 +133,6 @@ module Network.Http.Client (
     URL,
     get,
     post,
-    ParameterName,
-    ParameterValue,
     postForm,
     put
 ) where

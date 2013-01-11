@@ -18,8 +18,6 @@ module Network.Http.Inconvenience (
     URL,
     get,
     post,
-    ParameterName,
-    ParameterValue,
     postForm,
     put
 ) where
@@ -222,9 +220,6 @@ runBody body = do
     i3 <- Streams.fromList l
     return (inputStreamBody i3, fromIntegral n)
 
-type ParameterName = ByteString
-
-type ParameterValue = ByteString
 
 --
 -- | Send form data to a server via an HTTP POST request. This is the
@@ -236,7 +231,7 @@ type ParameterValue = ByteString
 postForm
     :: URL
     -- ^ Resource to POST to.
-    -> [(ParameterName, ParameterValue)]
+    -> [(ByteString, ByteString)]
     -- ^ List of name=value pairs. Will be sent URL-encoded.
     -> (Response -> InputStream ByteString -> IO α)
     -- ^ Handler function to receive the response from the server.
@@ -252,7 +247,7 @@ postForm r' nvs handler = bracket
 
     b' = S.intercalate "&" $ map combine nvs
 
-    combine :: (ParameterName,ParameterValue) -> ByteString
+    combine :: (ByteString,ByteString) -> ByteString
     combine (n',v') = S.concat [urlEncode n', "=", urlEncode v']
 
     parameters :: OutputStream ByteString -> IO ()
