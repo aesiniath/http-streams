@@ -20,6 +20,9 @@ maintainer:          Andrew Cowie <andrew@operationaldynamics.com>
 copyright:           © 2012 Operational Dynamics Consulting, Pty Ltd
 category:            Web
 tested-with:         GHC == 7.4
+stability:           experimental
+homepage:            http://research.operationaldynamics.com/projects/http-streams/
+bug-reports:         https://github.com/afcowie/http-streams/issues
 
 build-type:          Simple
 

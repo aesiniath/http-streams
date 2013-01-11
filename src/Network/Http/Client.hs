@@ -13,6 +13,9 @@
 {-# OPTIONS -fno-warn-orphans #-}
 
 {-|
+Maintainer: Andrew Cowie
+Stability: Experimental
+
 /Overview/
 
 A simple HTTP client library, using the Snap Framework's @io-streams@
