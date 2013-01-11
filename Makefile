@@ -9,7 +9,7 @@ MAKEFLAGS=-s -R
 REDIRECT=>/dev/null
 endif
 
-.PHONY: all dirs test build-core junk build-junk tests build-tests
+.PHONY: all dirs test build-core junk build-junk tests build-tests benchmarks build-benchmarks
 
 #
 # Disable missing signatures so that you can actually do development and
@@ -26,8 +26,8 @@ GHC=ghc \
 	-fno-warn-missing-signatures \
 	-fno-warn-unused-binds
 
-CORE_SOURCES=$(shell find src -name '*.hs')
-TEST_SOURCES=$(shell find tests -name '*.hs')
+CORE_SOURCES=$(shell find src -name '*.hs' -type f)
+TEST_SOURCES=$(shell find tests -name '*.hs' -type f)
 
 
 dirs: $(BUILDDIR)/.dir
@@ -41,6 +41,8 @@ $(BUILDDIR)/.dir:
 	mkdir $(BUILDDIR)/tests
 	@echo "MKDIR\t$(BUILDDIR)/junk"
 	mkdir $(BUILDDIR)/junk
+	@echo "MKDIR\t$(BUILDDIR)/bench"
+	mkdir $(BUILDDIR)/bench
 	touch $(BUILDDIR)/.dir
 
 #
@@ -65,19 +67,23 @@ httpclient:
 	ln -s $(BUILDDIR)/core/client.bin $@
 
 junk: build-junk
-build-junk: dirs $(BUILDDIR)/junk/snippet.bin snippet
+build-junk: dirs $(BUILDDIR)/junk/snippet.bin snippet tags
 
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
 	$(GHC) --make -O -threaded  \
-		-prof -fprof-auto \
+		-prof -fprof-auto-top \
 		-outputdir $(BUILDDIR)/junk \
 		-i"$(BUILDDIR):src:tests" \
 		-o $@ \
-		-Wwarn -fno-warn-unused-imports \
+		-Wwarn \
 		tests/Snippet.hs
 	@echo "STRIP\t$@"
 	strip $@
+
+tags: $(CORE_SOURCES) $(TEST_SOURCES)
+	@echo "CTAGS\tsrc tests"
+	hothasktags $^ > tags
 
 snippet:
 	@echo "LN -s\t$@"
@@ -88,7 +94,7 @@ snippet:
 #
 
 tests: build-tests
-build-tests: dirs $(BUILDDIR)/tests/check.bin check
+build-tests: dirs $(BUILDDIR)/tests/check.bin check tags
 
 $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -115,11 +121,41 @@ test: build-tests
 	@echo "EXEC\tcheck"
 	$(BUILDDIR)/tests/check.bin
 
+#
+# Benchmarking code
+#
+
+benchmark: build-benchmarks
+benchmarks: build-benchmarks
+build-benchmarks: dirs $(BUILDDIR)/bench/bench.bin bench tags
+
+$(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
+	@echo "GHC\t$@"
+	$(GHC) --make -O -threaded  \
+		-prof -fprof-auto \
+		-outputdir $(BUILDDIR)/bench \
+		-i"$(BUILDDIR):src:tests" \
+		-o $@ \
+		tests/Benchmark.hs
+	@echo "STRIP\t$@"
+	strip $@
+
+bench:
+	@echo "LN -s\t$@"
+	ln -s $(BUILDDIR)/bench/bench.bin $@
+
+
 clean: 
 	@echo "RM\ttemp files"
-	-rm -f *.hi *.o snippet check tags
+	-rm -f *.hi *.o snippet check tags benchmark
+	-rm -f *.prof
 	-rm -rf $(BUILDDIR)
 	-rm -rf dist/
 
-doc:
+doc: dist/setup-config
+	@echo "CABAL\thaddock"
 	cabal haddock
+
+dist/setup-config:
+	@echo "CABAL\tconfigure"
+	cabal configure
