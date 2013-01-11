@@ -15,34 +15,34 @@
 -- have been cloned from there.
 --
 
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 module Network.Http.ResponseParser (
     readResponseHeader,
     readChunkedBody,
     readFixedLengthBody,
     readCompressedBody,
-    
+
     parseResponse
         -- for testing
 ) where
 
-import Prelude hiding (take, takeWhile)
+import           Prelude                          hiding (take, takeWhile)
 
-import Data.ByteString (ByteString)
-import System.IO.Streams (InputStream)
-import qualified System.IO.Streams as Streams
-import qualified System.IO.Streams.Attoparsec as Streams
-import Control.Applicative
-import Data.Attoparsec.ByteString.Char8
-import Control.Monad (void)
-import Control.Exception (Exception, throw)
-import Data.Typeable (Typeable)
-import Data.Int (Int64)
+import           Control.Applicative
+import           Control.Exception                (Exception, throw)
+import           Control.Monad                    (void)
+import           Data.Attoparsec.ByteString.Char8
+import           Data.ByteString                  (ByteString)
+import           Data.Int                         (Int64)
+import           Data.Typeable                    (Typeable)
+import           System.IO.Streams                (InputStream)
+import qualified System.IO.Streams                as Streams
+import qualified System.IO.Streams.Attoparsec     as Streams
 
-import Network.Http.Types
+import           Network.Http.Types
 
 {-
     Process the reply from the server up to the end of the headers as
@@ -56,13 +56,13 @@ readResponseHeader i = do
 parseResponse :: Parser Response
 parseResponse = do
     (sc,sm) <- parseStatusLine
-    
+
     hs <- many parseHeader
 
     let hp = buildHeaders hs
-    
-    _ <- crlf 
-    
+
+    _ <- crlf
+
     return Response {
         pStatusCode = sc,
         pStatusMsg = sm,
@@ -102,7 +102,7 @@ crlf = string "\r\n"
 
 {-
     Process a response body in chunked transfer encoding, taking the
-    resultant bytes and reproducing them as an InputStream 
+    resultant bytes and reproducing them as an InputStream
 -}
 readChunkedBody :: InputStream ByteString -> IO (InputStream ByteString)
 readChunkedBody i1 = do
@@ -134,9 +134,6 @@ parseTransferChunk = do
             void crlf
             return $! Just x'
 
-{-
-    This is the exact type from Snap. Can we share them? Does it matter?
--}
 data HttpParseException = HttpParseException String
         deriving (Typeable, Show)
 
@@ -147,7 +144,7 @@ instance Exception HttpParseException
 {-
     This has the rather crucial side effect of terminating the stream
     after the requested number of bytes. Otherwise, code handling
-    responses waits on more imput until an HTTP timeout occurs.
+    responses waits on more input until an HTTP timeout occurs.
 -}
 readFixedLengthBody :: InputStream ByteString -> Int -> IO (InputStream ByteString)
 readFixedLengthBody i1 n = do
