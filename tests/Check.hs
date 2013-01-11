@@ -59,7 +59,6 @@ suite = do
         testAcceptHeaderFormat
 
     describe "Opening a connection" $ do
-        testConnectionLookup
         testConnectionHost
 
     describe "Parsing responses" $ do
@@ -108,11 +107,10 @@ fakeConnection = do
     i <- Streams.nullInput
     o <- Streams.nullOutput
     return $ Connection {
-        cHost = "www.example.com",
-        cAddr = (SockAddrInet 8000 (203 + shift 113 16 + shift 15 24)),
-        cSock = undefined,
-        cIn = i,
-        cOut = o
+        cHost  = "www.example.com",
+        cClose = return (),
+        cIn    = i,
+        cOut   = o
     }
 
 
@@ -125,22 +123,6 @@ testAcceptHeaderFormat =
         let h = qHeaders q
         let (Just a) = lookupHeader h "Accept"
         assertEqual "Failed to format header" "text/html; q=1.0, */*; q=0.0" a
-
-{-
-    This is a bit of a voodoo piece of code? Network byte order, yo.
-    Anyway, yes, using the Show instance is easier, and now having
-    written it we know it's reliable.
--}
-
-testConnectionLookup =
-    it "successfully looks up IP address of server" $ bracket
-        (openConnection "127.0.0.1" localPort)
-        (closeConnection)
-        (\c -> do
-            let a = cAddr c
-            assertEqual "Incorrect lookup (1)"
-                (SockAddrInet (fromIntegral localPort) (127 + shift 1 24)) a
-            assertEqual "Incorrect lookup (2)" ("127.0.0.1:"++show localPort) (show a))
 
 
 testConnectionHost =
