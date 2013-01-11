@@ -1,60 +1,47 @@
 An HTTP client
 ==============
 
-Work in progress, very preliminary.
-
 An HTTP client library for Haskell using the Snap Framework's
 [io-streams](https://github.com/snapframework/io-streams) library to
 handle the streaming IO.
 <!-- replace with link to hackage when it is released -->
 
-Background
-----------
+A common case in writing RESTful web services is needing to make onward calls
+to further servers. This package is intended to make this easy to do,
+especially from within wep apps written with Snap.
 
-One of the original motivations for writing http-streams was wanting
-something that would be usable in RESTful web services. Those working in
-Yesod have the powerful http-conduit package, but that implies having to
-use conduits. Instead I wanted something that would be compatible with
-the Snap Framework that I could use within a web service front-end to
-make onward calls to further servers.
+Example
+-------
 
-After much discussion with Gregory Collins and others, it became clear
-that trying to reuse the Request and Response types from Snap.Core
-wasn't going to be possible. But there was a significant amount of code
-in Snap's test suite, notably almost an entire HTTP client
-implementation. Having used Snap.Test to build test code for some of my
-own web service APIs, I knew there was some useful material there. The
-buildRequest function in our library was directly inspired by their
-code.
+The basic API is very simple:
 
-One of the exciting things about Haskell is the collaborative way that
-boundaries are pushed. From the beginnings in iteratee/enumerator, the
-development of streaming I/O libraries such as conduit and pipes has
-been phenomenal. The latest entry into this arena is io-streams, aimed
-at being a pragmatic implementation of some of the impressive
-theoretical work from the other libraries. io-streams's functions make
-the assumption that you're working in ... IO, which seems to have
-allowed them to make some significant optimizations. Remains to be seen,
-but the API is nice. http-streams, then, is an HTTP client library built
-to leverage and in turn expose an API based on the capabilities of
-io-streams.
+```haskell
+c <- openConnection "www.example.com" 80
+
+q <- buildRequest c $ do
+     http GET "/"
+     setAccept "text/html"
+
+p <- sendRequest c q emptyBody
+
+b <- receiveResponse c p
+
+x <- Streams.read b
+S.putStr $ fromMaybe "" x
+
+closeConnection c
+```
+
+There are also convenience functions for the common case of making
+straight-forward GET and POST requests; see the documentation in
+[Network.Http.Client](http://research.operationaldynamics.com/projects/http-streams/doc/Network-Http-Client.html)
+for examples and details of usage of the API.
 
 Status
 ------
 
-Please make no mistake; http-streams is at an early stage. We will
-strive for protocol correctness, so if there's a bug in our HTTP code
-don't hesitate to raise an issue. It's not even close to being optimized
-yet, but initial performance benchmarks seem to show it's off to a good
-start.
-
-I would expect a lot of API churn in the near future; I'm aiming for
-something pleasant to use while exposing the power of io-streams when
-you need it. Which is a good time to note that you're certainly better
-off using http-conduit if you need a mature implementation; after a few
-years working in Haskell this is my first go at implementing a library
-as opposed to just working on applications. There's a lot I've yet to
-learn about writing good code, so I look forward to your suggestions.
+http-streams is at an early stage. We will strive for protocol correctness,
+so if there's a bug in our HTTP code don't hesitate to raise an issue.
 
 AfC
 
