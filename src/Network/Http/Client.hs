@@ -38,8 +38,8 @@ the underlying API is straight-forward. In particular, constructing the
 \ c <- 'openConnection' \"www.example.com\" 80
 
 \ q <- 'buildRequest' c $ do
-     'http' GET \"\/\"
-     'setAccept' \"text/html\"
+          'http' GET \"\/\"
+          'setAccept' \"text/html\"
 
 \ p <- 'sendRequest' c q 'emptyBody'
 
@@ -57,13 +57,10 @@ abnormal termination by using @Control.Exception@'s standard
 'Control.Exception.bracket' function:
 
 @
-\ foo :: IO ByteString
-\ foo = bracket
-    ('openConnection' \"www.example.com\" 80)
-    ('closeConnection')
-    (doStuff)
+foo :: IO ByteString
+foo = 'withConnection' ('openConnection' \"www.example.com\" 80) doStuff
 
-\ doStuff :: Connection -> IO ByteString
+doStuff :: Connection -> IO ByteString
 @
 
 for instance.
@@ -90,6 +87,7 @@ module Network.Http.Client (
     Port,
     Connection,
     openConnection,
+    withConnection,
 
     -- * Building Requests
     -- | You setup a request using the RequestBuilder monad, and
@@ -117,17 +115,17 @@ module Network.Http.Client (
     emptyBody,
     fileBody,
     inputStreamBody,
-    
+
     -- * Processing HTTP response
     receiveResponse,
     StatusCode,
     getStatusCode,
     getStatusMessage,
     getHeader,
-    
+
     -- * Resource cleanup
     closeConnection,
-    
+
     -- * Convenience APIs
     -- | Some simple functions for making requests with useful defaults.
     -- There's no @head@ function for the usual reason of needing to
@@ -141,8 +139,8 @@ module Network.Http.Client (
     put
 ) where
 
-import Network.Http.Types
-import Network.Http.Connection
-import Network.Http.RequestBuilder
-import Network.Http.Inconvenience
+import           Network.Http.Connection
+import           Network.Http.Inconvenience
+import           Network.Http.RequestBuilder
+import           Network.Http.Types
 

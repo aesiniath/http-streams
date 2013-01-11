@@ -282,9 +282,10 @@ postForm r' nvs handler = bracket
 -- request, specifying the content type and a function to write the
 -- content to the supplied 'OutputStream'. You might see:
 --
--- > put "http://s3.example.com/bucket42/object149" "text/plain" (fileBody "hello.txt") (\p i -> do
--- >     putStr $ show p
--- >     Streams.connect i stdout)
+-- > put "http://s3.example.com/bucket42/object149" "text/plain" $
+-- >     fileBody "hello.txt" $ \p i -> do
+-- >         putStr $ show p
+-- >         Streams.connect i stdout
 --
 -- RFC 2616 requires that we send a @Content-Length@ header, but we
 -- can't figure that out unless we've run through the outbound stream,
@@ -298,9 +299,9 @@ postForm r' nvs handler = bracket
 -- > c <- openConnection "s3.example.com" 80
 -- >
 -- > q <- buildRequest c $ do
--- >     http PUT "/bucket42/object149"
--- >     setContentType "text/plain"
--- >     setContentLength n
+-- >          http PUT "/bucket42/object149"
+-- >          setContentType "text/plain"
+-- >          setContentLength n
 -- >
 -- > p <- sendRequest c q (fileBody "hello.txt")
 -- >
