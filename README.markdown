@@ -35,9 +35,17 @@ main = do
 ```
 
 There are also convenience functions for the common case of making
-straight-forward GET and POST requests; see the documentation in
+straight-forward GET and POST requests; for instance:
+
+```haskell
+    get "http://www.example.com/" (\p i -> Streams.connect i stdout)
+```
+
+will _{ahem}_ stream the response body to stdout.
+
+See the documentation in
 [Network.Http.Client](http://research.operationaldynamics.com/projects/http-streams/doc/Network-Http-Client.html)
-for examples and details of usage of the API.
+for further examples and details of usage of the API.
 
 Status
 ------
