@@ -16,20 +16,22 @@ Example
 The basic API is very simple:
 
 ```haskell
-c <- openConnection "www.example.com" 80
-
-q <- buildRequest c $ do
-     http GET "/"
-     setAccept "text/html"
-
-p <- sendRequest c q emptyBody
-
-b <- receiveResponse c p
-
-x <- Streams.read b
-S.putStr $ fromMaybe "" x
-
-closeConnection c
+main :: IO ()
+main = do
+    c <- openConnection "www.example.com" 80
+    
+    q <- buildRequest c $ do
+        http GET "/"
+        setAccept "text/html"
+    
+    p <- sendRequest c q emptyBody
+    
+    b <- receiveResponse c p
+    
+    x <- Streams.read b
+    S.putStr $ fromMaybe "" x
+    
+    closeConnection c
 ```
 
 There are also convenience functions for the common case of making
