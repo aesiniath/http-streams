@@ -9,15 +9,16 @@
 -- the BSD licence.
 --
 
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 module Network.Http.Connection (
     Hostname,
     Port,
     Connection(..),
         -- constructors only for testing
+    makeConnection,
+    withConnection,
     openConnection,
     closeConnection,
     sendRequest,
@@ -27,18 +28,18 @@ module Network.Http.Connection (
     inputStreamBody
 ) where
 
-import Network.Socket
-import System.IO.Streams (InputStream, OutputStream)
-import qualified System.IO.Streams as Streams
-import System.IO.Streams.Network (socketToStreams)
-import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as S
-import Data.CaseInsensitive (mk)
-import Control.Exception (Exception, throwIO)
-import Data.Typeable (Typeable)
-import Data.ByteString.Lex.Integral (readDecimal_)
-import Network.Http.Types
-import Network.Http.ResponseParser
+import           Control.Exception            (Exception, bracket, throwIO)
+import           Data.ByteString              (ByteString)
+import qualified Data.ByteString.Char8        as S
+import           Data.ByteString.Lex.Integral (readDecimal_)
+import           Data.CaseInsensitive         (mk)
+import           Data.Typeable                (Typeable)
+import           Network.Http.ResponseParser
+import           Network.Http.Types
+import           Network.Socket
+import           System.IO.Streams            (InputStream, OutputStream)
+import qualified System.IO.Streams            as Streams
+import           System.IO.Streams.Network    (socketToStreams)
 
 
 {-
@@ -55,26 +56,51 @@ type Port = Int
 --
 data Connection
     = Connection {
-        cHost :: ByteString,
-            -- will be used as the Host: header in the HTTP request.
-        cSock :: Socket,
-        cAddr :: SockAddr,
-        cOut :: OutputStream ByteString,
-        cIn  :: InputStream ByteString
+        cHost  :: ByteString,
+            -- ^ will be used as the Host: header in the HTTP request.
+        cClose :: IO (),
+            -- ^ called when the connection should be closed.
+        cOut   :: OutputStream ByteString,
+        cIn    :: InputStream ByteString
     }
 
 instance Show Connection where
     show c = {-# SCC "Connection.show" #-}
-        S.unpack $ S.concat
-           ["Connection {",
-            "cHost = \"", cHost c, "\", ",
-            "cAddr = \"", S.pack $ show $ cAddr c, "\"",
-            "}"]
+             concat [ "Connection {"
+                    , "cHost = \""
+                    , S.unpack $ cHost c
+                    , "\"}"
+                    ]
+
+
+------------------------------------------------------------------------------
+-- | Creates a raw Connection object from the given parts.
+makeConnection :: ByteString              -- ^ will be used as the Host: header
+                                          -- in the HTTP request.
+               -> IO ()                   -- ^ called when the connection is
+                                          -- terminated.
+               -> OutputStream ByteString -- ^ write end of the HTTP client
+                                          -- connection
+               -> InputStream ByteString  -- ^ read end of the client
+                                          -- connection
+               -> IO Connection
+makeConnection h c o i = return $! Connection h c o i
+
+
+------------------------------------------------------------------------------
+-- | Given an IO action producing a 'Connection', and a computation that needs
+-- a 'Connection', runs the computation, cleaning up the 'Connection'
+-- afterwards. Wraps 'Control.Exception.bracket'.
+withConnection :: IO Connection
+               -> (Connection -> IO a)
+               -> IO a
+withConnection mkC = bracket mkC closeConnection
+
 
 --
 -- | In order to make a request you first establish the TCP
 -- connection to the server over which to send it.
--- 
+--
 -- Ordinarily you would supply the host part of the URL here and it will
 -- be used as the value of the HTTP 1.1 @Host:@ field. However, you can
 -- specify any server name or IP addresss and set the @Host:@ value
@@ -86,11 +112,10 @@ instance Show Connection where
 -- > c <- openConnection "localhost" 80
 -- > ...
 --
--- More likely, you'll use 'Control.Exception.catch' or
--- 'Control.Exception.bracket' to wrap the call in order to ensure
+-- More likely, you'll use 'withConnection' to wrap the call in order to ensure
 -- finalization; see 'closeConnection' for an example.
 --
-openConnection :: Hostname -> Port -> IO (Connection)
+openConnection :: Hostname -> Port -> IO Connection
 openConnection h p = do
     s <- socket AF_INET Stream defaultProtocol
 
@@ -100,11 +125,10 @@ openConnection h p = do
     connect s a
     (i,o) <- socketToStreams s
     return Connection {
-        cHost = h',
-        cSock = s,
-        cAddr = a,
-        cOut = o,
-        cIn  = i
+        cHost  = h',
+        cClose = close s,
+        cOut   = o,
+        cIn    = i
     }
   where
     h' :: ByteString
@@ -129,22 +153,22 @@ openConnection h p = do
 -- >             Streams.write (Just "Hello World\n") o)
 --
 {-
-    Is it necessary to write Nothing to the output stream?  
+    Is it necessary to write Nothing to the output stream?
 -}
 sendRequest :: Connection -> Request -> (OutputStream ByteString -> IO α) -> IO Response
 sendRequest c q handler = do
     Streams.write (Just msg) o
-    
+
     -- write the body, if there is one
-    
+
     _ <- handler o
 
     Streams.write Nothing o
-    
+
     -- now prepare to process the reply.
-    
+
     p <- readResponseHeader i
-    
+
     return p
   where
     o = cOut c
@@ -184,16 +208,16 @@ sendRequest c q handler = do
 receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
 receiveResponse c p = do
     i1 <- return $ cIn c
-    
+
     i2 <- case encoding of
         None        -> readFixedLengthBody i1 n
         Chunked     -> readChunkedBody i1
-    
+
     i3 <- case compression of
         Identity    -> return i2
         Gzip        -> readCompressedBody i2
         Deflate     -> throwIO (UnexpectedCompression $ show compression)
-    
+
     return i3
   where
 
@@ -202,15 +226,15 @@ receiveResponse c p = do
                     then Chunked
                     else None
         Nothing -> None
-    
+
     compression = case header "Content-Encoding" of
         Just x'-> if mk x' == "gzip"
                     then Gzip
                     else Identity
         Nothing -> Identity
-    
+
     header = getHeader p
-    
+
     n = case header "Content-Length" of
         Just x' -> readDecimal_ x' :: Int
         Nothing -> 0
@@ -251,10 +275,6 @@ emptyBody _ = return ()
 -- >>> :t filePath "hello.txt"
 -- :: OutputStream ByteString -> IO ()
 --
-{-
-    This is all very nice, but shouldn't we be using some sendfile(2)
-    trick as is done in Snap.Core's sendFile?
--}
 fileBody :: FilePath -> OutputStream ByteString -> IO ()
 fileBody p o = do
     Streams.withFileAsInput p (\i -> Streams.connect i o)
@@ -304,8 +324,5 @@ inputStreamBody i o = do
 -- and have it and 'foo' return a different type.
 --
 closeConnection :: Connection -> IO ()
-closeConnection c = do
-    close s
-  where
-    s = cSock c
+closeConnection c = cClose c
 

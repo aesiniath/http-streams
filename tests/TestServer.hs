@@ -40,7 +40,7 @@ go = httpServe c site
         setHostname "127.0.0.1" $
         setBind "127.0.0.1" $
         setPort localPort $
-        setVerbose True emptyConfig
+        setVerbose False emptyConfig
 
 
 runTestServer :: IO ()
