@@ -38,8 +38,7 @@ library
                      bytestring-lexing,
                      blaze-builder,
                      attoparsec,
-                     snap-core < 1.0,
-                     io-streams
+                     io-streams >= 0.1 && <0.2
 
   hs-source-dirs:    src
   exposed-modules:   Network.Http.Client
@@ -52,7 +51,7 @@ library
   ghc-options:       -O2
                      -threaded
                      -Wall
-                     -Werror
+                     -Wwarn
                      -fwarn-tabs
                      -funbox-strict-fields
                      -fno-warn-missing-signatures
@@ -66,24 +65,27 @@ test-suite           check
   type:              exitcode-stdio-1.0
 
   default-language:  Haskell2010
-  
-  build-depends:     base,
+
+  build-depends:
+                     HUnit,
+                     MonadCatchIO-transformers,
+                     attoparsec,
+                     base,
+                     blaze-builder,
                      bytestring,
-                     mtl,
-                     network,
-                     unordered-containers,
                      bytestring-lexing,
                      case-insensitive,
-                     bytestring-lexing,
-                     blaze-builder,
-                     attoparsec,
+                     hspec,
                      io-streams,
-                     MonadCatchIO-transformers,
-                     snap-core < 1.0,
-                     snap-server < 1.0,
-                     snap < 1.0,
-                     HUnit,
-                     hspec
+                     mtl,
+                     network,
+                     snap            >= 0.9    && < 1.0,
+                     snap-core       >= 0.9    && < 1.0,
+                     snap-server     >= 0.9    && < 1.0,
+                     system-fileio   >= 0.3.10 && < 0.4,
+                     system-filepath >= 0.4.1  && < 0.5,
+                     unordered-containers
+
   hs-source-dirs:    src,tests
   main-is:           Check.hs
 
