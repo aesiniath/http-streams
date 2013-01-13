@@ -24,27 +24,26 @@ module Network.Http.Inconvenience (
     put
 ) where
 
-import           Blaze.ByteString.Builder    (Builder, fromByteString,
-                                              fromWord8, toByteString)
-import           Control.Exception           (bracket)
-import           Data.Bits                   (Bits (..))
-import           Data.ByteString.Char8       (ByteString)
-import qualified Data.ByteString.Char8       as S
-import           Data.ByteString.Internal    (c2w, w2c)
-import           Data.Char                   (intToDigit, isAlphaNum)
-import           Data.HashSet                (HashSet)
-import qualified Data.HashSet                as HS
-import           Data.Monoid                 (Monoid (..))
-import           GHC.Exts
-import           GHC.Word                    (Word8 (..))
-import           Network.URI                 (URI (..), URIAuth (..), nullURI,
-                                              parseURI)
-import           System.IO.Streams           (InputStream, OutputStream)
-import qualified System.IO.Streams           as Streams
+import Blaze.ByteString.Builder (Builder, fromByteString, fromWord8,
+                                 toByteString)
+import Control.Exception (bracket)
+import Data.Bits (Bits (..))
+import Data.ByteString.Char8 (ByteString)
+import qualified Data.ByteString.Char8 as S
+import Data.ByteString.Internal (c2w, w2c)
+import Data.Char (intToDigit, isAlphaNum)
+import Data.HashSet (HashSet)
+import qualified Data.HashSet as HS
+import Data.Monoid (Monoid (..))
+import GHC.Exts
+import GHC.Word (Word8 (..))
+import Network.URI (URI (..), URIAuth (..), nullURI, parseURI)
+import System.IO.Streams (InputStream, OutputStream)
+import qualified System.IO.Streams as Streams
 
-import           Network.Http.Connection
-import           Network.Http.RequestBuilder
-import           Network.Http.Types
+import Network.Http.Connection
+import Network.Http.RequestBuilder
+import Network.Http.Types
 
 ------------------------------------------------------------------------------
 instance IsString URI where

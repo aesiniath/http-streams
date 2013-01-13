@@ -14,9 +14,9 @@
 
 module Snippet where
 
-import Network.Http.Client
 import Control.Exception (bracket)
 import Data.Maybe (fromMaybe)
+import Network.Http.Client
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -24,10 +24,10 @@ import Data.Maybe (fromMaybe)
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
-import System.IO.Streams (InputStream, OutputStream, stdout)
-import qualified System.IO.Streams as Streams
 import Debug.Trace
 import System.Exit (exitSuccess)
+import System.IO.Streams (InputStream, OutputStream, stdout)
+import qualified System.IO.Streams as Streams
 
 
 main :: IO ()
@@ -35,7 +35,7 @@ main = do
 
     putStrLn "---- Basic API ----"
     basic
-    
+
     putStrLn "---- Resource cleanup ----"
     b' <- resource
     S.putStrLn b'
@@ -55,7 +55,7 @@ basic :: IO ()
 basic = do
     c <- openConnection "kernel.operationaldynamics.com" 58080
     putStrLn $ show c
-    
+
     q <- buildRequest c $ do
         http GET "/time"
         setAccept "text/plain"
@@ -63,12 +63,12 @@ basic = do
             -- Requests [headers] are terminated by a double newline
             -- already. We need a better way of emitting debug
             -- information mid-stream from this library.
-    
+
     p <- sendRequest c q emptyBody
     putStr $ show p
-    
+
     b <- receiveResponse c p
-    
+
     x <- Streams.read b
     putStr $ S.unpack $ fromMaybe "" x
 
@@ -91,7 +91,7 @@ resource = bracket
 
 -- Now actually use the supplied Connection object to further
 -- exercise the API. We'll do a PUT this time.
-    
+
 doStuff :: Connection -> IO ByteString
 doStuff c = do
     q <- buildRequest c $ do
@@ -99,10 +99,10 @@ doStuff c = do
         setAccept "*/*"
         setContentType "text/plain"
         setContentLength 12
-    
+
     p <- sendRequest c q (\o ->
         Streams.write (Just "Hello World\n") o)
-    
+
     b <- receiveResponse c p
 
     x <- Streams.read b

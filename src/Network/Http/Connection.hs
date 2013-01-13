@@ -28,19 +28,19 @@ module Network.Http.Connection (
     inputStreamBody
 ) where
 
-import           Control.Exception            (Exception, bracket, throwIO)
-import           Data.ByteString              (ByteString)
-import qualified Data.ByteString.Char8        as S
-import           Data.ByteString.Lex.Integral (readDecimal_)
-import           Data.CaseInsensitive         (mk)
-import           Data.Typeable                (Typeable)
-import           Network.Http.ResponseParser
-import           Network.Http.Types
-import           Network.Socket
-import           System.IO.Streams            (InputStream, OutputStream)
-import qualified System.IO.Streams            as Streams
-import           System.IO.Streams.Network    (socketToStreams)
+import Control.Exception (Exception, bracket, throwIO)
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as S
+import Data.ByteString.Lex.Integral (readDecimal_)
+import Data.CaseInsensitive (mk)
+import Data.Typeable (Typeable)
+import Network.Socket
+import System.IO.Streams (InputStream, OutputStream)
+import qualified System.IO.Streams as Streams
+import System.IO.Streams.Network (socketToStreams)
 
+import Network.Http.ResponseParser
+import Network.Http.Types
 
 {-
     This is a String because that's what the uri package works in. There
@@ -202,8 +202,7 @@ sendRequest c q handler = do
     this function, but it turns out we need to find out whether chunked
     encoding is being used, which is in one of the response headers. So,
     fine, no problem, and it actually has the benefit of making it clear
-    you're supposed to call this with the result of the sendRequest
-    call.
+    you're supposed to call this after the sendRequest call.
 -}
 receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
 receiveResponse c p = do

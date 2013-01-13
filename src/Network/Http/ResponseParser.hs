@@ -29,20 +29,20 @@ module Network.Http.ResponseParser (
         -- for testing
 ) where
 
-import           Prelude                          hiding (take, takeWhile)
+import Prelude hiding (take, takeWhile)
 
-import           Control.Applicative
-import           Control.Exception                (Exception, throw)
-import           Control.Monad                    (void)
-import           Data.Attoparsec.ByteString.Char8
-import           Data.ByteString                  (ByteString)
-import           Data.Int                         (Int64)
-import           Data.Typeable                    (Typeable)
-import           System.IO.Streams                (InputStream)
-import qualified System.IO.Streams                as Streams
-import qualified System.IO.Streams.Attoparsec     as Streams
+import Control.Applicative
+import Control.Exception (Exception, throw)
+import Control.Monad (void)
+import Data.Attoparsec.ByteString.Char8
+import Data.ByteString (ByteString)
+import Data.Int (Int64)
+import Data.Typeable (Typeable)
+import System.IO.Streams (InputStream)
+import qualified System.IO.Streams as Streams
+import qualified System.IO.Streams.Attoparsec as Streams
 
-import           Network.Http.Types
+import Network.Http.Types
 
 {-
     Process the reply from the server up to the end of the headers as

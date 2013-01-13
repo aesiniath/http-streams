@@ -9,9 +9,8 @@
 -- the BSD licence.
 --
 
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
 
 module Network.Http.RequestBuilder (
     RequestBuilder,
@@ -24,15 +23,15 @@ module Network.Http.RequestBuilder (
     setContentType,
     setContentLength,
     setHeader
-) where 
+) where
 
-import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as S
-import Data.ByteString.Char8 ()
 import Control.Monad.State
+import Data.ByteString (ByteString)
+import Data.ByteString.Char8 ()
+import qualified Data.ByteString.Char8 as S
 
-import Network.Http.Types
 import Network.Http.Connection
+import Network.Http.Types
 
 --
 -- | The RequestBuilder monad allows you to abuse do-notation to
@@ -97,7 +96,7 @@ setHostname v = do
 
 --
 -- | Set a generic header to be sent in the HTTP request. The other
--- methods in the RequestBuilder API are expressed in terms of this 
+-- methods in the RequestBuilder API are expressed in terms of this
 -- function, but we recommend you use them where offered for their
 -- stronger types.
 --
@@ -120,13 +119,13 @@ setAccept v = do
     setHeader "Accept" v
 
 --
--- | Indicate the content types you are willing to receive in a reply 
+-- | Indicate the content types you are willing to receive in a reply
 -- from the server in order of preference. A call of the form:
--- 
+--
 -- >     setAccept' [("text/html", 1.0),
 -- >                 ("application/xml", 0.8),
 -- >                 ("*/*", 0)]
--- 
+--
 -- will result in an @Accept:@ header value of
 -- @text\/html; q=1.0, application\/xml; q=0.8, *\/*; q=0.0@ as you
 -- would expect.
@@ -136,7 +135,7 @@ setAccept' tqs = do
     setHeader "Accept" v
   where
     v = S.intercalate ", " $ map format tqs
-    
+
     format :: (ByteString,Float) -> ByteString
     format (t,q) =
         S.concat [t, "; q=", S.pack $ show q]

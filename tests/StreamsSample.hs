@@ -13,38 +13,38 @@
 
 module StreamsSample (sampleViaHttpStreams) where
 
-import Network.Http.Client
 import Data.Maybe (fromMaybe)
+import Network.Http.Client
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
+import System.IO (BufferMode (..), IOMode (..))
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
-import System.IO (IOMode(..), BufferMode(..))
 
 main :: IO ()
 main = do
     sampleViaHttpStreams
-    
+
 sampleViaHttpStreams :: IO ()
 sampleViaHttpStreams = do
     c <- openConnection "localhost" 80
-    
+
     q <- buildRequest c $ do
         http GET "/"
         setAccept "text/html"
-        
+
     p <- sendRequest c q emptyBody
-    
+
     b <- receiveResponse c p
 
     Streams.withFileAsOutput
-        "/tmp/build/http-streams/bench/http-streams.out" 
-        WriteMode 
+        "/tmp/build/http-streams/bench/http-streams.out"
+        WriteMode
         (BlockBuffering Nothing)
         (\o -> do
             Streams.write (Just (S.pack $ show p)) o
             Streams.connect b o)
-    
+
     closeConnection c
 

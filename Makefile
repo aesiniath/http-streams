@@ -160,3 +160,6 @@ doc: dist/setup-config
 dist/setup-config:
 	@echo "CABAL\tconfigure"
 	cabal configure
+
+format: $(CORE_SOURCES) $(TEST_SOURCES)
+	stylish-haskell -i $^
