@@ -10,7 +10,6 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BangPatterns #-}
 {-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Types (
@@ -27,35 +26,35 @@ module Network.Http.Types (
     updateHeader,
     buildHeaders,
     lookupHeader,
-    
+
     -- for testing
     composeRequestBytes
 ) where
 
-import Prelude hiding (lookup)
+import           Prelude                        hiding (lookup)
 
-import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as S
-import Data.HashMap.Strict (HashMap, empty, insert, foldrWithKey, lookup)
-import Data.CaseInsensitive (CI, mk, original)
-import Blaze.ByteString.Builder (Builder, toByteString, copyByteString)
+import           Blaze.ByteString.Builder       (Builder, copyByteString, fromByteString,
+                                                 toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder
-import Data.Monoid (mconcat, mempty)
-import Data.String (IsString, fromString)
-import Data.Maybe (fromMaybe)
-import Data.ByteString.Lex.Integral (packDecimal)
+import           Data.ByteString                (ByteString)
+import qualified Data.ByteString.Char8          as S
+import           Data.CaseInsensitive           (CI, mk, original)
+import           Data.HashMap.Strict            (HashMap, empty, foldrWithKey,
+                                                 insert, lookup)
+import           Data.Monoid                    (mconcat, mempty)
+import           Data.String                    (IsString, fromString)
 
 -- | HTTP Methods, as per RFC 2616
 data Method
-    = GET 
-    | HEAD 
-    | POST 
-    | PUT 
-    | DELETE 
+    = GET
+    | HEAD
+    | POST
+    | PUT
+    | DELETE
     | TRACE
-    | OPTIONS 
-    | CONNECT 
-    | PATCH 
+    | OPTIONS
+    | CONNECT
+    | PATCH
     | Method ByteString
         deriving (Show, Read, Ord)
 
@@ -88,16 +87,16 @@ instance Eq Method where
 -- unlike other HTTP libraries, the request body is /not/ a part of this
 -- object; that will be streamed out by you when actually sending the
 -- request with 'sendRequest'.
--- 
+--
 -- 'Request' has a useful @Show@ instance that will output the request
 -- line and headers (as it will be sent over the wire but with the @\\r@
 -- characters stripped) which can be handy for debugging.
 --
 data Request
     = Request {
-        qMethod :: Method,
-        qHost :: ByteString,
-        qPath :: ByteString,
+        qMethod  :: Method,
+        qHost    :: ByteString,
+        qPath    :: ByteString,
         qHeaders :: Headers
     }
 
@@ -105,16 +104,17 @@ instance Show Request where
     show q = {-# SCC "Request.show" #-}
         S.unpack $ S.filter (/= '\r') $ composeRequestBytes q
 
+
 {-
     The bit that builds up the actual string to be transmitted. This
     is on the critical path for every request, so we'll want to revisit
     this to improve performance.
-    
+
     - Should we be using a Builder here? Almost certainly.
     - Should we just be writing to the OutputStream here?!?
     - Rewrite rule for Method?
     - How can serializing the Headers be made efficient?
-    
+
     This code includes the RFC compliant CR-LF sequences as line
     terminators, which is why the Show instance above has to bother
     with removing them.
@@ -161,7 +161,7 @@ type StatusCode = Int
 -- unlike other HTTP libraries, the response body is /not/ a part
 -- of this object; that will be streamed in by you when calling
 -- 'receiveResponse'.
--- 
+--
 -- Like 'Request', 'Response' has a @Show@ instance that will output
 -- the status line and response headers as they were received from the
 -- server.
@@ -169,8 +169,8 @@ type StatusCode = Int
 data Response
     = Response {
         pStatusCode :: StatusCode,
-        pStatusMsg :: ByteString,
-        pHeaders :: Headers
+        pStatusMsg  :: ByteString,
+        pHeaders    :: Headers
     }
 
 instance Show Response where
@@ -230,7 +230,7 @@ composeResponseBytes p =
         " ",
         message,
         "\r\n"]
-    code = copyByteString $ fromMaybe "599" $ packDecimal $ pStatusCode p
+    code = Builder.fromShow $ pStatusCode p
     message = copyByteString $ pStatusMsg p
     version = "HTTP/1.1"
     headerFields = joinHeaders $ unWrap $ pHeaders p
@@ -270,7 +270,7 @@ combine k v acc =
     mconcat [acc, key, ": ", value, "\r\n"]
   where
     key = copyByteString $ original k
-    value = copyByteString v
+    value = fromByteString v
 {-# INLINE combine #-}
 
 emptyHeaders :: Headers
