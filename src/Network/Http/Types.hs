@@ -33,7 +33,7 @@ module Network.Http.Types (
 
 import           Prelude                        hiding (lookup)
 
-import           Blaze.ByteString.Builder       (Builder, fromByteString,
+import           Blaze.ByteString.Builder       (Builder, copyByteString, fromByteString,
                                                  toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder
 import           Data.ByteString                (ByteString)
@@ -136,11 +136,11 @@ composeRequestBytes q =
         version,
         "\r\n"]
     method = fromString $ show $ qMethod q
-    uri = fromByteString $ qPath q
+    uri = copyByteString $ qPath q
     version = "HTTP/1.1"
 
     hostLine = mconcat ["Host: ", hostname, "\r\n"]
-    hostname = fromByteString $ qHost q
+    hostname = copyByteString $ qHost q
 
     headerFields = joinHeaders $ unWrap $ qHeaders q
 
@@ -231,7 +231,7 @@ composeResponseBytes p =
         message,
         "\r\n"]
     code = Builder.fromShow $ pStatusCode p
-    message = fromByteString $ pStatusMsg p
+    message = copyByteString $ pStatusMsg p
     version = "HTTP/1.1"
     headerFields = joinHeaders $ unWrap $ pHeaders p
 
@@ -269,7 +269,7 @@ combine :: CI ByteString -> ByteString -> Builder -> Builder
 combine k v acc =
     mconcat [acc, key, ": ", value, "\r\n"]
   where
-    key = fromByteString $ original k
+    key = copyByteString $ original k
     value = fromByteString v
 {-# INLINE combine #-}
 
