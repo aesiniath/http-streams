@@ -33,14 +33,13 @@ module Network.Http.Types (
 
 import Prelude hiding (lookup)
 
-import Blaze.ByteString.Builder (Builder, copyByteString, toByteString)
+import Blaze.ByteString.Builder (Builder, copyByteString, fromByteString,
+                                 toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
-import Data.ByteString.Lex.Integral (packDecimal)
 import Data.CaseInsensitive (CI, mk, original)
 import Data.HashMap.Strict (HashMap, empty, foldrWithKey, insert, lookup)
-import Data.Maybe (fromMaybe)
 import Data.Monoid (mconcat, mempty)
 import Data.String (IsString, fromString)
 
@@ -103,6 +102,7 @@ data Request
 instance Show Request where
     show q = {-# SCC "Request.show" #-}
         S.unpack $ S.filter (/= '\r') $ composeRequestBytes q
+
 
 {-
     The bit that builds up the actual string to be transmitted. This
@@ -229,7 +229,7 @@ composeResponseBytes p =
         " ",
         message,
         "\r\n"]
-    code = copyByteString $ fromMaybe "599" $ packDecimal $ pStatusCode p
+    code = Builder.fromShow $ pStatusCode p
     message = copyByteString $ pStatusMsg p
     version = "HTTP/1.1"
     headerFields = joinHeaders $ unWrap $ pHeaders p
@@ -269,7 +269,7 @@ combine k v acc =
     mconcat [acc, key, ": ", value, "\r\n"]
   where
     key = copyByteString $ original k
-    value = copyByteString v
+    value = fromByteString v
 {-# INLINE combine #-}
 
 emptyHeaders :: Headers

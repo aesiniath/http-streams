@@ -29,16 +29,15 @@ build-type:          Simple
 library
   default-language:  Haskell2010
 
-  build-depends:     base,
+  build-depends:     attoparsec,
+                     base,
+                     blaze-builder,
                      bytestring,
+                     case-insensitive,
+                     io-streams >= 0.1 && <0.2,
                      mtl,
                      network,
-                     unordered-containers,
-                     case-insensitive,
-                     bytestring-lexing,
-                     blaze-builder,
-                     attoparsec,
-                     io-streams >= 0.1 && <0.2
+                     unordered-containers
 
   hs-source-dirs:    src
   exposed-modules:   Network.Http.Client
@@ -73,7 +72,6 @@ test-suite           check
                      base,
                      blaze-builder,
                      bytestring,
-                     bytestring-lexing,
                      case-insensitive,
                      hspec,
                      io-streams,

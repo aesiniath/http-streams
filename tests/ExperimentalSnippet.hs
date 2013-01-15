@@ -18,6 +18,8 @@ import Control.Exception (bracket)
 import Data.Maybe (fromMaybe)
 import Network.Http.Client
 
+import Network.Http.Client
+
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
 --

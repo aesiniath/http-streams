@@ -24,12 +24,11 @@ import Test.HUnit
 -- Otherwise redundent imports, but useful for testing in GHCi.
 --
 
+import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, parseTest)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
-
-import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, parseTest)
 
 --
 -- what we're actually testing

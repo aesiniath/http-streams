@@ -38,8 +38,8 @@ the underlying API is straight-forward. In particular, constructing the
 \ c <- 'openConnection' \"www.example.com\" 80
 
 \ q <- 'buildRequest' c $ do
-     'http' GET \"\/\"
-     'setAccept' \"text/html\"
+          'http' GET \"\/\"
+          'setAccept' \"text/html\"
 
 \ p <- 'sendRequest' c q 'emptyBody'
 
@@ -57,13 +57,10 @@ abnormal termination by using @Control.Exception@'s standard
 'Control.Exception.bracket' function:
 
 @
-\ foo :: IO ByteString
-\ foo = bracket
-    ('openConnection' \"www.example.com\" 80)
-    ('closeConnection')
-    (doStuff)
+foo :: IO ByteString
+foo = 'withConnection' ('openConnection' \"www.example.com\" 80) doStuff
 
-\ doStuff :: Connection -> IO ByteString
+doStuff :: Connection -> IO ByteString
 @
 
 for instance.
@@ -90,6 +87,7 @@ module Network.Http.Client (
     Port,
     Connection,
     openConnection,
+    withConnection,
 
     -- * Building Requests
     -- | You setup a request using the RequestBuilder monad, and
@@ -135,8 +133,6 @@ module Network.Http.Client (
     URL,
     get,
     post,
-    ParameterName,
-    ParameterValue,
     postForm,
     put
 ) where
