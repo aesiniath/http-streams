@@ -137,8 +137,8 @@ module Network.Http.Client (
     put
 ) where
 
-import           Network.Http.Connection
-import           Network.Http.Inconvenience
-import           Network.Http.RequestBuilder
-import           Network.Http.Types
+import Network.Http.Connection
+import Network.Http.Inconvenience
+import Network.Http.RequestBuilder
+import Network.Http.Types
 

@@ -12,23 +12,24 @@
 {-# OPTIONS -fno-warn-unused-do-bind #-}
 
 
-import Network.Http.Client
 import Control.Exception (bracket)
 import Data.Maybe (fromMaybe)
 import Network.URI (parseURI)
+
+import Network.Http.Client
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
 --
 
+import Control.Monad
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
+import Debug.Trace
+import System.Environment (getArgs)
+import System.Exit (exitSuccess)
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
-import Debug.Trace
-import System.Exit (exitSuccess)
-import Control.Monad
-import System.Environment (getArgs)
 
 
 main :: IO ()
@@ -42,7 +43,7 @@ main = do
 basic :: IO ()
 basic = do
     c <- openConnection "research.laptop" 80
-    
+
     q <- buildRequest c $ do
         http GET "/~andrew/talks/TheWebProblem,SolvingItInHaskell/"
         setAccept "text/plain"
@@ -50,12 +51,12 @@ basic = do
             -- Requests [headers] are terminated by a double newline
             -- already. We need a better way of emitting debug
             -- information mid-stream from this library.
-    
+
     p <- sendRequest c q emptyBody
     putStr $ show p
-    
+
     b <- receiveResponse c p
-    
+
     x <- Streams.read b
     putStr $ S.unpack $ fromMaybe "" x
 

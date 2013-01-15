@@ -31,18 +31,17 @@ module Network.Http.Types (
     composeRequestBytes
 ) where
 
-import           Prelude                        hiding (lookup)
+import Prelude hiding (lookup)
 
-import           Blaze.ByteString.Builder       (Builder, copyByteString, fromByteString,
-                                                 toByteString)
+import Blaze.ByteString.Builder (Builder, copyByteString, fromByteString,
+                                 toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder
-import           Data.ByteString                (ByteString)
-import qualified Data.ByteString.Char8          as S
-import           Data.CaseInsensitive           (CI, mk, original)
-import           Data.HashMap.Strict            (HashMap, empty, foldrWithKey,
-                                                 insert, lookup)
-import           Data.Monoid                    (mconcat, mempty)
-import           Data.String                    (IsString, fromString)
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as S
+import Data.CaseInsensitive (CI, mk, original)
+import Data.HashMap.Strict (HashMap, empty, foldrWithKey, insert, lookup)
+import Data.Monoid (mconcat, mempty)
+import Data.String (IsString, fromString)
 
 -- | HTTP Methods, as per RFC 2616
 data Method

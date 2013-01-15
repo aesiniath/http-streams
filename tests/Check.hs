@@ -11,38 +11,34 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
-import           Control.Exception                (bracket)
-import           Data.Bits
-import           Data.Maybe                       (fromJust)
-import           Data.String
-import           Network.Socket                   (SockAddr (..))
-import           Network.URI                      (parseURI)
-import           Test.Hspec                       (Spec, describe, hspec, it)
-import           Test.HUnit
+import Control.Exception (bracket)
+import Data.Bits
+import Data.Maybe (fromJust)
+import Data.String
+import Network.Socket (SockAddr (..))
+import Network.URI (parseURI)
+import Test.Hspec (Spec, describe, hspec, it)
+import Test.HUnit
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
 --
 
-import           Data.ByteString                  (ByteString)
-import qualified Data.ByteString.Char8            as S
-import           System.IO.Streams                (InputStream, OutputStream)
-import qualified System.IO.Streams                as Streams
-
-import           Data.Attoparsec.ByteString.Char8 (Parser, parseOnly,
-                                                   parseTest)
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as S
+import System.IO.Streams (InputStream, OutputStream)
+import qualified System.IO.Streams as Streams
+import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, parseTest)
 
 --
 -- what we're actually testing
 --
 
-import           Network.Http.Client
-import           Network.Http.Connection          (Connection (..))
-import           Network.Http.ResponseParser      (parseResponse)
-import           Network.Http.Types               (Request (..),
-                                                   composeRequestBytes,
-                                                   lookupHeader)
-import           TestServer                       (localPort, runTestServer)
+import Network.Http.Client
+import Network.Http.Connection (Connection (..))
+import Network.Http.ResponseParser (parseResponse)
+import Network.Http.Types (Request (..), composeRequestBytes, lookupHeader)
+import TestServer (localPort, runTestServer)
 
 main :: IO ()
 main = do

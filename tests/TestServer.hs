@@ -12,23 +12,23 @@
 
 module TestServer (runTestServer, localPort) where
 
-import           Prelude                    hiding (catch)
+import Prelude hiding (catch)
 
-import           Control.Applicative
-import           Control.Concurrent         (forkIO, threadDelay)
-import           Control.Exception          (SomeException)
-import           Control.Monad.CatchIO      (catch)
-import           Control.Monad.Trans        (liftIO)
-import           Data.ByteString            (ByteString)
-import qualified Data.ByteString.Char8      as S
+import Control.Applicative
+import Control.Concurrent (forkIO, threadDelay)
+import Control.Exception (SomeException)
+import Control.Monad.CatchIO (catch)
+import Control.Monad.Trans (liftIO)
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as S
 import qualified Data.ByteString.Lazy.Char8 as L
-import           Data.Maybe                 (fromMaybe)
-import           Filesystem                 (getSize)
-import           Filesystem.Path.CurrentOS  (decodeString)
-import           Snap.Core
-import           Snap.Http.Server
-import           Snap.Util.FileServe
-import           System.IO                  (hFlush, hPutStrLn, stderr)
+import Data.Maybe (fromMaybe)
+import Filesystem (getSize)
+import Filesystem.Path.CurrentOS (decodeString)
+import Snap.Core
+import Snap.Http.Server
+import Snap.Util.FileServe
+import System.IO (hFlush, hPutStrLn, stderr)
 
 localPort = 56981
 

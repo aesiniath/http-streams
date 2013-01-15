@@ -13,17 +13,17 @@
 {-# OPTIONS -fno-warn-unused-imports #-}
 
 import Criterion.Main
+import Data.Bits
 import GHC.Conc
 import Network.Http.Client
+import Network.Socket (SockAddr (..))
 import System.IO.Streams (InputStream)
-import Network.Socket (SockAddr(..))
-import Data.Bits
 
 --
 -- Non-public API
 --
 
-import Network.Http.Connection (Connection(..))
+import Network.Http.Connection (Connection (..))
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -32,12 +32,12 @@ import Network.Http.Connection (Connection(..))
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import qualified Data.ByteString.UTF8 as S
+import Debug.Trace
 import System.IO.Streams (OutputStream, stdout)
 import qualified System.IO.Streams as Streams
-import Debug.Trace
 
 
-main :: IO () 
+main :: IO ()
 main = do
     GHC.Conc.setNumCapabilities 4
 
@@ -57,23 +57,23 @@ initialize  = do
 actual :: [ByteString] -> IO (Request, Response, InputStream ByteString)
 actual l = do
     c <- fakeConnection l
-    
+
     q <- buildRequest c $ do
         http GET "/bucket42/object149"
         setAccept "text/plain"
-    
+
     p <- sendRequest c q emptyBody
-    
+
     b <- receiveResponse c p
 
     return (q,p,b)
-    
+
 
 fakeConnection :: [ByteString] -> IO Connection
 fakeConnection l = do
     o <- Streams.nullOutput
     i <- Streams.fromList l
-    
+
     return $ Connection {
         cHost = "s3.example.com",
         cAddr = (SockAddrInet 80 (203 + shift 113 16 + shift 15 24)),

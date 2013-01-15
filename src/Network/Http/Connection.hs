@@ -30,20 +30,20 @@ module Network.Http.Connection (
     inputStreamBody
 ) where
 
-import           Control.Exception           (Exception, bracket, throwIO)
-import           Data.Bits                   (Bits (..))
-import           Data.ByteString             (ByteString)
-import qualified Data.ByteString.Char8       as S
-import           Data.CaseInsensitive        (mk)
-import           Data.Char                   (ord)
-import           Data.Typeable               (Typeable)
-import           Network.Http.ResponseParser
-import           Network.Http.Types
-import           Network.Socket
-import           System.IO.Streams           (InputStream, OutputStream)
-import qualified System.IO.Streams           as Streams
-import           System.IO.Streams.Network   (socketToStreams)
+import Control.Exception (Exception, bracket, throwIO)
+import Data.Bits (Bits (..))
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as S
+import Data.CaseInsensitive (mk)
+import Data.Char (ord)
+import Data.Typeable (Typeable)
+import Network.Socket
+import System.IO.Streams (InputStream, OutputStream)
+import qualified System.IO.Streams as Streams
+import System.IO.Streams.Network (socketToStreams)
 
+import Network.Http.ResponseParser
+import Network.Http.Types
 
 {-
     This is a String because that's what the uri package works in. There

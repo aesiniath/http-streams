@@ -19,10 +19,10 @@ import GHC.Conc
     namespace collision nightmares.
 -}
 
-import StreamsSample (sampleViaHttpStreams)
 import ConduitSample (sampleViaHttpConduit)
+import StreamsSample (sampleViaHttpStreams)
 
-main :: IO () 
+main :: IO ()
 main = do
     GHC.Conc.setNumCapabilities 4
     defaultMain

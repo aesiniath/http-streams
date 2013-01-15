@@ -12,15 +12,15 @@
 
 module ConduitSample (sampleViaHttpConduit) where
 
-import Network.HTTP.Conduit
-import Network.HTTP.Types
+import Control.Monad.Trans (liftIO)
 import qualified Data.ByteString.Char8 as S
 import qualified Data.ByteString.Lazy.Char8 as L
 import Data.CaseInsensitive (CI, original)
 import Data.Conduit
 import Data.Conduit.Binary (sinkHandle, sourceLbs)
-import Control.Monad.Trans (liftIO)
-import System.IO (openFile, hClose, IOMode(..))
+import Network.HTTP.Conduit
+import Network.HTTP.Types
+import System.IO (IOMode (..), hClose, openFile)
 
 main :: IO ()
 main = do
@@ -32,21 +32,21 @@ sampleViaHttpConduit = do
     runResourceT $ do
 
         manager <- liftIO $ newManager def
-        
+
         req <- parseUrl "http://localhost/"
         let req2 = req {
             checkStatus = \_ _ -> Nothing,
             requestHeaders = [(hAccept, "text/html")]
         }
-        
+
         res <- http req2 manager
-        
+
         let sta = responseStatus res
             ver = responseVersion res
             hdr = responseHeaders res
-        
+
         handle <- liftIO $ openFile "/tmp/build/http-streams/bench/http-conduit.out" WriteMode
-        
+
         sourceLbs (joinStatus sta ver) $$ sinkHandle handle
         sourceLbs (join hdr) $$ sinkHandle handle
         responseBody res $$+- sinkHandle handle
