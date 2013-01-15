@@ -54,16 +54,16 @@ the underlying API is straight-forward. In particular, constructing the
 Because this is all happening in 'IO' (the defining feature of
 @io-streams@!), you can ensure resource cleanup on normal or
 abnormal termination by using @Control.Exception@'s standard
-'Control.Exception.bracket' function:
+'Control.Exception.bracket' function; see 'closeConnection' for an
+example. For the common case we have a utility function which
+wraps @bracket@ for you:
 
 @
-foo :: IO ByteString
-foo = 'withConnection' ('openConnection' \"www.example.com\" 80) doStuff
+\ foo :: IO ByteString
+\ foo = 'withConnection' ('openConnection' \"www.example.com\" 80) doStuff
 
-doStuff :: Connection -> IO ByteString
+\ doStuff :: Connection -> IO ByteString
 @
-
-for instance.
 
 There are also a set of convenience APIs that do just that, along with
 the tedious bits like parsing URLs. For example, to do an HTTP GET and

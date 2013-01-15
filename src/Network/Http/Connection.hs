@@ -75,28 +75,43 @@ instance Show Connection where
                     ]
 
 
-------------------------------------------------------------------------------
+--
 -- | Creates a raw Connection object from the given parts.
-makeConnection :: ByteString              -- ^ will be used as the Host: header
-                                          -- in the HTTP request.
-               -> IO ()                   -- ^ called when the connection is
-                                          -- terminated.
-               -> OutputStream ByteString -- ^ write end of the HTTP client
-                                          -- connection
-               -> InputStream ByteString  -- ^ read end of the client
-                                          -- connection
-               -> IO Connection
-makeConnection h c o i = return $! Connection h c o i
+--
+makeConnection
+    :: ByteString             
+    -- ^ will be used as the Host: header in the HTTP request.
+    -> IO ()
+    -- ^ called when the connection is terminated.
+    -> OutputStream ByteString
+    -- ^ write end of the HTTP client connection.
+    -> InputStream ByteString
+    -- ^ read end of the client connection.
+    -> IO Connection
+makeConnection h c o i =
+    return $! Connection h c o i
 
 
-------------------------------------------------------------------------------
--- | Given an IO action producing a 'Connection', and a computation that needs
--- a 'Connection', runs the computation, cleaning up the 'Connection'
--- afterwards. Wraps 'Control.Exception.bracket'.
-withConnection :: IO Connection
-               -> (Connection -> IO a)
-               -> IO a
-withConnection mkC = bracket mkC closeConnection
+--
+-- | Given an @IO@ action producing a 'Connection', and a computation
+-- that needs one, runs the computation, cleaning up the
+-- @Connection@ afterwards.
+--
+-- > x <- withConnection (openConnection "s3.example.com" 80) $ (\c -> do
+-- >     q <- buildRequest c $ do
+-- >         http GET "/bucket42/object/149"
+-- >     p <- sendRequest c q emptyBody
+-- >     ...
+-- >     return "blah")
+--
+-- which can make the code making an HTTP request a lot more
+-- straight-forward.
+--
+-- Wraps @Control.Exception@'s 'Control.Exception.bracket'.
+--
+withConnection :: IO Connection -> (Connection -> IO α) -> IO α
+withConnection mkC =
+    bracket mkC closeConnection
 
 
 --
@@ -115,7 +130,7 @@ withConnection mkC = bracket mkC closeConnection
 -- > ...
 --
 -- More likely, you'll use 'withConnection' to wrap the call in order to ensure
--- finalization; see 'closeConnection' for an example.
+-- finalization.
 --
 openConnection :: Hostname -> Port -> IO Connection
 openConnection h p = do

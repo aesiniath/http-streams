@@ -43,7 +43,7 @@ import Network.Http.Connection
 import Network.Http.RequestBuilder
 import Network.Http.Types
 
-------------------------------------------------------------------------------
+
 instance IsString URI where
     fromString str = case parseURI str of
         Just uri    -> uri
@@ -51,18 +51,21 @@ instance IsString URI where
 
 type URL = ByteString
 
-
 ------------------------------------------------------------------------------
+
+--
 -- | URL-escapes a string (see
 -- <http://tools.ietf.org/html/rfc2396.html#section-2.4>)
+--
 urlEncode :: ByteString -> URL
 urlEncode = toByteString . urlEncodeBuilder
 {-# INLINE urlEncode #-}
 
 
-------------------------------------------------------------------------------
+--
 -- | URL-escapes a string (see
 -- <http://tools.ietf.org/html/rfc2396.html#section-2.4>) into a 'Builder'.
+--
 urlEncodeBuilder :: ByteString -> Builder
 urlEncodeBuilder = go mempty
   where
@@ -76,7 +79,6 @@ urlEncodeBuilder = go mempty
                     in go b'' r
 
 
-------------------------------------------------------------------------------
 hexd :: Char -> Builder
 hexd c0 = fromWord8 (c2w '%') `mappend` fromWord8 hi `mappend` fromWord8 low
   where
@@ -88,7 +90,6 @@ hexd c0 = fromWord8 (c2w '%') `mappend` fromWord8 hi `mappend` fromWord8 low
     shiftr (W8# a#) (I# b#) = I# (word2Int# (uncheckedShiftRL# a# b#))
 
 
-------------------------------------------------------------------------------
 urlEncodeTable :: HashSet Char
 urlEncodeTable = HS.fromList $! filter f $! map w2c [0..255]
   where
@@ -96,6 +97,8 @@ urlEncodeTable = HS.fromList $! filter f $! map w2c [0..255]
 
 
 ------------------------------------------------------------------------------
+
+
 establish :: URI -> IO (Connection)
 establish u =
     case scheme of
@@ -115,7 +118,7 @@ establish u =
         _   -> read $ tail $ uriPort auth :: Int
 
 
-------------------------------------------------------------------------------
+
 parseURL :: URL -> URI
 parseURL r' =
     case parseURI r of
@@ -124,13 +127,15 @@ parseURL r' =
   where
     r = S.unpack r'
 
-
 ------------------------------------------------------------------------------
+
 path :: URI -> ByteString
 path u = S.pack $ concat [uriPath u, uriQuery u, uriFragment u]
 
 
 ------------------------------------------------------------------------------
+
+--
 -- | Issue an HTTP GET request and pass the resultant response to the
 -- supplied handler function.
 --
