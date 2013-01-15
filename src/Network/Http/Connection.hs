@@ -67,19 +67,19 @@ data Connection
     }
 
 instance Show Connection where
-    show c = {-# SCC "Connection.show" #-}
-             concat [ "Connection {"
-                    , "cHost = \""
-                    , S.unpack $ cHost c
-                    , "\"}"
-                    ]
+    show c =    {-# SCC "Connection.show" #-}
+        concat
+           ["Connection {",
+            "cHost = \"",
+             S.unpack $ cHost c,
+             "\"}"]
 
 
 --
 -- | Creates a raw Connection object from the given parts.
 --
 makeConnection
-    :: ByteString             
+    :: ByteString
     -- ^ will be used as the Host: header in the HTTP request.
     -> IO ()
     -- ^ called when the connection is terminated.
