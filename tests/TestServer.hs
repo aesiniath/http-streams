@@ -146,9 +146,13 @@ handleAsText = do
 
 handlePostMethod :: Snap ()
 handlePostMethod = do
+    setTimeout 5
     modifyResponse $ setResponseStatus 201 "Created"
     modifyResponse $ setHeader "Cache-Control" "no-cache"
     modifyResponse $ setHeader "Location" "http://server.example.com/something/788"
+    modifyResponse $ setContentType "text/plain"
+
+    writeBS "201 Created"
 
 
 handlePutMethod :: Snap ()

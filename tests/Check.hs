@@ -19,6 +19,7 @@ import Network.Socket (SockAddr (..))
 import Network.URI (parseURI)
 import Test.Hspec (Spec, describe, hspec, it)
 import Test.HUnit
+import Blaze.ByteString.Builder (Builder, toByteString)
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -74,7 +75,7 @@ testRequestTermination =
             http GET "/time"
             setAccept "text/plain"
 
-        let e' = composeRequestBytes q
+        let e' = toByteString $ composeRequestBytes q
         let n = S.length e' - 4
         let (a',b') = S.splitAt n e'
 
@@ -92,7 +93,7 @@ testRequestLineFormat =
             q <- buildRequest c $ do
                 http GET "/time"
 
-            let e' = composeRequestBytes q
+            let e' = toByteString $ composeRequestBytes q
             let l' = S.takeWhile (/= '\r') e'
 
             assertEqual "Invalid HTTP request line" "GET /time HTTP/1.1" l')
@@ -232,40 +233,20 @@ assertMaybe prefix m0 =
 
 
 
-testPostWithForm = do
-{-
-    it "recognizes gzip content #2" $ do
-        c <- openConnection "127.0.0.1" 80
-
-        q <- buildRequest c $ do
-            http POST "/postbox"
-            setHeader "Accept-Encoding" "gzip"
-
-        p <- sendRequest c q emptyBody
-
-        i <- receiveResponse c p
-
-        let em = getHeader p "Content-Encoding"
-        assertMaybe "Should be a Content-Encoding header!" em
-        assertEqual "Content-Encoding header should be 'gzip'!" (Just "gzip") em
-
-        let nm = getHeader p "Content-Length"
-        assertMaybe "Should be a Content-Length header!" nm
-        let n = read $ S.unpack $ fromJust nm :: Int
-        assertEqual "Should be a fixed length message!" 233 n
-
-        (i2, getCount) <- Streams.countInput i
-        Streams.skipToEof i2
-
-        len <- getCount
-        assertEqual "Incorrect number of bytes read" 280 len
-
-        end <- Streams.atEOF i
-        assertBool "Expected end of stream" end
--}
+testPostWithForm =
     it "POST with form data correctly encodes parameters" $ do
         let url = S.concat ["http://", localhost, "/postbox"]
 
-        postForm url [("name","Kermit"),("role","Stagehand")] (\p i -> do
-            putStr $ show p
-            Streams.connect i Streams.stdout)
+        postForm url [("name","Kermit"),("role","Stagehand")] handler
+      where
+        handler :: Response -> InputStream ByteString -> IO ()
+        handler p i = do
+            let code = getStatusCode p
+            assertEqual "Expected 201" 201 code
+
+            (i2, getCount) <- Streams.countInput i
+            Streams.skipToEof i2
+
+            len <- getCount
+            assertEqual "Incorrect number of bytes read" 11 len
+            return ()

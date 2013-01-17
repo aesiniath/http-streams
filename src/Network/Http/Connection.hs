@@ -29,6 +29,7 @@ module Network.Http.Connection (
     inputStreamBody
 ) where
 
+import Blaze.ByteString.Builder (flush)
 import Control.Exception (Exception, bracket, throwIO)
 import Data.Bits (Bits (..))
 import Data.ByteString (ByteString)
@@ -170,17 +171,21 @@ openConnection h p = do
 -- >             Streams.write (Just "Hello World\n") o)
 --
 {-
-    Is it necessary to write Nothing to the output stream?
+    The flush is necessary to get the headers out before the body,
+    since we've wrapped the OutputStream ByteString into an
+    OutputStream Builder for writing that part of the request.
 -}
 sendRequest :: Connection -> Request -> (OutputStream ByteString -> IO α) -> IO Response
 sendRequest c q handler = do
+    o <- Streams.builderStream o'
+
     Streams.write (Just msg) o
+    Streams.write (Just flush) o
 
     -- write the body, if there is one
 
-    _ <- handler o
-
-    Streams.write Nothing o
+    _ <- handler o'
+    Streams.write Nothing o'
 
     -- now prepare to process the reply.
 
@@ -188,8 +193,8 @@ sendRequest c q handler = do
 
     return p
   where
-    o = cOut c
-    i = cIn c
+    o' = cOut c
+    i  = cIn c
     msg = composeRequestBytes q
 
 {-
@@ -304,7 +309,8 @@ emptyBody _ = return ()
 --
 fileBody :: FilePath -> OutputStream ByteString -> IO ()
 fileBody p o = do
-    Streams.withFileAsInput p (\i -> Streams.connect i o)
+    Streams.withFileAsInput p (\i -> do
+        Streams.connect i o)
 
 
 --

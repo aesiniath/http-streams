@@ -101,7 +101,7 @@ data Request
 
 instance Show Request where
     show q = {-# SCC "Request.show" #-}
-        S.unpack $ S.filter (/= '\r') $ composeRequestBytes q
+        S.unpack $ S.filter (/= '\r') $ toByteString $ composeRequestBytes q
 
 
 {-
@@ -109,8 +109,6 @@ instance Show Request where
     is on the critical path for every request, so we'll want to revisit
     this to improve performance.
 
-    - Should we be using a Builder here? Almost certainly.
-    - Should we just be writing to the OutputStream here?!?
     - Rewrite rule for Method?
     - How can serializing the Headers be made efficient?
 
@@ -119,9 +117,9 @@ instance Show Request where
     with removing them.
 -}
 
-composeRequestBytes :: Request -> ByteString
+composeRequestBytes :: Request -> Builder
 composeRequestBytes q =
-    toByteString $ mconcat
+    mconcat
        [requestline,
         hostLine,
         headerFields,
@@ -174,7 +172,7 @@ data Response
 
 instance Show Response where
     show p =     {-# SCC "Response.show" #-}
-        S.unpack $ S.filter (/= '\r') $ composeResponseBytes p
+        S.unpack $ S.filter (/= '\r') $ toByteString $ composeResponseBytes p
 
 --
 -- | Get the HTTP response status code.
@@ -215,9 +213,9 @@ getHeader p k =
     h = pHeaders p
 
 
-composeResponseBytes :: Response -> ByteString
+composeResponseBytes :: Response -> Builder
 composeResponseBytes p =
-    toByteString $ mconcat
+    mconcat
        [statusline,
         headerFields,
         "\r\n"]
