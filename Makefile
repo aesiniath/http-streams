@@ -67,7 +67,7 @@ httpclient:
 	ln -s $(BUILDDIR)/core/client.bin $@
 
 junk: build-junk
-build-junk: dirs $(BUILDDIR)/junk/snippet.bin snippet tags
+build-junk: dirs $(BUILDDIR)/junk/snippet.bin snippet build-tags
 
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -82,20 +82,28 @@ $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "STRIP\t$@"
 	strip $@
 
-tags: $(CORE_SOURCES) $(TEST_SOURCES)
-	@echo "CTAGS\tsrc tests"
-	hothasktags $^ > tags
-
 snippet:
 	@echo "LN -s\t$@"
 	ln -s $(BUILDDIR)/junk/snippet.bin $@
+
+#
+# `make tags` from command line should force rebuild
+#
+tags: clean-tags build-tags
+
+clean-tags:
+	@if [ -f tags ] ; then echo "RM\ttags" ; rm -f tags ; fi
+
+build-tags: $(CORE_SOURCES) $(TEST_SOURCES)
+	@echo "CTAGS\tsrc tests"
+	hothasktags $^ > tags
 
 #
 # Build test suite code
 #
 
 tests: build-tests
-build-tests: dirs $(BUILDDIR)/tests/check.bin check tags
+build-tests: dirs $(BUILDDIR)/tests/check.bin check build-tags
 
 $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -128,7 +136,7 @@ test: build-tests
 
 benchmark: build-benchmarks
 benchmarks: build-benchmarks
-build-benchmarks: dirs $(BUILDDIR)/bench/bench.bin bench tags
+build-benchmarks: dirs $(BUILDDIR)/bench/bench.bin bench build-tags
 
 $(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
