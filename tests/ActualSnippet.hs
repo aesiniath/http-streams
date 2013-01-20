@@ -9,7 +9,6 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS -fno-warn-unused-do-bind #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
 module Snippet where
@@ -42,10 +41,14 @@ main = do
             -- already. We need a better way of emitting debug
             -- information mid-stream from this library.
 
-    p <- sendRequest c q emptyBody
-    putStr $ show p
+    sendRequest c q emptyBody
 
-    b <- receiveResponse c p
-    Streams.connect b stdout
+    receiveResponse c debugHandler
 
     closeConnection c
+
+
+debugHandler :: Response -> InputStream ByteString -> IO ()
+debugHandler p i = do
+    putStr $ show p
+    Streams.connect i stdout

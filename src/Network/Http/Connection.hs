@@ -171,31 +171,24 @@ openConnection h p = do
 -- > p <- sendRequest c q (\o ->
 -- >             Streams.write (Just "Hello World\n") o)
 --
-{-
-    The flush is necessary to get the headers out before the body,
-    since we've wrapped the OutputStream ByteString into an
-    OutputStream Builder for writing that part of the request.
--}
-sendRequest :: Connection -> Request -> (OutputStream Builder -> IO α) -> IO Response
+sendRequest :: Connection -> Request -> (OutputStream Builder -> IO α) -> IO α
 sendRequest c q handler = do
-    o <- Streams.builderStream o'
+    o2 <- Streams.builderStream o1
 
-    Streams.write (Just msg) o
-    Streams.write (Just Builder.flush) o
+    Streams.write (Just msg) o2
 
     -- write the body, if there is one
 
-    _ <- handler o
-    Streams.write Nothing o
+    x <- handler o2
 
-    -- now prepare to process the reply.
+    -- push the stream out by flushing the output buffers
 
-    p <- readResponseHeader i
+    Streams.write (Just Builder.flush) o2
 
-    return p
+    return x
+
   where
-    o' = cOut c
-    i  = cIn c
+    o1 = cOut c
     msg = composeRequestBytes q
 
 {-
@@ -227,9 +220,19 @@ sendRequest c q handler = do
     fine, no problem, and it actually has the benefit of making it clear
     you're supposed to call this after the sendRequest call.
 -}
-receiveResponse :: Connection -> Response -> IO (InputStream ByteString)
-receiveResponse c p = do
+receiveResponse :: Connection -> (Response -> InputStream ByteString -> IO α) -> IO α
+receiveResponse c handler = do
     i1 <- return $ cIn c
+
+    p  <- readResponseHeader i1
+    i2 <- readResponseBody p i1
+
+    x  <- handler p i2
+    return x
+
+
+readResponseBody :: Response -> InputStream ByteString -> IO (InputStream ByteString)
+readResponseBody p i1 = do
 
     i2 <- case encoding of
         None        -> readFixedLengthBody i1 n

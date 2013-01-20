@@ -153,18 +153,16 @@ testChunkedEncoding =
         q <- buildRequest c $ do
             http GET "/time"
 
-        p <- sendRequest c q emptyBody
+        sendRequest c q emptyBody
+        receiveResponse c (\p i1 -> do
+            let cm = getHeader p "Transfer-Encoding"
+            assertEqual "Should be chunked encoding!" (Just "chunked") cm
 
-        let cm = getHeader p "Transfer-Encoding"
-        assertEqual "Should be chunked encoding!" (Just "chunked") cm
+            (i2, getCount) <- Streams.countInput i1
+            Streams.skipToEof i2
 
-        i <- receiveResponse c p
-
-        (i2, getCount) <- Streams.countInput i
-        Streams.skipToEof i2
-
-        len <- getCount
-        assertEqual "Incorrect number of bytes read" 29 len
+            len <- getCount
+            assertEqual "Incorrect number of bytes read" 29 len)
 
 
 testContentLength =
@@ -174,25 +172,24 @@ testContentLength =
         q <- buildRequest c $ do
             http GET "/static/statler.jpg"
 
-        p <- sendRequest c q emptyBody
+        sendRequest c q emptyBody
 
-        let nm = getHeader p "Content-Length"
-        assertMaybe "Should be a Content-Length header!" nm
+        receiveResponse c (\p i1 -> do
+            let nm = getHeader p "Content-Length"
+            assertMaybe "Should be a Content-Length header!" nm
 
-        let n = read $ S.unpack $ fromJust nm :: Int
-        assertEqual "Should be a fixed length message!" 4611 n
+            let n = read $ S.unpack $ fromJust nm :: Int
+            assertEqual "Should be a fixed length message!" 4611 n
 
-        i <- receiveResponse c p
+            (i2, getCount) <- Streams.countInput i1
+            x' <- Streams.readExactly 4611 i2
 
-        (i2, getCount) <- Streams.countInput i
-        x' <- Streams.readExactly 4611 i2
+            len <- getCount
+            assertEqual "Incorrect number of bytes read" 4611 len
+            assertBool "Incorrect length" (4611 == S.length x')
 
-        len <- getCount
-        assertEqual "Incorrect number of bytes read" 4611 len
-        assertBool "Incorrect length" (4611 == S.length x')
-
-        end <- Streams.atEOF i2
-        assertBool "Expected end of stream" end
+            end <- Streams.atEOF i2
+            assertBool "Expected end of stream" end)
 
 {-
     This had to change when we moved to an internal test server; seems
@@ -207,23 +204,22 @@ testCompressedResponse =
             http GET "/static/hello.html"
             setHeader "Accept-Encoding" "gzip"
 
-        p <- sendRequest c q emptyBody
+        sendRequest c q emptyBody
 
-        i <- receiveResponse c p
+        receiveResponse c (\p i -> do
+            let nm = getHeader p "Content-Encoding"
+            assertMaybe "Should be a Content-Encoding header!" nm
+            assertEqual "Content-Encoding header should be 'gzip'!" (Just "gzip") nm
 
-        let nm = getHeader p "Content-Encoding"
-        assertMaybe "Should be a Content-Encoding header!" nm
-        assertEqual "Content-Encoding header should be 'gzip'!" (Just "gzip") nm
+            (i2, getCount) <- Streams.countInput i
+            x' <- Streams.readExactly 102 i2
 
-        (i2, getCount) <- Streams.countInput i
-        x' <- Streams.readExactly 102 i2
+            len <- getCount
+            assertEqual "Incorrect number of bytes read" 102 len
+            assertBool "Incorrect length" (102 == S.length x')
 
-        len <- getCount
-        assertEqual "Incorrect number of bytes read" 102 len
-        assertBool "Incorrect length" (102 == S.length x')
-
-        end <- Streams.atEOF i
-        assertBool "Expected end of stream" end
+            end <- Streams.atEOF i
+            assertBool "Expected end of stream" end)
 
 
 assertMaybe :: String -> Maybe a -> Assertion

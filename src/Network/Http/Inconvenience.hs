@@ -142,9 +142,9 @@ path u = S.pack $ concat [uriPath u, uriQuery u, uriFragment u]
 --
 get :: URL
     -- ^ Resource to GET from.
-    -> (Response -> InputStream ByteString -> IO α)
+    -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
-    -> IO ()
+    -> IO β
 get r' handler = bracket
     (establish u)
     (teardown)
@@ -155,18 +155,14 @@ get r' handler = bracket
 
     u = parseURL r'
 
-    process :: Connection -> IO ()
     process c = do
         q <- buildRequest c $ do
             http GET (path u)
             setAccept "*/*"
 
-        p <- sendRequest c q emptyBody
+        sendRequest c q emptyBody
 
-        b <- receiveResponse c p
-
-        _ <- handler p b
-        return ()
+        receiveResponse c handler
 
 --
 -- | Send content to a server via an HTTP POST request. Use this
@@ -181,9 +177,9 @@ post :: URL
     -- ^ MIME type of the request body being sent.
     -> (OutputStream Builder -> IO α)
     -- ^ Handler function to write content to server.
-    -> (Response -> InputStream ByteString -> IO α)
+    -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
-    -> IO ()
+    -> IO β
 post r' t body handler = bracket
     (establish u)
     (teardown)
@@ -193,7 +189,6 @@ post r' t body handler = bracket
 
     u = parseURL r'
 
-    process :: Connection -> IO ()
     process c = do
         (e,n) <- runBody body
 
@@ -203,12 +198,9 @@ post r' t body handler = bracket
             setContentType t
             setContentLength n
 
-        p <- sendRequest c q e
+        sendRequest c q e
 
-        b <- receiveResponse c p
-
-        _ <- handler p b
-        return ()
+        receiveResponse c handler
 
 
 runBody
@@ -243,9 +235,9 @@ postForm
     -- ^ Resource to POST to.
     -> [(ByteString, ByteString)]
     -- ^ List of name=value pairs. Will be sent URL-encoded.
-    -> (Response -> InputStream ByteString -> IO α)
+    -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
-    -> IO ()
+    -> IO β
 postForm r' nvs handler = bracket
     (establish u)
     (teardown)
@@ -264,7 +256,6 @@ postForm r' nvs handler = bracket
     parameters o = do
         Streams.write (Just (Builder.fromByteString b')) o
 
-    process :: Connection -> IO ()
     process c = do
         (e,n) <- runBody parameters
 
@@ -274,12 +265,9 @@ postForm r' nvs handler = bracket
             setContentType "application/x-www-form-urlencoded"
             setContentLength n
 
-        p <- sendRequest c q e
+        sendRequest c q e
 
-        b <- receiveResponse c p
-
-        _ <- handler p b
-        return ()
+        receiveResponse c handler
 
 
 --
@@ -324,9 +312,9 @@ put :: URL
     -- ^ MIME type of the request body being sent.
     -> (OutputStream Builder -> IO α)
     -- ^ Handler function to write content to server.
-    -> (Response -> InputStream ByteString -> IO α)
+    -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
-    -> IO ()
+    -> IO β
 put r' t body handler = bracket
     (establish u)
     (teardown)
@@ -336,7 +324,6 @@ put r' t body handler = bracket
 
     u = parseURL r'
 
-    process :: Connection -> IO ()
     process c = do
         (e,n) <- runBody body
 
@@ -348,9 +335,6 @@ put r' t body handler = bracket
             setHeader "Content-Type" t
             setHeader "Content-Length" len
 
-        p <- sendRequest c q e
+        sendRequest c q e
 
-        b <- receiveResponse c p
-
-        _ <- handler p b
-        return ()
+        receiveResponse c handler
