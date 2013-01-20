@@ -292,11 +292,12 @@ postForm r' nvs handler = bracket
 -- > c <- openConnection "s3.example.com" 80
 -- >
 -- > q <- buildRequest c $ do
--- >          http PUT "/bucket42/object149"
--- >          setContentType "text/plain"
--- >          setContentLength n
+-- >     http PUT "/bucket42/object149"
+-- >     setContentType "text/plain"
+-- >     setContentLength n
 -- >
--- > p <- sendRequest c q (fileBody "hello.txt")
+-- > _ <- sendRequest c q (fileBody "hello.txt")
+-- > p <- receiveResponse c (\p _ -> return p)
 -- >
 -- > closeConnection c
 -- > assert (getStatusCode p == 201)

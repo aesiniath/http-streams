@@ -24,6 +24,7 @@ for ease of use when querying web services and dealing with the result.
 
 Given:
 
+> import System.IO.Streams (InputStream, OutputStream, stdout)
 > import qualified System.IO.Streams as Streams
 > import qualified Data.ByteString as S
 
@@ -41,12 +42,11 @@ the underlying API is straight-forward. In particular, constructing the
           'http' GET \"\/\"
           'setAccept' \"text/html\"
 
-\ p <- 'sendRequest' c q 'emptyBody'
+\ 'sendRequest' c q 'emptyBody'
 
-\ b <- `receiveResponse` c p
-
-\ x <- Streams.read b
-\ S.putStr $ fromMaybe \"\" x
+\ `receiveResponse` c (\\p i -> do
+\     x <- Streams.read b
+\     S.putStr $ fromMaybe \"\" x)
 
 \ 'closeConnection' c
 @

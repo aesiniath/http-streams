@@ -102,7 +102,7 @@ makeConnection h c o i =
 -- > x <- withConnection (openConnection "s3.example.com" 80) $ (\c -> do
 -- >     q <- buildRequest c $ do
 -- >         http GET "/bucket42/object/149"
--- >     p <- sendRequest c q emptyBody
+-- >     sendRequest c q emptyBody
 -- >     ...
 -- >     return "blah")
 --
@@ -162,13 +162,13 @@ openConnection h p = do
 -- HTTP requests like 'GET' that don't send data, use 'emptyBody' as the
 -- output stream:
 --
--- > p <- sendRequest c q emptyBody
+-- > sendRequest c q emptyBody
 --
 -- For 'PUT' and 'POST' requests, you can use 'fileBody' or
 -- 'inputStreamBody' to send content to the server, or you can work with
 -- the @io-streams@ API directly:
 --
--- > p <- sendRequest c q (\o ->
+-- > sendRequest c q (\o ->
 -- >             Streams.write (Just "Hello World\n") o)
 --
 sendRequest :: Connection -> Request -> (OutputStream Builder -> IO α) -> IO α
@@ -198,37 +198,35 @@ sendRequest c q handler = do
 
 --
 -- | Handle the response coming back from the server. This function
--- returns you the 'InputStream' containing the entity body.
+-- hands control to a handler function you supply, passing you the
+-- 'Response' object with the response headers and an 'InputStream'
+-- containing the entity body.
 --
--- For example, if you just wanted to print the response body:
+-- For example, if you just wanted to print the first chunk of the
+-- content from the server:
 --
--- > b <- receiveResponse c p
--- >
--- > m <- Streams.read b
--- > case m of
--- >     Just bytes -> putStr bytes
--- >     Nothing    -> return ()
+-- > receiveResponse c (\p i -> do
+-- >     m <- Streams.read b
+-- >     case m of
+-- >         Just bytes -> putStr bytes
+-- >         Nothing    -> return ())
 --
 -- Obviously, you can do more sophisticated things with the
 -- 'InputStream', which is the whole point of having an @io-streams@
 -- based HTTP client library.
 --
-{-
-    It was tempting to leave the Response out of the type signature for
-    this function, but it turns out we need to find out whether chunked
-    encoding is being used, which is in one of the response headers. So,
-    fine, no problem, and it actually has the benefit of making it clear
-    you're supposed to call this after the sendRequest call.
--}
+-- The final value from the handler function.  is the return value of
+-- @receiveResponse@, if you need it.
+--
 receiveResponse :: Connection -> (Response -> InputStream ByteString -> IO α) -> IO α
 receiveResponse c handler = do
-    i1 <- return $ cIn c
+    p  <- readResponseHeader i
+    i' <- readResponseBody p i
 
-    p  <- readResponseHeader i1
-    i2 <- readResponseBody p i1
-
-    x  <- handler p i2
+    x  <- handler p i'
     return x
+  where
+    i = cIn c
 
 
 readResponseBody :: Response -> InputStream ByteString -> IO (InputStream ByteString)
@@ -290,10 +288,6 @@ instance Exception UnexpectedCompression
 -- | Use this for the common case of the HTTP methods that only send
 -- headers and which have no entity body, i.e. 'GET' requests.
 --
-{-
-    Is there a way we can make this static and so be reusable by
-    everyone, rather than an IO action?
--}
 emptyBody :: OutputStream Builder -> IO ()
 emptyBody _ = return ()
 
@@ -303,13 +297,13 @@ emptyBody _ = return ()
 --
 -- You use this partially applied:
 --
--- > p <- sendRequest c q (fileBody "/etc/passwd")
+-- > sendRequest c q (fileBody "/etc/passwd")
 --
 -- Note that the type of @(fileBody \"\/path\/to\/file\")@ is just what
 -- you need for the third argument to 'sendRequest', namely
 --
 -- >>> :t filePath "hello.txt"
--- :: OutputStream ByteString -> IO ()
+-- :: OutputStream Builder -> IO ()
 --
 {-
     Relies on Streams.withFileAsInput generating (very) large chunks [which it
@@ -329,9 +323,9 @@ fileBody p o = do
 -- Use it curried:
 --
 -- > i <- getStreamFromVault                    -- magic, clearly
--- > p <- sendRequest c q (inputStreamBody i)
+-- > sendRequest c q (inputStreamBody i)
 --
--- This function maps 'Builder.fromByteString' over the input, which will
+-- This function maps "Builder.fromByteString" over the input, which will
 -- be efficient if the ByteString chunks are large.
 --
 inputStreamBody :: InputStream ByteString -> OutputStream Builder -> IO ()

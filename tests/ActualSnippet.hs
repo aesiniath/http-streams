@@ -20,6 +20,8 @@ import Network.Http.Client
 -- Otherwise redundent imports, but useful for testing in GHCi.
 --
 
+import Blaze.ByteString.Builder (Builder)
+import qualified Blaze.ByteString.Builder as Builder
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Debug.Trace
