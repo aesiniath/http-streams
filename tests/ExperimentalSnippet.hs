@@ -16,7 +16,6 @@ module Snippet where
 
 import Control.Exception (bracket)
 import Data.Maybe (fromMaybe)
-import Network.Http.Client
 
 import Network.Http.Client
 
@@ -66,13 +65,13 @@ basic = do
             -- already. We need a better way of emitting debug
             -- information mid-stream from this library.
 
-    p <- sendRequest c q emptyBody
-    putStr $ show p
+    sendRequest c q emptyBody
 
-    b <- receiveResponse c p
+    receiveResponse c (\p i -> do
+        putStr $ show p
 
-    x <- Streams.read b
-    putStr $ S.unpack $ fromMaybe "" x
+        x <- Streams.read i
+        putStr $ S.unpack $ fromMaybe "" x)
 
     closeConnection c
 
@@ -102,13 +101,14 @@ doStuff c = do
         setContentType "text/plain"
         setContentLength 12
 
-    p <- sendRequest c q (\o ->
+    sendRequest c q (\o ->
         Streams.write (Just "Hello World\n") o)
 
-    b <- receiveResponse c p
+    y' <- receiveResponse c (\_ i -> do
+        x' <- Streams.read i
+        return $ fromMaybe "" x')
 
-    x <- Streams.read b
-    return $ fromMaybe "" x
+    return y'
 
 
 {-
@@ -122,12 +122,11 @@ express = do
         putStr $ show p
         Streams.connect i stdout)
 
-    put "http://httpbin.org/put" "text/plain" (fileBody "tests/hello.txt") (\p i -> do
+    put "http://www.httpbin.org/put" "text/plain" (fileBody "tests/hello.txt") (\p i -> do
         putStr $ show p
         Streams.connect i stdout)
 
-    postForm "http://requestb.in/14ff5121" [("name","Kermit"),("role","Stage & Screen")] (\p i -> do
+    postForm "http://www.httpbin.org/post" [("name","Kermit"),("role","Stage & Screen")] (\p i -> do
         putStr $ show p
         Streams.connect i Streams.stdout)
-
 
