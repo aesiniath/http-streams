@@ -29,7 +29,8 @@ module Network.Http.Connection (
     inputStreamBody
 ) where
 
-import Blaze.ByteString.Builder (flush)
+import Blaze.ByteString.Builder (Builder)
+import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString)
 import Control.Exception (Exception, bracket, throwIO)
 import Data.Bits (Bits (..))
 import Data.ByteString (ByteString)
@@ -175,17 +176,17 @@ openConnection h p = do
     since we've wrapped the OutputStream ByteString into an
     OutputStream Builder for writing that part of the request.
 -}
-sendRequest :: Connection -> Request -> (OutputStream ByteString -> IO α) -> IO Response
+sendRequest :: Connection -> Request -> (OutputStream Builder -> IO α) -> IO Response
 sendRequest c q handler = do
     o <- Streams.builderStream o'
 
     Streams.write (Just msg) o
-    Streams.write (Just flush) o
+    Streams.write (Just Builder.flush) o
 
     -- write the body, if there is one
 
-    _ <- handler o'
-    Streams.write Nothing o'
+    _ <- handler o
+    Streams.write Nothing o
 
     -- now prepare to process the reply.
 
@@ -290,7 +291,7 @@ instance Exception UnexpectedCompression
     Is there a way we can make this static and so be reusable by
     everyone, rather than an IO action?
 -}
-emptyBody :: OutputStream ByteString -> IO ()
+emptyBody :: OutputStream Builder -> IO ()
 emptyBody _ = return ()
 
 --
@@ -307,10 +308,13 @@ emptyBody _ = return ()
 -- >>> :t filePath "hello.txt"
 -- :: OutputStream ByteString -> IO ()
 --
-fileBody :: FilePath -> OutputStream ByteString -> IO ()
+{-
+    Relies on Streams.withFileAsInput generating (very) large chunks [which it
+    does]. A more efficient way to do this would be interesting.
+-}
+fileBody :: FilePath -> OutputStream Builder -> IO ()
 fileBody p o = do
-    Streams.withFileAsInput p (\i -> do
-        Streams.connect i o)
+    Streams.withFileAsInput p (\i -> inputStreamBody i o)
 
 
 --
@@ -324,11 +328,13 @@ fileBody p o = do
 -- > i <- getStreamFromVault                    -- magic, clearly
 -- > p <- sendRequest c q (inputStreamBody i)
 --
--- This function just calls 'Streams.connect' on the two streams.
+-- This function maps 'Builder.fromByteString' over the input, which will
+-- be efficient if the ByteString chunks are large.
 --
-inputStreamBody :: InputStream α -> OutputStream α -> IO ()
-inputStreamBody i o = do
-    Streams.connect i o
+inputStreamBody :: InputStream ByteString -> OutputStream Builder -> IO ()
+inputStreamBody i1 o = do
+    i2 <- Streams.map Builder.fromByteString i1
+    Streams.connect i2 o
 
 --
 -- | Shutdown the connection. You need to call this release the

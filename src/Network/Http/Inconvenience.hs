@@ -22,8 +22,9 @@ module Network.Http.Inconvenience (
     put
 ) where
 
-import Blaze.ByteString.Builder (Builder, fromByteString, fromWord8,
-                                 toByteString)
+import Blaze.ByteString.Builder (Builder)
+import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString,
+                                                      fromWord8, toByteString)
 import Control.Exception (bracket)
 import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
@@ -31,7 +32,7 @@ import qualified Data.ByteString.Char8 as S
 import Data.ByteString.Internal (c2w, w2c)
 import Data.Char (intToDigit, isAlphaNum)
 import Data.HashSet (HashSet)
-import qualified Data.HashSet as HS
+import qualified Data.HashSet as HashSet
 import Data.Monoid (Monoid (..))
 import GHC.Exts
 import GHC.Word (Word8 (..))
@@ -58,7 +59,7 @@ type URL = ByteString
 -- <http://tools.ietf.org/html/rfc2396.html#section-2.4>)
 --
 urlEncode :: ByteString -> URL
-urlEncode = toByteString . urlEncodeBuilder
+urlEncode = Builder.toByteString . urlEncodeBuilder
 {-# INLINE urlEncode #-}
 
 
@@ -71,16 +72,16 @@ urlEncodeBuilder = go mempty
   where
     go !b !s = maybe b' esc (S.uncons y)
       where
-        (x,y)     = S.span (flip HS.member urlEncodeTable) s
-        b'        = b `mappend` fromByteString x
+        (x,y)     = S.span (flip HashSet.member urlEncodeTable) s
+        b'        = b `mappend` Builder.fromByteString x
         esc (c,r) = let b'' = if c == ' '
-                                then b' `mappend` fromWord8 (c2w '+')
+                                then b' `mappend` Builder.fromWord8 (c2w '+')
                                 else b' `mappend` hexd c
                     in go b'' r
 
 
 hexd :: Char -> Builder
-hexd c0 = fromWord8 (c2w '%') `mappend` fromWord8 hi `mappend` fromWord8 low
+hexd c0 = Builder.fromWord8 (c2w '%') `mappend` Builder.fromWord8 hi `mappend` Builder.fromWord8 low
   where
     !c        = c2w c0
     toDigit   = c2w . intToDigit
@@ -91,7 +92,7 @@ hexd c0 = fromWord8 (c2w '%') `mappend` fromWord8 hi `mappend` fromWord8 low
 
 
 urlEncodeTable :: HashSet Char
-urlEncodeTable = HS.fromList $! filter f $! map w2c [0..255]
+urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
   where
     f c = isAlphaNum c || elem c "$-.!*'(),"
 
@@ -178,7 +179,7 @@ post :: URL
     -- ^ Resource to POST to.
     -> ContentType
     -- ^ MIME type of the request body being sent.
-    -> (OutputStream ByteString -> IO α)
+    -> (OutputStream Builder -> IO α)
     -- ^ Handler function to write content to server.
     -> (Response -> InputStream ByteString -> IO α)
     -- ^ Handler function to receive the response from the server.
@@ -211,18 +212,23 @@ post r' t body handler = bracket
 
 
 runBody
-    :: (OutputStream ByteString -> IO α)
-    -> IO ((OutputStream ByteString -> IO ()), Int)
+    :: (OutputStream Builder -> IO α)
+    -> IO ((OutputStream Builder -> IO ()), Int)
 runBody body = do
-    (o1, flush) <- Streams.listOutputStream          -- FIXME WRONG?
+    (o1, getList) <- Streams.listOutputStream
+        :: IO (OutputStream ByteString, IO [ByteString])
     (o2, getCount) <- Streams.countOutput o1
+    o3 <- Streams.builderStream o2
 
-    _ <- body o2
+    _ <- body o3
+    Streams.write (Just Builder.flush) o3
 
     n <- getCount
-    l <- flush
-    i3 <- Streams.fromList l
-    return (inputStreamBody i3, fromIntegral n)
+    l <- getList
+    i1 <- Streams.fromList l
+        :: IO (InputStream ByteString)
+
+    return (inputStreamBody i1, fromIntegral n)
 
 
 --
@@ -254,9 +260,9 @@ postForm r' nvs handler = bracket
     combine :: (ByteString,ByteString) -> ByteString
     combine (n',v') = S.concat [urlEncode n', "=", urlEncode v']
 
-    parameters :: OutputStream ByteString -> IO ()
+    parameters :: OutputStream Builder -> IO ()
     parameters o = do
-        Streams.write (Just b') o
+        Streams.write (Just (Builder.fromByteString b')) o
 
     process :: Connection -> IO ()
     process c = do
@@ -316,7 +322,7 @@ put :: URL
     -- ^ Resource to PUT to.
     -> ContentType
     -- ^ MIME type of the request body being sent.
-    -> (OutputStream ByteString -> IO α)
+    -> (OutputStream Builder -> IO α)
     -- ^ Handler function to write content to server.
     -> (Response -> InputStream ByteString -> IO α)
     -- ^ Handler function to receive the response from the server.

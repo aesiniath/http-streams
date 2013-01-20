@@ -11,6 +11,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
+import Blaze.ByteString.Builder (Builder)
+import qualified Blaze.ByteString.Builder as Builder (toByteString)
 import Control.Exception (bracket)
 import Data.Bits
 import Data.Maybe (fromJust)
@@ -19,7 +21,6 @@ import Network.Socket (SockAddr (..))
 import Network.URI (parseURI)
 import Test.Hspec (Spec, describe, hspec, it)
 import Test.HUnit
-import Blaze.ByteString.Builder (Builder, toByteString)
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -75,7 +76,7 @@ testRequestTermination =
             http GET "/time"
             setAccept "text/plain"
 
-        let e' = toByteString $ composeRequestBytes q
+        let e' = Builder.toByteString $ composeRequestBytes q
         let n = S.length e' - 4
         let (a',b') = S.splitAt n e'
 
@@ -93,7 +94,7 @@ testRequestLineFormat =
             q <- buildRequest c $ do
                 http GET "/time"
 
-            let e' = toByteString $ composeRequestBytes q
+            let e' = Builder.toByteString $ composeRequestBytes q
             let l' = S.takeWhile (/= '\r') e'
 
             assertEqual "Invalid HTTP request line" "GET /time HTTP/1.1" l')
