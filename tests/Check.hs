@@ -238,16 +238,16 @@ testPostWithForm =
     it "POST with form data correctly encodes parameters" $ do
         let url = S.concat ["http://", localhost, "/postbox"]
 
-        postForm url [("name","Kermit"),("role","Stagehand")] handler
+        postForm url [("name","Kermit"),("role","St&gehand")] handler
       where
         handler :: Response -> InputStream ByteString -> IO ()
         handler p i = do
             let code = getStatusCode p
             assertEqual "Expected 201" 201 code
 
-            (i2, getCount) <- Streams.countInput i
-            Streams.skipToEof i2
+            b' <- Streams.readExactly 28 i
+            end <- Streams.atEOF i
+            assertBool "Expected end of stream" end
 
-            len <- getCount
-            assertEqual "Incorrect number of bytes read" 11 len
-            return ()
+            assertEqual "Incorrect URL encoding" "name=Kermit&role=St%26gehand" b'
+

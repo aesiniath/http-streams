@@ -152,7 +152,8 @@ handlePostMethod = do
     modifyResponse $ setHeader "Location" "http://server.example.com/something/788"
     modifyResponse $ setContentType "text/plain"
 
-    writeBS "201 Created"
+    b' <- readRequestBody 1024
+    writeLBS b'
 
 
 handlePutMethod :: Snap ()
