@@ -13,6 +13,7 @@
 
 module Snippet where
 
+import Control.Concurrent (threadDelay)
 import Control.Exception (bracket)
 import Network.Http.Client
 
@@ -32,29 +33,31 @@ import qualified System.IO.Streams as Streams
 
 main :: IO ()
 main = do
-    c <- openConnection "kernel.operationaldynamics.com" 58080
-    putStrLn $ show c
+--  c <- openConnection "kernel.operationaldynamics.com" 58080
+    c <- openConnection "localhost" 80
 
     q1 <- buildRequest c $ do
-        http GET "/time"
+        http GET "/num-1.txt"
         setAccept "text/plain"
 
     q2 <- buildRequest c $ do
-        http GET "/time"
+        http GET "/num-2.txt"
+        setAccept "text/plain"
+
+    q3 <- buildRequest c $ do
+        http GET "/num-3.txt"
         setAccept "text/plain"
 
     sendRequest c q1 emptyBody
     sendRequest c q2 emptyBody
+    sendRequest c q3 emptyBody
 
+    receiveResponse c debugHandler
     receiveResponse c debugHandler
     receiveResponse c debugHandler
 
     closeConnection c
 
-
-printHandler :: Response -> InputStream ByteString -> IO ()
-printHandler _ i = do
-    Streams.connect i stdout
 
 debugHandler :: Response -> InputStream ByteString -> IO ()
 debugHandler p i = do
