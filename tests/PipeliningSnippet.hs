@@ -33,23 +33,24 @@ import qualified System.IO.Streams as Streams
 
 main :: IO ()
 main = do
---  c <- openConnection "kernel.operationaldynamics.com" 58080
-    c <- openConnection "localhost" 80
+    c <- openConnection "kernel.operationaldynamics.com" 58080
 
     q1 <- buildRequest c $ do
-        http GET "/num-1.txt"
+        http GET "/time?id=1"
         setAccept "text/plain"
 
     q2 <- buildRequest c $ do
-        http GET "/num-2.txt"
+        http GET "/time?id=2"
         setAccept "text/plain"
 
     q3 <- buildRequest c $ do
-        http GET "/num-3.txt"
+        http GET "/time?id=3"
         setAccept "text/plain"
 
     sendRequest c q1 emptyBody
+    threadDelay 1000000
     sendRequest c q2 emptyBody
+    threadDelay 1000000
     sendRequest c q3 emptyBody
 
     receiveResponse c debugHandler

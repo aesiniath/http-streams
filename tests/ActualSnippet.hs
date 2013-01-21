@@ -33,7 +33,6 @@ import qualified System.IO.Streams as Streams
 main :: IO ()
 main = do
     c <- openConnection "kernel.operationaldynamics.com" 58080
-    putStrLn $ show c
 
     q <- buildRequest c $ do
         http GET "/time"
