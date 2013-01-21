@@ -21,7 +21,6 @@ endif
 GHC=ghc \
 	-rtsopts \
 	-Wall \
-	-Werror \
 	-fwarn-tabs \
 	-fno-warn-missing-signatures \
 	-fno-warn-unused-binds
