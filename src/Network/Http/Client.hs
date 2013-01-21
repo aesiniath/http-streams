@@ -36,20 +36,27 @@ the underlying API is straight-forward. In particular, constructing the
 'Request' to send is quick and to the point:
 
 @
-\ c <- 'openConnection' \"www.example.com\" 80
+\ main :: IO ()
+\ main = do
+\     c <- 'openConnection' \"www.example.com\" 80
 
-\ q <- 'buildRequest' c $ do
+\     q <- 'buildRequest' c $ do
           'http' GET \"\/\"
           'setAccept' \"text/html\"
 
-\ 'sendRequest' c q 'emptyBody'
+\     'sendRequest' c q 'emptyBody'
 
-\ `receiveResponse` c (\\p i -> do
-\     x <- Streams.read b
-\     S.putStr $ fromMaybe \"\" x)
+\     `receiveResponse` c (\\p i -> do
+\         x <- Streams.read b
+\         S.putStr $ fromMaybe \"\" x)
 
-\ 'closeConnection' c
+\     'closeConnection' c
 @
+
+which would print the first chunk of the response back from the
+server. Obviously in real usage you'll do something more interesting
+with the 'Response' in the handler function, and consume the entire
+response body from the InputStream ByteString.
 
 Because this is all happening in 'IO' (the defining feature of
 @io-streams@!), you can ensure resource cleanup on normal or
@@ -70,11 +77,11 @@ the tedious bits like parsing URLs. For example, to do an HTTP GET and
 stream the response body to stdout, you can simply do:
 
 @
-\ 'get' \"http:\/\/www.example.com\/file.txt\" (\\p i -> Streams.connect i stdout)
+\     'get' \"http:\/\/www.example.com\/file.txt\" (\\p i -> Streams.connect i stdout)
 @
 
 which on the one hand is \"easy\" while on the other exposes the the
-'Response' and 'InputStream' for you to read from. Of course, messing
+'Response' and InputStream for you to read from. Of course, messing
 around with URLs is all a bit inefficient, so if you already have e.g.
 hostname and path, or if you need more control over the request being
 created, then the underlying @http-streams@ API is simple enough to use
@@ -87,7 +94,6 @@ module Network.Http.Client (
     Port,
     Connection,
     openConnection,
-    withConnection,
 
     -- * Building Requests
     -- | You setup a request using the RequestBuilder monad, and
@@ -127,6 +133,7 @@ module Network.Http.Client (
 
     -- * Resource cleanup
     closeConnection,
+    withConnection,
 
     -- * Convenience APIs
     -- | Some simple functions for making requests with useful defaults.

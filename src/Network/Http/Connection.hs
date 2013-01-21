@@ -127,11 +127,21 @@ withConnection mkC =
 --
 -- Usage is as follows:
 --
--- > c <- openConnection "localhost" 80
--- > ...
+-- >     c <- openConnection "localhost" 80
+-- >     ...
+-- >     closeConnection c
 --
--- More likely, you'll use 'withConnection' to wrap the call in order to ensure
--- finalization.
+-- More likely, you'll use 'withConnection' to wrap the call in order
+-- to ensure finalization.
+--
+-- HTTP pipelining is supported; you can reuse the connection to a
+-- web server, but it's up to you to ensure you match the number of
+-- requests sent to the number of responses read, and to process those
+-- responses in order. This is all assuming that the /server/ supports
+-- pipelining; be warned that not all do. Web browsers go to
+-- extraordinary lengths to probe this; you probably only want to do
+-- pipelining under controlled conditions. Otherwise just open a new
+-- connection for subsequent requests.
 --
 openConnection :: Hostname -> Port -> IO Connection
 openConnection h p = do
@@ -161,14 +171,14 @@ openConnection h p = do
 -- HTTP requests like 'GET' that don't send data, use 'emptyBody' as the
 -- output stream:
 --
--- > sendRequest c q emptyBody
+-- >     sendRequest c q emptyBody
 --
 -- For 'PUT' and 'POST' requests, you can use 'fileBody' or
 -- 'inputStreamBody' to send content to the server, or you can work with
 -- the @io-streams@ API directly:
 --
--- > sendRequest c q (\o ->
--- >             Streams.write (Just "Hello World\n") o)
+-- >     sendRequest c q (\o ->
+-- >         Streams.write (Just "Hello World\n") o)
 --
 sendRequest :: Connection -> Request -> (OutputStream Builder -> IO α) -> IO α
 sendRequest c q handler = do
@@ -257,7 +267,7 @@ emptyBody _ = return ()
 --
 -- You use this partially applied:
 --
--- > sendRequest c q (fileBody "/etc/passwd")
+-- >     sendRequest c q (fileBody "/etc/passwd")
 --
 -- Note that the type of @(fileBody \"\/path\/to\/file\")@ is just what
 -- you need for the third argument to 'sendRequest', namely
@@ -282,8 +292,8 @@ fileBody p o = do
 --
 -- Use it curried:
 --
--- > i <- getStreamFromVault                    -- magic, clearly
--- > sendRequest c q (inputStreamBody i)
+-- >     i <- getStreamFromVault                    -- magic, clearly
+-- >     sendRequest c q (inputStreamBody i)
 --
 -- This function maps "Builder.fromByteString" over the input, which will
 -- be efficient if the ByteString chunks are large.
@@ -369,6 +379,8 @@ concatHandler _ i1 = do
 -- > --
 -- >
 -- > doStuff :: Connection -> IO ByteString
+--
+-- or, just use 'withConnection'.
 --
 -- While returning a ByteString is probably the most common use case,
 -- you could conceivably do more processing of the response in 'doStuff'

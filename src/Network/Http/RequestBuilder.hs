@@ -44,11 +44,11 @@ newtype RequestBuilder α = RequestBuilder (State Request α)
 -- | Run a RequestBuilder, yielding a Request object you can use on the
 -- given connection.
 --
--- > q <- buildRequest c $ do
--- >     http POST "/api/v1/messages"
--- >     setContentType "application/json"
--- >     setAccept "text/html"
--- >     setHeader "X-WhoDoneIt" "The Butler"
+-- >     q <- buildRequest c $ do
+-- >         http POST "/api/v1/messages"
+-- >         setContentType "application/json"
+-- >         setAccept "text/html"
+-- >         setHeader "X-WhoDoneIt" "The Butler"
 --
 -- Obviously it's up to you to later actually /send/ JSON data.
 --
@@ -122,9 +122,9 @@ setAccept v = do
 -- | Indicate the content types you are willing to receive in a reply
 -- from the server in order of preference. A call of the form:
 --
--- >     setAccept' [("text/html", 1.0),
--- >                 ("application/xml", 0.8),
--- >                 ("*/*", 0)]
+-- >         setAccept' [("text/html", 1.0),
+-- >                     ("application/xml", 0.8),
+-- >                     ("*/*", 0)]
 --
 -- will result in an @Accept:@ header value of
 -- @text\/html; q=1.0, application\/xml; q=0.8, *\/*; q=0.0@ as you
