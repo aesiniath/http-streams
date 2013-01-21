@@ -98,12 +98,12 @@ makeConnection h c o i =
 -- that needs one, runs the computation, cleaning up the
 -- @Connection@ afterwards.
 --
--- > x <- withConnection (openConnection "s3.example.com" 80) $ (\c -> do
--- >     q <- buildRequest c $ do
--- >         http GET "/bucket42/object/149"
--- >     sendRequest c q emptyBody
--- >     ...
--- >     return "blah")
+-- >     x <- withConnection (openConnection "s3.example.com" 80) $ (\c -> do
+-- >         q <- buildRequest c $ do
+-- >             http GET "/bucket42/object/149"
+-- >         sendRequest c q emptyBody
+-- >         ...
+-- >         return "blah")
 --
 -- which can make the code making an HTTP request a lot more
 -- straight-forward.

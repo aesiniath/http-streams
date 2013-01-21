@@ -143,9 +143,9 @@ path u = S.pack $ concat [uriPath u, uriQuery u, uriFragment u]
 -- The handler function is as for 'receiveResponse', so you can use one
 -- of the supplied convenience handlers if you're in a hurry:
 --
--- > x' <- get "http://www.bbc.co.uk/news/" concatHandler
+-- >     x' <- get "http://www.bbc.co.uk/news/" concatHandler
 --
--- But as ever the disadvantage of doing this is you are not doing
+-- But as ever the disadvantage of doing this is that you're not doing
 -- anything intelligent with the HTTP response status code. Better
 -- to write your own handler function.
 --
@@ -284,10 +284,10 @@ postForm r' nvs handler = bracket
 -- request, specifying the content type and a function to write the
 -- content to the supplied 'OutputStream'. You might see:
 --
--- > put "http://s3.example.com/bucket42/object149" "text/plain" $
--- >     fileBody "hello.txt" $ \p i -> do
--- >         putStr $ show p
--- >         Streams.connect i stdout
+-- >     put "http://s3.example.com/bucket42/object149" "text/plain" $
+-- >         fileBody "hello.txt" $ \p i -> do
+-- >             putStr $ show p
+-- >             Streams.connect i stdout
 --
 -- RFC 2616 requires that we send a @Content-Length@ header, but we
 -- can't figure that out unless we've run through the outbound stream,
@@ -296,20 +296,20 @@ postForm r' nvs handler = bracket
 -- the underlying API directly and you can actually stream the body
 -- instead. For example:
 --
--- > n <- getSize "hello.txt"
+-- >     n <- getSize "hello.txt"
 -- >
--- > c <- openConnection "s3.example.com" 80
+-- >     c <- openConnection "s3.example.com" 80
 -- >
--- > q <- buildRequest c $ do
--- >     http PUT "/bucket42/object149"
--- >     setContentType "text/plain"
--- >     setContentLength n
+-- >     q <- buildRequest c $ do
+-- >         http PUT "/bucket42/object149"
+-- >         setContentType "text/plain"
+-- >         setContentLength n
 -- >
--- > _ <- sendRequest c q (fileBody "hello.txt")
--- > p <- receiveResponse c (\p _ -> return p)
+-- >     _ <- sendRequest c q (fileBody "hello.txt")
+-- >     p <- receiveResponse c (\p _ -> return p)
 -- >
--- > closeConnection c
--- > assert (getStatusCode p == 201)
+-- >     closeConnection c
+-- >     assert (getStatusCode p == 201)
 --
 -- or something to that effect; the key being that you can set the
 -- @Content-Length@ header correctly, and then write the content using
