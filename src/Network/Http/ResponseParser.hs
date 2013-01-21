@@ -21,9 +21,7 @@
 
 module Network.Http.ResponseParser (
     readResponseHeader,
-    readChunkedBody,
-    readFixedLengthBody,
-    readCompressedBody,
+    readResponseBody,
 
     parseResponse
         -- for testing
@@ -32,10 +30,14 @@ module Network.Http.ResponseParser (
 import Prelude hiding (take, takeWhile)
 
 import Control.Applicative
-import Control.Exception (Exception, throw)
+import Control.Exception (Exception, throw, throwIO)
 import Control.Monad (void)
 import Data.Attoparsec.ByteString.Char8
+import Data.Bits (Bits (..))
 import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as S
+import Data.CaseInsensitive (mk)
+import Data.Char (ord)
 import Data.Int (Int64)
 import Data.Typeable (Typeable)
 import System.IO.Streams (InputStream)
@@ -97,6 +99,70 @@ key = do
 
 crlf :: Parser ByteString
 crlf = string "\r\n"
+
+
+---------------------------------------------------------------------
+
+{-
+    Switch on the encoding and compression headers, wrapping the raw
+    InputStream to present the entity body's actual bytes.
+-}
+readResponseBody :: Response -> InputStream ByteString -> IO (InputStream ByteString)
+readResponseBody p i1 = do
+
+    i2 <- case encoding of
+        None        -> readFixedLengthBody i1 n
+        Chunked     -> readChunkedBody i1
+
+    i3 <- case compression of
+        Identity    -> return i2
+        Gzip        -> readCompressedBody i2
+        Deflate     -> throwIO (UnexpectedCompression $ show compression)
+
+    return i3
+  where
+
+    encoding = case header "Transfer-Encoding" of
+        Just x'-> if mk x' == "chunked"
+                    then Chunked
+                    else None
+        Nothing -> None
+
+    compression = case header "Content-Encoding" of
+        Just x'-> if mk x' == "gzip"
+                    then Gzip
+                    else Identity
+        Nothing -> Identity
+
+    header = getHeader p
+
+    n = case header "Content-Length" of
+        Just x' -> readDecimal x' :: Int
+        Nothing -> 0
+
+
+readDecimal :: (Enum a, Num a, Bits a) => ByteString -> a
+readDecimal = S.foldl' f 0
+  where
+    f !cnt !i = cnt * 10 + digitToInt i
+
+    {-# INLINE digitToInt #-}
+    digitToInt :: (Enum a, Num a, Bits a) => Char -> a
+    digitToInt c | c >= '0' && c <= '9' = toEnum $! ord c - ord '0'
+                 | otherwise = error $ "'" ++ [c] ++ "' is not an ascii digit"
+{-# INLINE readDecimal #-}
+
+
+data TransferEncoding = None | Chunked
+
+data ContentEncoding = Identity | Gzip | Deflate
+    deriving (Show)
+
+data UnexpectedCompression = UnexpectedCompression String
+        deriving (Typeable, Show)
+
+instance Exception UnexpectedCompression
+
 
 ---------------------------------------------------------------------
 
