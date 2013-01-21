@@ -49,8 +49,3 @@ main = do
 
     closeConnection c
 
-
-debugHandler :: Response -> InputStream ByteString -> IO ()
-debugHandler p i = do
-    putStr $ show p
-    Streams.connect i stdout

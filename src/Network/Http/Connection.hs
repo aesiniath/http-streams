@@ -25,7 +25,8 @@ module Network.Http.Connection (
     receiveResponse,
     emptyBody,
     fileBody,
-    inputStreamBody
+    inputStreamBody,
+    debugHandler
 ) where
 
 import Blaze.ByteString.Builder (Builder)
@@ -34,7 +35,7 @@ import Control.Exception (bracket)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Network.Socket
-import System.IO.Streams (InputStream, OutputStream)
+import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 import System.IO.Streams.Network (socketToStreams)
 
@@ -288,6 +289,40 @@ inputStreamBody :: InputStream ByteString -> OutputStream Builder -> IO ()
 inputStreamBody i1 o = do
     i2 <- Streams.map Builder.fromByteString i1
     Streams.connect i2 o
+
+
+--
+-- | Print the response headers and response body to @stdout@. You can
+-- use this with 'receiveResponse' or one of the convenience functions
+-- when testing. For example, doing:
+--
+-- >     c <- openConnection "kernel.operationaldynamics.com" 58080
+-- >
+-- >     q <- buildRequest c $ do
+-- >         http GET "/time"
+-- >
+-- >     sendRequest c q emptyBody
+-- >
+-- >     receiveResponse c debugHandler
+--
+-- would print out:
+--
+-- > HTTP/1.1 200 OK
+-- > Transfer-Encoding: chunked
+-- > Content-Type: text/plain
+-- > Vary: Accept-Encoding
+-- > Server: Snap/0.9.2.4
+-- > Content-Encoding: gzip
+-- > Date: Mon, 21 Jan 2013 06:13:37 GMT
+-- >
+-- > Mon 21 Jan 13, 06:13:37.303Z
+--
+-- or thereabouts.
+--
+debugHandler :: Response -> InputStream ByteString -> IO ()
+debugHandler p i = do
+    putStr $ show p
+    Streams.connect i stdout
 
 --
 -- | Shutdown the connection. You need to call this release the
