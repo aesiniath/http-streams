@@ -191,7 +191,11 @@ parseTransferChunk = do
       then return $! throw $! HttpParseException $!
            "parseTransferChunk: chunk of size " ++ show n ++ " too long."
       else if n <= 0
-        then return Nothing
+        then do
+            -- skip trailers and consume final CRLF
+            _ <- many parseHeader
+            void crlf
+            return Nothing
         else do
             -- now safe to take this many bytes.
             !x' <- take n
