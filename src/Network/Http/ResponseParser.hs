@@ -172,10 +172,8 @@ instance Exception UnexpectedCompression
 -}
 readChunkedBody :: InputStream ByteString -> IO (InputStream ByteString)
 readChunkedBody i1 = do
-    i2 <- Streams.makeInputStream action
+    i2 <- Streams.parserToInputStream parseTransferChunk i1
     return i2
-  where
-    action = Streams.parseFromStream parseTransferChunk i1
 
 
 {-
