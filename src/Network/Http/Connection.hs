@@ -26,14 +26,17 @@ module Network.Http.Connection (
     emptyBody,
     fileBody,
     inputStreamBody,
-    debugHandler
+    debugHandler,
+    concatHandler
 ) where
 
 import Blaze.ByteString.Builder (Builder)
-import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString)
+import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString,
+                                                      toByteString)
 import Control.Exception (bracket)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
+import Data.Monoid (mappend, mempty)
 import Network.Socket
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
@@ -323,6 +326,27 @@ debugHandler :: Response -> InputStream ByteString -> IO ()
 debugHandler p i = do
     putStr $ show p
     Streams.connect i stdout
+
+--
+-- | Sometimes you just want the entire response body as a single blob.
+-- You can use @concatHandler@. The usual caveats about allocating a
+-- single object from streaming I/O apply: do not use this if you are
+-- not absolutely certain that the response body will fit in a
+-- reasonable amount of memory.
+--
+-- Note that this function makes no discrimination based on the
+-- response's HTTP status code. You're almost certainly better off
+-- writing your own handler function.
+--
+{-
+    I'd welcome a better name for this function.
+-}
+concatHandler :: Response -> InputStream ByteString -> IO ByteString
+concatHandler _ i1 = do
+    i2 <- Streams.map Builder.fromByteString i1
+    x <- Streams.fold mappend mempty i2
+    return $ Builder.toByteString x
+
 
 --
 -- | Shutdown the connection. You need to call this release the

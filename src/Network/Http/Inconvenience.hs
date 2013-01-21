@@ -140,6 +140,15 @@ path u = S.pack $ concat [uriPath u, uriQuery u, uriFragment u]
 -- | Issue an HTTP GET request and pass the resultant response to the
 -- supplied handler function.
 --
+-- The handler function is as for 'receiveResponse', so you can use one
+-- of the supplied convenience handlers if you're in a hurry:
+--
+-- > x' <- get "http://www.bbc.co.uk/news/" concatHandler
+--
+-- But as ever the disadvantage of doing this is you are not doing
+-- anything intelligent with the HTTP response status code. Better
+-- to write your own handler function.
+--
 get :: URL
     -- ^ Resource to GET from.
     -> (Response -> InputStream ByteString -> IO β)

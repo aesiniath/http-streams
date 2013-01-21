@@ -123,6 +123,7 @@ module Network.Http.Client (
     getStatusMessage,
     getHeader,
     debugHandler,
+    concatHandler,
 
     -- * Resource cleanup
     closeConnection,
