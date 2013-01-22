@@ -214,11 +214,11 @@ sendRequest c q handler = do
 -- For example, if you just wanted to print the first chunk of the
 -- content from the server:
 --
--- > receiveResponse c (\p i -> do
--- >     m <- Streams.read b
--- >     case m of
--- >         Just bytes -> putStr bytes
--- >         Nothing    -> return ())
+-- >     receiveResponse c (\p i -> do
+-- >         m <- Streams.read b
+-- >         case m of
+-- >             Just bytes -> putStr bytes
+-- >             Nothing    -> return ())
 --
 -- Obviously, you can do more sophisticated things with the
 -- 'InputStream', which is the whole point of having an @io-streams@

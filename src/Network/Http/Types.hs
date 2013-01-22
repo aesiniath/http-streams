@@ -194,9 +194,9 @@ getStatusMessage = pStatusMsg
 -- case-insensitive, so you can specify the name to lookup however you
 -- like. If the header is not present @Nothing@ will be returned.
 --
--- > let n = case getHeader p "Content-Length" of
--- >            Just x' -> read x' :: Int
--- >            Nothing -> 0
+-- >     let n = case getHeader p "Content-Length" of
+-- >                Just x' -> read x' :: Int
+-- >                Nothing -> 0
 --
 -- which of course is essentially what goes on inside the library when
 -- @http-streams@ receives a response from the server and has to figure
