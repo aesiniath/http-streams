@@ -67,6 +67,7 @@ suite = do
 
     describe "Convenience API" $ do
         testPostWithForm
+        testPutChunks
 
 
 testRequestTermination =
@@ -229,7 +230,6 @@ assertMaybe prefix m0 =
         Just _  -> assertBool "" True
 
 
-
 testPostWithForm =
     it "POST with form data correctly encodes parameters" $ do
         let url = S.concat ["http://", localhost, "/postbox"]
@@ -239,11 +239,29 @@ testPostWithForm =
         handler :: Response -> InputStream ByteString -> IO ()
         handler p i = do
             let code = getStatusCode p
-            assertEqual "Expected 201" 201 code
+            assertEqual "Expected 200" 200 code
 
             b' <- Streams.readExactly 28 i
             end <- Streams.atEOF i
             assertBool "Expected end of stream" end
 
             assertEqual "Incorrect URL encoding" "name=Kermit&role=St%26gehand" b'
+
+
+testPutChunks =
+    it "PUT correctly chunks entity body" $ do
+        let url = S.concat ["http://", localhost, "/putting"]
+
+        put url "image/jpeg" (fileBody "tests/statler.jpg") handler
+      where
+        handler :: Response -> InputStream ByteString -> IO ()
+        handler p i = do
+            let code = getStatusCode p
+            assertEqual "Expected 201" 201 code
+
+            (Just b') <- Streams.read i
+            end <- Streams.atEOF i
+            assertBool "Expected end of stream" end
+
+            assertEqual "Should have replied with content type." "image/jpeg" b'
 

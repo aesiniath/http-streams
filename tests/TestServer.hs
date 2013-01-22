@@ -64,7 +64,8 @@ routeRequests =
             [("resource/:id", serveResource),
              ("static/:id", method GET serveStatic),
              ("time", serveTime),
-             ("postbox", method POST handlePostMethod)]
+             ("postbox", method POST handlePostMethod),
+             ("putting", method PUT handlePutMethod)]
     <|> serveNotFound
 
 
@@ -147,7 +148,7 @@ handleAsText = do
 handlePostMethod :: Snap ()
 handlePostMethod = do
     setTimeout 5
-    modifyResponse $ setResponseStatus 201 "Created"
+    modifyResponse $ setResponseStatus 200 "OK"
     modifyResponse $ setHeader "Cache-Control" "no-cache"
     modifyResponse $ setHeader "Location" "http://server.example.com/something/788"
     modifyResponse $ setContentType "text/plain"
@@ -159,12 +160,19 @@ handlePostMethod = do
 handlePutMethod :: Snap ()
 handlePutMethod = do
     r <- getRequest
-    let mime0 = getHeader "Content-Type" r
+    let mm = getHeader "Content-Type" r
 
-    case mime0 of
-        Just "application/json" -> updateResource
-        _                       -> serveUnsupported
+    t <- case mm of
+        Just m -> return m
+        _      -> do
+            serveUnsupported
+            return ""
 
+    modifyResponse $ setResponseStatus 201 "Created"
+    modifyResponse $ setContentType t
+
+    b' <- readRequestBody 65536
+    writeBS $ S.pack $ show $ L.length b'
 
 updateResource :: Snap ()
 updateResource = do
