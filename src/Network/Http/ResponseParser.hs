@@ -23,8 +23,9 @@ module Network.Http.ResponseParser (
     readResponseHeader,
     readResponseBody,
 
-    parseResponse
         -- for testing
+    parseResponse,
+    readDecimal
 ) where
 
 import Prelude hiding (take, takeWhile)

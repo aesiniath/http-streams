@@ -60,6 +60,7 @@ buildRequest c mm = do
         qHost = h,
         qMethod = GET,
         qPath = "/",
+        qBody = Empty,
         qHeaders = emptyHeaders
     }
     return $ execState s q
@@ -72,13 +73,24 @@ http :: Method -> ByteString -> RequestBuilder ()
 http m p = do
     q <- get
     let h0 = qHeaders q
-    let h1 = updateHeader h0 "User-Agent" "http-streams/0.1.1"
+    let h1 = updateHeader h0 "User-Agent" "http-streams/0.2.0"
     let h2 = updateHeader h1 "Accept-Encoding" "gzip"
+
+    let e  = case m of
+            GET   -> Empty
+            POST  -> Chunking
+            PUT   -> Chunking
+            _     -> Empty
+
+    let h3 = case e of
+            Chunking    -> updateHeader h2 "Transfer-Encoding" "chunked"
+            _           -> h2
 
     put q {
         qMethod = m,
         qPath = p,
-        qHeaders = h2
+        qBody = e,
+        qHeaders = h3
     }
 
 --
@@ -107,6 +119,22 @@ setHeader k v = do
     let h1 = updateHeader h0 k v
     put q {
         qHeaders = h1
+    }
+
+deleteHeader :: ByteString -> RequestBuilder ()
+deleteHeader k = do
+    q <- get
+    let h0 = qHeaders q
+    let h1 = removeHeader h0 k
+    put q {
+        qHeaders = h1
+    }
+
+setEntityBody :: EntityBody -> RequestBuilder ()
+setEntityBody e = do
+    q <- get
+    put q {
+        qBody = e
     }
 
 --
@@ -152,11 +180,22 @@ setContentType v = do
     setHeader "Content-Type" v
 
 --
--- | Specify the length of the request body, in bytes. This needs to be
--- accurate; and most servers will assume @0@ if you don't send it with
--- a PUT or POST request.
+-- | Specify the length of the request body, in bytes.
+--
+-- RFC 2616 requires that we either send a @Content-Length@ header or
+-- use @Transfer-Encoding: chunked@. If you know the exact size ahead
+-- of time, then call this function; the body content will still be
+-- streamed out by @io-streams@ in more-or-less constant space.
+--
+-- This function is special: in a PUT or POST request, @http-streams@
+-- will assume chunked transfer-encoding /unless/ you specify a content
+-- length here, in which case you need to ensure your body function
+-- writes precisely that many bytes.
+--
 --
 setContentLength :: Int -> RequestBuilder ()
 setContentLength n = do
+    deleteHeader "Transfer-Encoding"
     setHeader "Content-Length" (S.pack $ show n)
+    setEntityBody $ Static n
 

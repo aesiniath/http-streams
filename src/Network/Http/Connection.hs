@@ -33,6 +33,7 @@ module Network.Http.Connection (
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString,
                                                       toByteString)
+import qualified Blaze.ByteString.Builder.HTTP as Builder (chunkedTransferEncoding, chunkedTransferTerminator)
 import Control.Exception (bracket)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
@@ -180,15 +181,38 @@ openConnection h p = do
 -- >     sendRequest c q (\o ->
 -- >         Streams.write (Just "Hello World\n") o)
 --
+{-
+    I would like to enforce the constraints on the Empty and Static
+    cases shown here, but those functions take OutputStream ByteString,
+    and we are of course working in OutputStream Builder by that point.
+-}
 sendRequest :: Connection -> Request -> (OutputStream Builder -> IO α) -> IO α
 sendRequest c q handler = do
     o2 <- Streams.builderStream o1
+
+    -- write the headers
 
     Streams.write (Just msg) o2
 
     -- write the body, if there is one
 
-    x <- handler o2
+    x <- case e of
+        Empty -> do
+--          o3 <- Streams.throwIfConsumesMoreThan 0 o2
+            y <- handler o2
+            return y
+
+        Chunking    -> do
+            o3 <- Streams.contramap Builder.chunkedTransferEncoding o2
+            y  <- handler o3
+            Streams.write (Just Builder.chunkedTransferTerminator) o2
+            return y
+
+        (Static n) -> do
+--          o3 <- Streams.giveBytes (fromIntegral n :: Int64) o2
+            y  <- handler o2
+            return y
+
 
     -- push the stream out by flushing the output buffers
 
@@ -198,12 +222,9 @@ sendRequest c q handler = do
 
   where
     o1 = cOut c
+    e = qBody q
     msg = composeRequestBytes q
 
-{-
-    The bit that builds up the actual string to be transmitted is now
-    in Network.Http.Types
--}
 
 --
 -- | Handle the response coming back from the server. This function
@@ -249,10 +270,6 @@ receiveResponse c handler = do
   where
     i = cIn c
 
-{-
-    Descriminating body encoding and compression has moved to
-    Network.Http.ResponseParser
--}
 
 --
 -- | Use this for the common case of the HTTP methods that only send
@@ -260,6 +277,7 @@ receiveResponse c handler = do
 --
 emptyBody :: OutputStream Builder -> IO ()
 emptyBody _ = return ()
+
 
 --
 -- | Specify a local file to be sent to the server as the body of the
@@ -298,10 +316,15 @@ fileBody p o = do
 -- This function maps "Builder.fromByteString" over the input, which will
 -- be efficient if the ByteString chunks are large.
 --
+{-
+    Note that this has to be 'supply' and not 'connect' as we do not
+    want the end of stream to prematurely terminate the chunked encoding
+    pipeline!
+-}
 inputStreamBody :: InputStream ByteString -> OutputStream Builder -> IO ()
 inputStreamBody i1 o = do
     i2 <- Streams.map Builder.fromByteString i1
-    Streams.connect i2 o
+    Streams.supply i2 o
 
 
 --
@@ -336,6 +359,7 @@ debugHandler :: Response -> InputStream ByteString -> IO ()
 debugHandler p i = do
     putStr $ show p
     Streams.connect i stdout
+
 
 --
 -- | Sometimes you just want the entire response body as a single blob.

@@ -23,7 +23,7 @@ module Network.Http.Inconvenience (
 ) where
 
 import Blaze.ByteString.Builder (Builder)
-import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString,
+import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       fromWord8, toByteString)
 import Control.Exception (bracket)
 import Data.Bits (Bits (..))
@@ -176,9 +176,6 @@ get r' handler = bracket
 --
 -- | Send content to a server via an HTTP POST request. Use this
 -- function if you have an 'OutputStream' with the body content.
--- See the note in 'put' about @Content-Length@ and the request
--- body needing to fit into memory. If that is inconvenient, just use
--- the underlying "Network.Http.Client" API directly.
 --
 post :: URL
     -- ^ Resource to POST to.
@@ -199,37 +196,15 @@ post r' t body handler = bracket
     u = parseURL r'
 
     process c = do
-        (e,n) <- runBody body
-
         q <- buildRequest c $ do
             http POST (path u)
             setAccept "*/*"
             setContentType t
-            setContentLength n
 
-        sendRequest c q e
+        _ <- sendRequest c q body
 
-        receiveResponse c handler
-
-
-runBody
-    :: (OutputStream Builder -> IO α)
-    -> IO ((OutputStream Builder -> IO ()), Int)
-runBody body = do
-    (o1, getList) <- Streams.listOutputStream
-        :: IO (OutputStream ByteString, IO [ByteString])
-    (o2, getCount) <- Streams.countOutput o1
-    o3 <- Streams.builderStream o2
-
-    _ <- body o3
-    Streams.write (Just Builder.flush) o3
-
-    n <- getCount
-    l <- getList
-    i1 <- Streams.fromList l
-        :: IO (InputStream ByteString)
-
-    return (inputStreamBody i1, fromIntegral n)
+        x <- receiveResponse c handler
+        return x
 
 
 --
@@ -266,17 +241,15 @@ postForm r' nvs handler = bracket
         Streams.write (Just (Builder.fromByteString b')) o
 
     process c = do
-        (e,n) <- runBody parameters
-
         q <- buildRequest c $ do
             http POST (path u)
             setAccept "*/*"
             setContentType "application/x-www-form-urlencoded"
-            setContentLength n
 
-        sendRequest c q e
+        _ <- sendRequest c q parameters
 
-        receiveResponse c handler
+        x <- receiveResponse c handler
+        return x
 
 
 --
@@ -284,37 +257,10 @@ postForm r' nvs handler = bracket
 -- request, specifying the content type and a function to write the
 -- content to the supplied 'OutputStream'. You might see:
 --
--- >     put "http://s3.example.com/bucket42/object149" "text/plain" $
--- >         fileBody "hello.txt" $ \p i -> do
+-- >     put "http://s3.example.com/bucket42/object149" "text/plain" 
+-- >         (fileBody "hello.txt") (\p i -> do
 -- >             putStr $ show p
--- >             Streams.connect i stdout
---
--- RFC 2616 requires that we send a @Content-Length@ header, but we
--- can't figure that out unless we've run through the outbound stream,
--- which means the entity body being sent must fit entirely into memory.
--- If you need to send something large and already know the size, use
--- the underlying API directly and you can actually stream the body
--- instead. For example:
---
--- >     n <- getSize "hello.txt"
--- >
--- >     c <- openConnection "s3.example.com" 80
--- >
--- >     q <- buildRequest c $ do
--- >         http PUT "/bucket42/object149"
--- >         setContentType "text/plain"
--- >         setContentLength n
--- >
--- >     _ <- sendRequest c q (fileBody "hello.txt")
--- >     p <- receiveResponse c (\p _ -> return p)
--- >
--- >     closeConnection c
--- >     assert (getStatusCode p == 201)
---
--- or something to that effect; the key being that you can set the
--- @Content-Length@ header correctly, and then write the content using
--- (in this example) 'fileBody' which will let @io-streams@ stream
--- the content in more-or-less constant space.
+-- >             Streams.connect i stdout)
 --
 put :: URL
     -- ^ Resource to PUT to.
@@ -335,16 +281,13 @@ put r' t body handler = bracket
     u = parseURL r'
 
     process c = do
-        (e,n) <- runBody body
-
-        let len = S.pack $ show (n :: Int)
-
         q <- buildRequest c $ do
             http PUT (path u)
             setAccept "*/*"
             setHeader "Content-Type" t
-            setHeader "Content-Length" len
 
-        sendRequest c q e
+        _ <- sendRequest c q body
 
-        receiveResponse c handler
+        x <- receiveResponse c handler
+        return x
+

@@ -13,9 +13,11 @@
 
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (toByteString)
+import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar)
 import Control.Exception (bracket)
 import Data.Bits
 import Data.Maybe (fromJust)
+import Data.Monoid
 import Data.String
 import Network.Socket (SockAddr (..))
 import Network.URI (parseURI)
@@ -38,7 +40,7 @@ import qualified System.IO.Streams as Streams
 
 import Network.Http.Client
 import Network.Http.Connection (Connection (..))
-import Network.Http.ResponseParser (parseResponse)
+import Network.Http.ResponseParser (parseResponse, readDecimal)
 import Network.Http.Types (Request (..), composeRequestBytes, lookupHeader)
 import TestServer (localPort, runTestServer)
 
@@ -66,6 +68,8 @@ suite = do
         testCompressedResponse
 
     describe "Convenience API" $ do
+        testPutChunks
+        testPostChunks
         testPostWithForm
 
 
@@ -230,6 +234,48 @@ assertMaybe prefix m0 =
 
 
 
+testPutChunks =
+    it "PUT correctly chunks known size entity body" $ do
+        let url = S.concat ["http://", localhost, "/size"]
+
+        put url "text/plain" body handler
+      where
+        body :: OutputStream Builder -> IO ()
+        body o = do
+            let x = mconcat $ replicate 33000 (Builder.fromChar 'x')
+            Streams.write (Just x) o
+
+        handler :: Response -> InputStream ByteString -> IO ()
+        handler _ i = do
+            (Just b') <- Streams.read i
+
+            end <- Streams.atEOF i
+            assertBool "Expected end of stream" end
+
+            let size = readDecimal b' :: Int
+            assertEqual "Should have replied with correct file size" 33000 size
+
+
+testPostChunks =
+    it "POST correctly chunks a fileBody" $ do
+        let url = S.concat ["http://", localhost, "/size"]
+
+        post url "image/jpeg" (fileBody "tests/statler.jpg") handler
+      where
+        handler :: Response -> InputStream ByteString -> IO ()
+        handler p i = do
+            let code = getStatusCode p
+            assertEqual "Expected 200 OK" 200 code
+
+            (Just b') <- Streams.read i
+
+            end <- Streams.atEOF i
+            assertBool "Expected end of stream" end
+
+            let size = readDecimal b' :: Int
+            assertEqual "Should have replied with correct file size" 4611 size
+
+
 testPostWithForm =
     it "POST with form data correctly encodes parameters" $ do
         let url = S.concat ["http://", localhost, "/postbox"]
@@ -242,6 +288,7 @@ testPostWithForm =
             assertEqual "Expected 201" 201 code
 
             b' <- Streams.readExactly 28 i
+
             end <- Streams.atEOF i
             assertBool "Expected end of stream" end
 

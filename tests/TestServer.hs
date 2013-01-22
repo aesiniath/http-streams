@@ -64,7 +64,8 @@ routeRequests =
             [("resource/:id", serveResource),
              ("static/:id", method GET serveStatic),
              ("time", serveTime),
-             ("postbox", method POST handlePostMethod)]
+             ("postbox", method POST handlePostMethod),
+             ("size", handleSizeRequest)]
     <|> serveNotFound
 
 
@@ -75,8 +76,6 @@ serveResource = do
     let m = rqMethod r
     case m of
         GET     -> handleGetMethod
-        PUT     -> handlePutMethod
-        POST    -> handlePostMethod
         _       -> serveMethodNotAllowed
 
 
@@ -156,15 +155,22 @@ handlePostMethod = do
     writeLBS b'
 
 
-handlePutMethod :: Snap ()
-handlePutMethod = do
+handleSizeRequest :: Snap ()
+handleSizeRequest = do
     r <- getRequest
-    let mime0 = getHeader "Content-Type" r
+    let mm = getHeader "Content-Type" r
 
-    case mime0 of
-        Just "application/json" -> updateResource
-        _                       -> serveUnsupported
+    t <- case mm of
+        Just m -> return m
+        _      -> do
+            serveUnsupported
+            return ""
 
+    modifyResponse $ setResponseStatus 200 "OK"
+    modifyResponse $ setContentType t
+
+    b' <- readRequestBody 65536
+    writeBS $ S.pack $ show $ L.length b'
 
 updateResource :: Snap ()
 updateResource = do
