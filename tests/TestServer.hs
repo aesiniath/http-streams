@@ -65,7 +65,7 @@ routeRequests =
              ("static/:id", method GET serveStatic),
              ("time", serveTime),
              ("postbox", method POST handlePostMethod),
-             ("putting", method PUT handlePutMethod)]
+             ("size", handleSizeRequest)]
     <|> serveNotFound
 
 
@@ -76,8 +76,6 @@ serveResource = do
     let m = rqMethod r
     case m of
         GET     -> handleGetMethod
-        PUT     -> handlePutMethod
-        POST    -> handlePostMethod
         _       -> serveMethodNotAllowed
 
 
@@ -148,7 +146,7 @@ handleAsText = do
 handlePostMethod :: Snap ()
 handlePostMethod = do
     setTimeout 5
-    modifyResponse $ setResponseStatus 200 "OK"
+    modifyResponse $ setResponseStatus 201 "Created"
     modifyResponse $ setHeader "Cache-Control" "no-cache"
     modifyResponse $ setHeader "Location" "http://server.example.com/something/788"
     modifyResponse $ setContentType "text/plain"
@@ -157,8 +155,8 @@ handlePostMethod = do
     writeLBS b'
 
 
-handlePutMethod :: Snap ()
-handlePutMethod = do
+handleSizeRequest :: Snap ()
+handleSizeRequest = do
     r <- getRequest
     let mm = getHeader "Content-Type" r
 
@@ -168,7 +166,7 @@ handlePutMethod = do
             serveUnsupported
             return ""
 
-    modifyResponse $ setResponseStatus 201 "Created"
+    modifyResponse $ setResponseStatus 200 "OK"
     modifyResponse $ setContentType t
 
     b' <- readRequestBody 65536
