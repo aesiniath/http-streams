@@ -182,10 +182,16 @@ setContentType v = do
 --
 -- | Specify the length of the request body, in bytes.
 --
+-- RFC 2616 requires that we either send a @Content-Length@ header or
+-- use @Transfer-Encoding: chunked@. If you know the exact size ahead
+-- of time, then call this function; the body content will still be
+-- streamed out by @io-streams@ in more-or-less constant space.
+--
 -- This function is special: in a PUT or POST request, @http-streams@
 -- will assume chunked transfer-encoding /unless/ you specify a content
 -- length here, in which case you need to ensure your body function
--- writes exactly that many bytes.
+-- writes precisely that many bytes.
+--
 --
 setContentLength :: Int -> RequestBuilder ()
 setContentLength n = do
