@@ -14,6 +14,7 @@
 
 module Network.Http.Types (
     Request(..),
+    EntityBody(..),
     getHostname,
     Response(..),
     StatusCode,
@@ -24,6 +25,7 @@ module Network.Http.Types (
     Headers,
     emptyHeaders,
     updateHeader,
+    removeHeader,
     buildHeaders,
     lookupHeader,
 
@@ -39,7 +41,8 @@ import qualified Blaze.ByteString.Builder.Char8 as Builder
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.CaseInsensitive (CI, mk, original)
-import Data.HashMap.Strict (HashMap, empty, foldrWithKey, insert, lookup)
+import Data.HashMap.Strict (HashMap, delete, empty, foldrWithKey, insert,
+                            lookup)
 import Data.Monoid (mconcat, mempty)
 import Data.String (IsString, fromString)
 
@@ -96,12 +99,16 @@ data Request
         qMethod  :: Method,
         qHost    :: ByteString,
         qPath    :: ByteString,
+        qBody    :: EntityBody,
         qHeaders :: Headers
     }
 
 instance Show Request where
     show q = {-# SCC "Request.show" #-}
         S.unpack $ S.filter (/= '\r') $ toByteString $ composeRequestBytes q
+
+
+data EntityBody = Empty | Chunking | Static Int
 
 
 {-
@@ -285,6 +292,14 @@ updateHeader x k v =
   where
     result = insert (mk k) v m
     m = unWrap x
+
+removeHeader :: Headers -> ByteString -> Headers
+removeHeader x k =
+    Wrap result
+  where
+    result = delete (mk k) m
+    m = unWrap x
+
 
 {-
     Given a list of key,value pairs, construct a 'Headers' map. This is

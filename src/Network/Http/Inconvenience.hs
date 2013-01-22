@@ -23,7 +23,7 @@ module Network.Http.Inconvenience (
 ) where
 
 import Blaze.ByteString.Builder (Builder)
-import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString,
+import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       fromWord8, toByteString)
 import Control.Exception (bracket)
 import Data.Bits (Bits (..))
@@ -176,9 +176,6 @@ get r' handler = bracket
 --
 -- | Send content to a server via an HTTP POST request. Use this
 -- function if you have an 'OutputStream' with the body content.
--- See the note in 'put' about @Content-Length@ and the request
--- body needing to fit into memory. If that is inconvenient, just use
--- the underlying "Network.Http.Client" API directly.
 --
 post :: URL
     -- ^ Resource to POST to.
@@ -199,37 +196,15 @@ post r' t body handler = bracket
     u = parseURL r'
 
     process c = do
-        (e,n) <- runBody body
-
         q <- buildRequest c $ do
             http POST (path u)
             setAccept "*/*"
             setContentType t
-            setContentLength n
 
-        sendRequest c q e
+        _ <- sendRequest c q body
 
-        receiveResponse c handler
-
-
-runBody
-    :: (OutputStream Builder -> IO α)
-    -> IO ((OutputStream Builder -> IO ()), Int)
-runBody body = do
-    (o1, getList) <- Streams.listOutputStream
-        :: IO (OutputStream ByteString, IO [ByteString])
-    (o2, getCount) <- Streams.countOutput o1
-    o3 <- Streams.builderStream o2
-
-    _ <- body o3
-    Streams.write (Just Builder.flush) o3
-
-    n <- getCount
-    l <- getList
-    i1 <- Streams.fromList l
-        :: IO (InputStream ByteString)
-
-    return (inputStreamBody i1, fromIntegral n)
+        x <- receiveResponse c handler
+        return x
 
 
 --
@@ -266,17 +241,15 @@ postForm r' nvs handler = bracket
         Streams.write (Just (Builder.fromByteString b')) o
 
     process c = do
-        (e,n) <- runBody parameters
-
         q <- buildRequest c $ do
             http POST (path u)
             setAccept "*/*"
             setContentType "application/x-www-form-urlencoded"
-            setContentLength n
 
-        sendRequest c q e
+        _ <- sendRequest c q parameters
 
-        receiveResponse c handler
+        x <- receiveResponse c handler
+        return x
 
 
 --
@@ -335,16 +308,13 @@ put r' t body handler = bracket
     u = parseURL r'
 
     process c = do
-        (e,n) <- runBody body
-
-        let len = S.pack $ show (n :: Int)
-
         q <- buildRequest c $ do
             http PUT (path u)
             setAccept "*/*"
             setHeader "Content-Type" t
-            setHeader "Content-Length" len
 
-        sendRequest c q e
+        _ <- sendRequest c q body
 
-        receiveResponse c handler
+        x <- receiveResponse c handler
+        return x
+
