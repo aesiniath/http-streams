@@ -38,7 +38,7 @@ sampleViaHttpStreams = do
 
     receiveResponse c (\p i ->
         Streams.withFileAsOutput
-            "/tmp/build/http-streams/bench/http-streams.out"
+            "/tmp/http-streams.out"
             WriteMode
             (BlockBuffering Nothing)
             (\o -> do

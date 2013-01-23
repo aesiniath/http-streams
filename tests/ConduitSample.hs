@@ -45,12 +45,14 @@ sampleViaHttpConduit = do
             ver = responseVersion res
             hdr = responseHeaders res
 
-        handle <- liftIO $ openFile "/tmp/build/http-streams/bench/http-conduit.out" WriteMode
+        handle <- liftIO $ openFile "/tmp/http-conduit.out" WriteMode
 
         sourceLbs (joinStatus sta ver) $$ sinkHandle handle
         sourceLbs (join hdr) $$ sinkHandle handle
         responseBody res $$+- sinkHandle handle
         liftIO $ hClose handle
+
+        liftIO $ closeManager manager
 
 
 joinStatus :: Status -> HttpVersion -> L.ByteString
