@@ -34,17 +34,16 @@ sampleViaHttpStreams = do
         http GET "/"
         setAccept "text/html"
 
-    p <- sendRequest c q emptyBody
+    sendRequest c q emptyBody
 
-    b <- receiveResponse c p
-
-    Streams.withFileAsOutput
-        "/tmp/build/http-streams/bench/http-streams.out"
-        WriteMode
-        (BlockBuffering Nothing)
-        (\o -> do
-            Streams.write (Just (S.pack $ show p)) o
-            Streams.connect b o)
+    receiveResponse c (\p i ->
+        Streams.withFileAsOutput
+            "/tmp/build/http-streams/bench/http-streams.out"
+            WriteMode
+            (BlockBuffering Nothing)
+            (\o -> do
+                Streams.write (Just (S.pack $ show p)) o
+                Streams.connect i o))
 
     closeConnection c
 
