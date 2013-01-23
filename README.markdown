@@ -24,12 +24,13 @@ main = do
         http GET "/"
         setAccept "text/html"
     
-    p <- sendRequest c q emptyBody
+    sendRequest c q emptyBody
     
-    b <- receiveResponse c p
-    
-    x <- Streams.read b
-    S.putStr $ fromMaybe "" x
+    receiveResponse c (\p i -> do
+    	putStr $ show p
+
+    	x <- Streams.read i
+    	S.putStr $ fromMaybe "" x)
     
     closeConnection c
 ```
