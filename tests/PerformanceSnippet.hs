@@ -9,8 +9,10 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS -fno-warn-unused-imports #-}
 {-# OPTIONS -fno-warn-unused-do-bind #-}
 
+module Snippet where
 
 import Control.Exception (bracket)
 import Data.Maybe (fromMaybe)
@@ -49,16 +51,9 @@ basic = do
         http GET "/~andrew/talks/TheWebProblem,SolvingItInHaskell/"
         setAccept "text/plain"
     putStr $ show q
-            -- Requests [headers] are terminated by a double newline
-            -- already. We need a better way of emitting debug
-            -- information mid-stream from this library.
 
-    p <- sendRequest c q emptyBody
-    putStr $ show p
+    sendRequest c q emptyBody
 
-    b <- receiveResponse c p
-
-    x <- Streams.read b
-    putStr $ S.unpack $ fromMaybe "" x
+    receiveResponse c debugHandler
 
     closeConnection c

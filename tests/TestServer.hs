@@ -32,6 +32,9 @@ import System.IO (hFlush, hPutStrLn, stderr)
 
 localPort = 56981
 
+main :: IO ()
+main = go
+
 go :: IO ()
 go = httpServe c site
   where
@@ -111,30 +114,16 @@ handleGetMethod = do
     let mime0 = getHeader "Accept" r
 
     case mime0 of
-        Just "application/json" -> handleAsREST
         Just "text/html"        -> handleAsBrowser
         _                       -> handleAsText
 
 
-handleAsREST :: Snap ()
-handleAsREST = do
-    im' <- getParam "id"
-    om' <- getParam "other"
-
-    let e' = S.concat [fromMaybe "" im', fromMaybe "" om']
-    let l  = fromIntegral $ S.length e'
-
-    modifyResponse $ setContentType "application/json"
-    modifyResponse $ setHeader "Cache-Control" "max-age=42"
-    modifyResponse $ setContentLength $ l
-    writeBS e'
-
-
 handleAsBrowser :: Snap ()
 handleAsBrowser = do
+    modifyResponse $ setResponseStatus 200 "OK"
     modifyResponse $ setContentType "text/html; charset=UTF-8"
     modifyResponse $ setHeader "Cache-Control" "max-age=1"
-    sendFile "hello.html"
+    sendFile "tests/hello.html"
 
 
 handleAsText :: Snap ()
