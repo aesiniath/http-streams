@@ -198,8 +198,8 @@ sendRequest c q handler = do
 
     x <- case e of
         Empty -> do
---          o3 <- Streams.throwIfConsumesMoreThan 0 o2
-            y <- handler o2
+            o3 <- Streams.nullOutput
+            y <- handler o3
             return y
 
         Chunking    -> do
