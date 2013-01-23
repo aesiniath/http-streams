@@ -35,7 +35,8 @@ module Network.Http.Types (
 
 import Prelude hiding (lookup)
 
-import Blaze.ByteString.Builder (Builder, copyByteString, fromByteString,
+import Blaze.ByteString.Builder (Builder)
+import qualified Blaze.ByteString.Builder as Builder (copyByteString, fromByteString, copyByteString, fromByteString,
                                  toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder
 import Data.ByteString (ByteString)
@@ -105,7 +106,7 @@ data Request
 
 instance Show Request where
     show q = {-# SCC "Request.show" #-}
-        S.unpack $ S.filter (/= '\r') $ toByteString $ composeRequestBytes q
+        S.unpack $ S.filter (/= '\r') $ Builder.toByteString $ composeRequestBytes q
 
 
 data EntityBody = Empty | Chunking | Static Int
@@ -139,12 +140,12 @@ composeRequestBytes q =
         " ",
         version,
         "\r\n"]
-    method = fromString $ show $ qMethod q
-    uri = copyByteString $ qPath q
+    method = Builder.fromString $ show $ qMethod q
+    uri = Builder.copyByteString $ qPath q
     version = "HTTP/1.1"
 
     hostLine = mconcat ["Host: ", hostname, "\r\n"]
-    hostname = copyByteString $ qHost q
+    hostname = Builder.copyByteString $ qHost q
 
     headerFields = joinHeaders $ unWrap $ qHeaders q
 
@@ -179,7 +180,7 @@ data Response
 
 instance Show Response where
     show p =     {-# SCC "Response.show" #-}
-        S.unpack $ S.filter (/= '\r') $ toByteString $ composeResponseBytes p
+        S.unpack $ S.filter (/= '\r') $ Builder.toByteString $ composeResponseBytes p
 
 --
 -- | Get the HTTP response status code.
@@ -235,7 +236,7 @@ composeResponseBytes p =
         message,
         "\r\n"]
     code = Builder.fromShow $ pStatusCode p
-    message = copyByteString $ pStatusMsg p
+    message = Builder.copyByteString $ pStatusMsg p
     version = "HTTP/1.1"
     headerFields = joinHeaders $ unWrap $ pHeaders p
 
@@ -264,7 +265,7 @@ newtype Headers = Wrap {
 }
 
 instance Show Headers where
-    show x = S.unpack $ S.filter (/= '\r') $ toByteString $ joinHeaders $ unWrap x
+    show x = S.unpack $ S.filter (/= '\r') $ Builder.toByteString $ joinHeaders $ unWrap x
 
 joinHeaders :: HashMap (CI ByteString) ByteString -> Builder
 joinHeaders m = foldrWithKey combine mempty m
@@ -273,8 +274,8 @@ combine :: CI ByteString -> ByteString -> Builder -> Builder
 combine k v acc =
     mconcat [acc, key, ": ", value, "\r\n"]
   where
-    key = copyByteString $ original k
-    value = fromByteString v
+    key = Builder.copyByteString $ original k
+    value = Builder.fromByteString v
 {-# INLINE combine #-}
 
 emptyHeaders :: Headers
