@@ -36,8 +36,11 @@ module Network.Http.Types (
 import Prelude hiding (lookup)
 
 import Blaze.ByteString.Builder (Builder)
-import qualified Blaze.ByteString.Builder as Builder (copyByteString, fromByteString, copyByteString, fromByteString,
-                                 toByteString)
+import qualified Blaze.ByteString.Builder as Builder (copyByteString,
+                                                      copyByteString,
+                                                      fromByteString,
+                                                      fromByteString,
+                                                      toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S

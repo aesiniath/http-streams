@@ -94,7 +94,7 @@ clean-tags:
 	@if [ -f tags ] ; then echo "RM\ttags" ; rm -f tags ; fi
 
 build-tags: $(CORE_SOURCES) $(TEST_SOURCES)
-	@echo "CTAGS\tsrc tests"
+	@echo "CTAGS\ttags"
 	hothasktags $^ > tags
 
 #

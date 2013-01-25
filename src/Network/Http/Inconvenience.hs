@@ -33,6 +33,7 @@ import Data.ByteString.Internal (c2w, w2c)
 import Data.Char (intToDigit, isAlphaNum)
 import Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
+import Data.List (intersperse)
 import Data.Monoid (Monoid (..))
 import GHC.Exts
 import GHC.Word (Word8 (..))
@@ -231,14 +232,14 @@ postForm r' nvs handler = bracket
 
     u = parseURL r'
 
-    b' = S.intercalate "&" $ map combine nvs
+    b = mconcat $ intersperse "&" $ map combine nvs
 
-    combine :: (ByteString,ByteString) -> ByteString
-    combine (n',v') = S.concat [urlEncode n', "=", urlEncode v']
+    combine :: (ByteString,ByteString) -> Builder
+    combine (n',v') = mconcat [urlEncodeBuilder n', "=", urlEncodeBuilder v']
 
     parameters :: OutputStream Builder -> IO ()
     parameters o = do
-        Streams.write (Just (Builder.fromByteString b')) o
+        Streams.write (Just b) o
 
     process c = do
         q <- buildRequest c $ do
@@ -257,7 +258,7 @@ postForm r' nvs handler = bracket
 -- request, specifying the content type and a function to write the
 -- content to the supplied 'OutputStream'. You might see:
 --
--- >     put "http://s3.example.com/bucket42/object149" "text/plain" 
+-- >     put "http://s3.example.com/bucket42/object149" "text/plain"
 -- >         (fileBody "hello.txt") (\p i -> do
 -- >             putStr $ show p
 -- >             Streams.connect i stdout)
