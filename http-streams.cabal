@@ -34,7 +34,7 @@ library
                      blaze-builder,
                      bytestring,
                      case-insensitive,
-                     io-streams >= 0.1 && <0.2,
+                     io-streams >= 1.0 && <1.1,
                      mtl,
                      network,
                      unordered-containers
