@@ -105,7 +105,7 @@ establish :: URI -> IO (Connection)
 establish u =
     case scheme of
         "http:" -> openConnection host port
-        "https:"-> error ("SSL support not yet implemented")
+        "https:"-> openConnectionSSL host ports
         _       -> error ("Unknown URI scheme " ++ scheme)
   where
     scheme = uriScheme u
@@ -118,7 +118,9 @@ establish u =
     port = case uriPort auth of
         ""  -> 80
         _   -> read $ tail $ uriPort auth :: Int
-
+    ports = case uriPort auth of
+        ""  -> 443
+        _   -> read $ tail $ uriPort auth :: Int
 
 
 parseURL :: URL -> URI

@@ -35,6 +35,7 @@ library
                      bytestring,
                      case-insensitive,
                      io-streams >= 1.0 && <1.1,
+                     openssl-streams >= 1.0 && <1.1,
                      mtl,
                      network,
                      unordered-containers
