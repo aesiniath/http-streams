@@ -94,6 +94,7 @@ module Network.Http.Client (
     Port,
     Connection,
     openConnection,
+    openConnectionSSL,
 
     -- * Building Requests
     -- | You setup a request using the RequestBuilder monad, and
