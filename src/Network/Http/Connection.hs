@@ -40,8 +40,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.Monoid (mappend, mempty)
 import Network.Socket
-import OpenSSL (withOpenSSL)
-import OpenSSL.Session (SSL)
+import OpenSSL.Session (SSL, SSLContext)
 import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
@@ -169,15 +168,8 @@ openConnection h p = do
         then S.pack h
         else S.concat [ S.pack h, ":", S.pack $ show p ]
 
-openConnectionSSL :: Hostname -> Port -> IO Connection
-openConnectionSSL h p = withOpenSSL $ do
-    ctx <- SSL.context
-    SSL.contextSetDefaultCiphers ctx
-
-    SSL.contextSetCADirectory ctx "/etc/ssl/certs"
-    SSL.contextSetVerificationMode ctx $
-        SSL.VerifyPeer True True Nothing
-
+openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
+openConnectionSSL ctx h p = do
     s <- socket AF_INET Stream defaultProtocol
 
     is <- getAddrInfo Nothing (Just h) (Just $ show p)
