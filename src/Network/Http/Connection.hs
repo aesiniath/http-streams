@@ -168,6 +168,34 @@ openConnection h p = do
         then S.pack h
         else S.concat [ S.pack h, ":", S.pack $ show p ]
 
+--
+-- | Open a secure connection to a web server.
+--
+-- You need to wrap this (and subsequent code using this connection)
+-- within a call to 'OpenSSL.withOpenSSL':
+--
+-- > import OpenSSL (withOpenSSL)
+-- > import OpenSSL.Session (SSLContext)
+-- > import qualified OpenSSL.Session as SSL
+-- >
+-- > main :: IO ()
+-- > main = withOpenSSL $ do
+-- >     ctx <- baselineContextSSL
+-- >     c <- openConnectionSSL ctx "api.github.com" 443
+-- >     ...
+-- >     closeConnection c
+--
+-- If you want to tune the parameters used in making SSL connections,
+-- manually specify certificates, etc, then setup your own context:
+--
+-- >     ctx <- SSL.context
+-- >     ...
+--
+-- See "OpenSSL.Session".
+--
+-- Crypto is as provided by the system @openssl@ library, as wrapped
+-- by the @HsOpenSSL@ package and @openssl-streams@.
+--
 openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
 openConnectionSSL ctx h p = do
     s <- socket AF_INET Stream defaultProtocol

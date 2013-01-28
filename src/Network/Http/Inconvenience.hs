@@ -10,6 +10,7 @@
 --
 
 {-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE MagicHash         #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -fno-warn-orphans  #-}
@@ -134,11 +135,23 @@ establish u =
 -- to use the default set of ciphers, and to verify certificates using
 -- the system certificates directory.
 --
+-- This is the SSL context used if you make an @\"https:\/\/\"@ request
+-- using one of the convenience functions.
+--
+{-
+    FIXME Is there a standard define set at Haskell CPP time which says
+    which OS you're on? I'm guessing no. People with non-free systems
+    are welcome to contribute a patch.
+-}
 baselineContextSSL :: IO SSLContext
 baselineContextSSL = do
     ctx <- SSL.context
     SSL.contextSetDefaultCiphers ctx
+#if defined __MACOSX__
+#elif defined __WIN32__
+#else
     SSL.contextSetCADirectory ctx "/etc/ssl/certs"
+#endif
     SSL.contextSetVerificationMode ctx $
         SSL.VerifyPeer True True Nothing
     return ctx
