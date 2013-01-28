@@ -20,6 +20,7 @@ module Network.Http.Connection (
     makeConnection,
     withConnection,
     openConnection,
+    openConnectionSSL,
     closeConnection,
     sendRequest,
     receiveResponse,
@@ -39,9 +40,11 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.Monoid (mappend, mempty)
 import Network.Socket
+import OpenSSL.Session (SSL, SSLContext)
+import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
-import System.IO.Streams.Network (socketToStreams)
+import qualified System.IO.Streams.SSL as Streams hiding (connect)
 
 import Network.Http.ResponseParser
 import Network.Http.Types
@@ -152,7 +155,7 @@ openConnection h p = do
 
     let a = addrAddress $ head is
     connect s a
-    (i,o) <- socketToStreams s
+    (i,o) <- Streams.socketToStreams s
     return Connection {
         cHost  = h',
         cClose = close s,
@@ -164,6 +167,64 @@ openConnection h p = do
     h' = if p == 80
         then S.pack h
         else S.concat [ S.pack h, ":", S.pack $ show p ]
+
+--
+-- | Open a secure connection to a web server.
+--
+-- You need to wrap this (and subsequent code using this connection)
+-- within a call to 'OpenSSL.withOpenSSL':
+--
+-- > import OpenSSL (withOpenSSL)
+-- > import OpenSSL.Session (SSLContext)
+-- > import qualified OpenSSL.Session as SSL
+-- >
+-- > main :: IO ()
+-- > main = withOpenSSL $ do
+-- >     ctx <- baselineContextSSL
+-- >     c <- openConnectionSSL ctx "api.github.com" 443
+-- >     ...
+-- >     closeConnection c
+--
+-- If you want to tune the parameters used in making SSL connections,
+-- manually specify certificates, etc, then setup your own context:
+--
+-- >     ctx <- SSL.context
+-- >     ...
+--
+-- See "OpenSSL.Session".
+--
+-- Crypto is as provided by the system @openssl@ library, as wrapped
+-- by the @HsOpenSSL@ package and @openssl-streams@.
+--
+openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
+openConnectionSSL ctx h p = do
+    s <- socket AF_INET Stream defaultProtocol
+
+    is <- getAddrInfo Nothing (Just h) (Just $ show p)
+
+    let a = addrAddress $ head is
+    connect s a
+
+    ssl <- SSL.connection ctx s
+    SSL.connect ssl
+
+    (i,o) <- Streams.sslToStreams ssl
+    return Connection {
+        cHost  = h',
+        cClose = closeSSL s ssl,
+        cOut   = o,
+        cIn    = i
+    }
+  where
+    h' :: ByteString
+    h' = if p == 443
+        then S.pack h
+        else S.concat [ S.pack h, ":", S.pack $ show p ]
+
+closeSSL :: Socket -> SSL -> IO ()
+closeSSL s ssl = do
+    SSL.shutdown ssl SSL.Unidirectional
+    close s
 
 --
 -- | Having composed a 'Request' object with the headers and metadata for

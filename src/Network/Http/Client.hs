@@ -143,7 +143,11 @@ module Network.Http.Client (
     get,
     post,
     postForm,
-    put
+    put,
+
+    -- * Secure connections
+    openConnectionSSL,
+    baselineContextSSL
 ) where
 
 import Network.Http.Connection

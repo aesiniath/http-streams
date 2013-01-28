@@ -10,6 +10,7 @@
 --
 
 {-# LANGUAGE BangPatterns      #-}
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE MagicHash         #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -fno-warn-orphans  #-}
@@ -19,7 +20,8 @@ module Network.Http.Inconvenience (
     get,
     post,
     postForm,
-    put
+    put,
+    baselineContextSSL
 ) where
 
 import Blaze.ByteString.Builder (Builder)
@@ -38,6 +40,9 @@ import Data.Monoid (Monoid (..))
 import GHC.Exts
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), nullURI, parseURI)
+import OpenSSL (withOpenSSL)
+import OpenSSL.Session (SSLContext)
+import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
 
@@ -105,7 +110,9 @@ establish :: URI -> IO (Connection)
 establish u =
     case scheme of
         "http:" -> openConnection host port
-        "https:"-> error ("SSL support not yet implemented")
+        "https:"-> withOpenSSL $ do
+                    ctx <- baselineContextSSL
+                    openConnectionSSL ctx host ports
         _       -> error ("Unknown URI scheme " ++ scheme)
   where
     scheme = uriScheme u
@@ -118,7 +125,36 @@ establish u =
     port = case uriPort auth of
         ""  -> 80
         _   -> read $ tail $ uriPort auth :: Int
+    ports = case uriPort auth of
+        ""  -> 443
+        _   -> read $ tail $ uriPort auth :: Int
 
+
+--
+-- | A basic SSL context suitable for production use. It is configured
+-- to use the default set of ciphers, and to verify certificates using
+-- the system certificates directory.
+--
+-- This is the SSL context used if you make an @\"https:\/\/\"@ request
+-- using one of the convenience functions.
+--
+{-
+    FIXME Is there a standard define set at Haskell CPP time which says
+    which OS you're on? I'm guessing no. People with non-free systems
+    are welcome to contribute a patch.
+-}
+baselineContextSSL :: IO SSLContext
+baselineContextSSL = do
+    ctx <- SSL.context
+    SSL.contextSetDefaultCiphers ctx
+#if defined __MACOSX__
+#elif defined __WIN32__
+#else
+    SSL.contextSetCADirectory ctx "/etc/ssl/certs"
+#endif
+    SSL.contextSetVerificationMode ctx $
+        SSL.VerifyPeer True True Nothing
+    return ctx
 
 
 parseURL :: URL -> URI
