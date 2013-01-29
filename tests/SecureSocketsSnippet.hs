@@ -26,8 +26,6 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Debug.Trace
 import OpenSSL (withOpenSSL)
-import OpenSSL.Session (SSL, SSLContext)
-import qualified OpenSSL.Session as SSL
 import System.Exit (exitSuccess)
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams

@@ -175,8 +175,6 @@ openConnection h p = do
 -- within a call to 'OpenSSL.withOpenSSL':
 --
 -- > import OpenSSL (withOpenSSL)
--- > import OpenSSL.Session (SSLContext)
--- > import qualified OpenSSL.Session as SSL
 -- >
 -- > main :: IO ()
 -- > main = withOpenSSL $ do
@@ -188,6 +186,10 @@ openConnection h p = do
 -- If you want to tune the parameters used in making SSL connections,
 -- manually specify certificates, etc, then setup your own context:
 --
+-- > import OpenSSL.Session (SSLContext)
+-- > import qualified OpenSSL.Session as SSL
+-- >
+-- >     ...
 -- >     ctx <- SSL.context
 -- >     ...
 --

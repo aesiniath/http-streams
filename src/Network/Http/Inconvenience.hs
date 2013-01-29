@@ -133,7 +133,9 @@ establish u =
 --
 -- | A basic SSL context suitable for production use. It is configured
 -- to use the default set of ciphers, and to verify certificates using
--- the system certificates directory.
+-- the system certificates directory. You can use this value as the
+-- starting point and then make further calls to refine the settings if
+-- necessary.
 --
 -- This is the SSL context used if you make an @\"https:\/\/\"@ request
 -- using one of the convenience functions.
@@ -148,7 +150,11 @@ baselineContextSSL = do
     ctx <- SSL.context
     SSL.contextSetDefaultCiphers ctx
 #if defined __MACOSX__
+    error "Defaut SSL certificate directory not specified for Mac OS X"
+    SSL.contextSetCADirectory ctx "FIXME"
 #elif defined __WIN32__
+    error "FIXME, defaut SSL certificate directory not specified for Windows"
+    SSL.contextSetCADirectory ctx "FIXME"
 #else
     SSL.contextSetCADirectory ctx "/etc/ssl/certs"
 #endif
