@@ -62,7 +62,7 @@ buildRequest c mm = do
         qMethod = GET,
         qPath = "/",
         qBody = Empty,
-        qExpect = False,
+        qExpect = Normal,
         qHeaders = emptyHeaders
     }
     return $ execState s q
@@ -139,7 +139,7 @@ setEntityBody e = do
         qBody = e
     }
 
-setExpectMode :: Bool -> RequestBuilder ()
+setExpectMode :: ExpectMode -> RequestBuilder ()
 setExpectMode e = do
     q <- get
     put q {
@@ -228,5 +228,5 @@ setContentLength n = do
 setExpectContinue :: RequestBuilder ()
 setExpectContinue = do
     setHeader "Expect" "100-continue"
-    setExpectMode True
+    setExpectMode Continue
 

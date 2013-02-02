@@ -260,23 +260,23 @@ sendRequest c q handler = do
 
     -- deal with the expect-continue mess
 
-    e2 <- if t
-        then do
+    e2 <- case t of
+        Normal -> do
+            return e
+
+        Continue -> do
             Streams.write (Just Builder.flush) o2
 
             p  <- readResponseHeader i
 
-            putStr $ show p
             case getStatusCode p of
                 100 -> do
                         -- ok to send
                         return e
                 _   -> do
                         -- put the response back
-                        Streams.unRead (Builder.toByteString $ composeResponseBytes p) i
+                        Streams.unRead (rsp p) i
                         return Empty
-        else
-            return e
 
     -- write the body, if there is one
 
@@ -310,6 +310,7 @@ sendRequest c q handler = do
     t = qExpect q
     msg = composeRequestBytes q
     i = cIn c
+    rsp p = Builder.toByteString $ composeResponseBytes p
 
 
 --
