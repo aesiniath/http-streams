@@ -220,10 +220,10 @@ setContentLength n = do
 -- should be 417 if the expectation failed.
 --
 -- Only bother with this if you know the service you're talking to
--- requires clients to send the @Expect:@ header and handles it
--- properly. Most servers don't do any precondition checking, send an
--- intermediate 100 response regardless, and then just read the body
--- anyway, making this a bit of a no-op in most cases.
+-- requires clients to send an @Expect: 100-continue@ header and will
+-- handle it properly. Most servers don't do any precondition checking,
+-- automatically send an intermediate 100 response, and then just read
+-- the body regardless, making this a bit of a no-op in most cases.
 --
 setExpectContinue :: RequestBuilder ()
 setExpectContinue = do
