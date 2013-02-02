@@ -30,7 +30,8 @@ module Network.Http.Types (
     lookupHeader,
 
     -- for testing
-    composeRequestBytes
+    composeRequestBytes,
+    composeResponseBytes
 ) where
 
 import Prelude hiding (lookup)

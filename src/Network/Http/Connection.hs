@@ -260,25 +260,27 @@ sendRequest c q handler = do
 
     -- deal with the expect-continue mess
 
-    if t
-    then do
-        Streams.write (Just Builder.flush) o2
+    e2 <- if t
+        then do
+            Streams.write (Just Builder.flush) o2
 
-        p  <- readResponseHeader i
+            p  <- readResponseHeader i
 
-        putStr $ show p
-        case getStatusCode p of
-            100 -> do
-                    return () -- ok to send
-            417 -> error "FIXME, handle expectation failed"
-            _   -> error "FIXME, now what?"
-    else
-        return ()
-
+            putStr $ show p
+            case getStatusCode p of
+                100 -> do
+                        -- ok to send
+                        return e
+                _   -> do
+                        -- put the response back
+                        Streams.unRead (Builder.toByteString $ composeResponseBytes p) i
+                        return Empty
+        else
+            return e
 
     -- write the body, if there is one
 
-    x <- case e of
+    x <- case e2 of
         Empty -> do
             o3 <- Streams.nullOutput
             y <- handler o3
