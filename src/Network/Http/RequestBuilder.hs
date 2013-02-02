@@ -214,7 +214,16 @@ setContentLength n = do
 --
 -- This function is special: in a PUT or POST request, @http-streams@
 -- will wait for the server to reply with an HTTP/1.1 100 Continue
--- status before sending the entity body.
+-- status before sending the entity body. This is handled internally;
+-- you will get the real response (be it successful 2xx, client error,
+-- 4xx, or server error 5xx) in 'receiveResponse'. In theory, it
+-- should be 417 if the expectation failed.
+--
+-- Only bother with this if you know the service you're talking to
+-- requires clients to send the @Expect:@ header and handles it
+-- properly. Most servers don't do any precondition checking, send an
+-- intermediate 100 response regardless, and then just read the body
+-- anyway, making this a bit of a no-op in most cases.
 --
 setExpectContinue :: RequestBuilder ()
 setExpectContinue = do

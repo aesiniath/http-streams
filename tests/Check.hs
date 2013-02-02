@@ -228,6 +228,12 @@ testCompressedResponse =
             end <- Streams.atEOF i
             assertBool "Expected end of stream" end)
 
+{-
+    This isn't much of a test yet; we really need to test
+    a) that 100 Continue was received b) that it was absorbed
+    c) that body is correct size, and then d) 4xx and 5xx
+    responses are propegated through.
+-}
 
 testExpectationContinue =
     it "sends expectation and handles 100 response" $ do
@@ -241,6 +247,7 @@ testExpectationContinue =
             Streams.write (Just "Hello world\n") o)
 
         receiveResponse c (\p i -> do
+            assertEqual "Incorrect status code" 201 (getStatusCode p)
             x' <- Streams.readExactly 12 i
 
             end <- Streams.atEOF i
