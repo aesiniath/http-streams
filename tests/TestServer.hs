@@ -79,6 +79,7 @@ serveResource = do
     let m = rqMethod r
     case m of
         GET     -> handleGetMethod
+        PUT     -> handlePutWithExpectation
         _       -> serveMethodNotAllowed
 
 
@@ -138,6 +139,17 @@ handlePostMethod = do
     modifyResponse $ setResponseStatus 201 "Created"
     modifyResponse $ setHeader "Cache-Control" "no-cache"
     modifyResponse $ setHeader "Location" "http://server.example.com/something/788"
+    modifyResponse $ setContentType "text/plain"
+
+    b' <- readRequestBody 1024
+    writeLBS b'
+
+
+handlePutWithExpectation :: Snap ()
+handlePutWithExpectation = do
+    setTimeout 5
+    modifyResponse $ setResponseStatus 201 "Created"
+    modifyResponse $ setHeader "Cache-Control" "no-cache"
     modifyResponse $ setContentType "text/plain"
 
     b' <- readRequestBody 1024

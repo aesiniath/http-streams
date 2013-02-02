@@ -10,6 +10,7 @@
 --
 
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DoAndIfThenElse    #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
 module Network.Http.Connection (
@@ -257,9 +258,29 @@ sendRequest c q handler = do
 
     Streams.write (Just msg) o2
 
+    -- deal with the expect-continue mess
+
+    e2 <- if t
+        then do
+            Streams.write (Just Builder.flush) o2
+
+            p  <- readResponseHeader i
+
+            putStr $ show p
+            case getStatusCode p of
+                100 -> do
+                        -- ok to send
+                        return e
+                _   -> do
+                        -- put the response back
+                        Streams.unRead (Builder.toByteString $ composeResponseBytes p) i
+                        return Empty
+        else
+            return e
+
     -- write the body, if there is one
 
-    x <- case e of
+    x <- case e2 of
         Empty -> do
             o3 <- Streams.nullOutput
             y <- handler o3
@@ -271,7 +292,7 @@ sendRequest c q handler = do
             Streams.write (Just Builder.chunkedTransferTerminator) o2
             return y
 
-        (Static n) -> do
+        (Static _) -> do
 --          o3 <- Streams.giveBytes (fromIntegral n :: Int64) o2
             y  <- handler o2
             return y
@@ -286,7 +307,9 @@ sendRequest c q handler = do
   where
     o1 = cOut c
     e = qBody q
+    t = qExpect q
     msg = composeRequestBytes q
+    i = cIn c
 
 
 --

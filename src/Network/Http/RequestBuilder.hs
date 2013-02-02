@@ -22,6 +22,7 @@ module Network.Http.RequestBuilder (
     ContentType,
     setContentType,
     setContentLength,
+    setExpectContinue,
     setHeader
 ) where
 
@@ -61,6 +62,7 @@ buildRequest c mm = do
         qMethod = GET,
         qPath = "/",
         qBody = Empty,
+        qExpect = False,
         qHeaders = emptyHeaders
     }
     return $ execState s q
@@ -137,6 +139,13 @@ setEntityBody e = do
         qBody = e
     }
 
+setExpectMode :: Bool -> RequestBuilder ()
+setExpectMode e = do
+    q <- get
+    put q {
+        qExpect = e
+    }
+
 --
 -- | Indicate the content type you are willing to receive in a reply
 -- from the server. For more complex @Accept:@ headers, use
@@ -198,4 +207,26 @@ setContentLength n = do
     deleteHeader "Transfer-Encoding"
     setHeader "Content-Length" (S.pack $ show n)
     setEntityBody $ Static n
+
+--
+-- | Specify that this request should set the expectation that the
+-- server needs to approve the request before you send it.
+--
+-- This function is special: in a PUT or POST request, @http-streams@
+-- will wait for the server to reply with an HTTP/1.1 100 Continue
+-- status before sending the entity body. This is handled internally;
+-- you will get the real response (be it successful 2xx, client error,
+-- 4xx, or server error 5xx) in 'receiveResponse'. In theory, it
+-- should be 417 if the expectation failed.
+--
+-- Only bother with this if you know the service you're talking to
+-- requires clients to send the @Expect:@ header and handles it
+-- properly. Most servers don't do any precondition checking, send an
+-- intermediate 100 response regardless, and then just read the body
+-- anyway, making this a bit of a no-op in most cases.
+--
+setExpectContinue :: RequestBuilder ()
+setExpectContinue = do
+    setHeader "Expect" "100-continue"
+    setExpectMode True
 

@@ -30,7 +30,8 @@ module Network.Http.Types (
     lookupHeader,
 
     -- for testing
-    composeRequestBytes
+    composeRequestBytes,
+    composeResponseBytes
 ) where
 
 import Prelude hiding (lookup)
@@ -104,6 +105,7 @@ data Request
         qHost    :: ByteString,
         qPath    :: ByteString,
         qBody    :: EntityBody,
+        qExpect  :: Bool,
         qHeaders :: Headers
     }
 
@@ -113,7 +115,6 @@ instance Show Request where
 
 
 data EntityBody = Empty | Chunking | Static Int
-
 
 {-
     The bit that builds up the actual string to be transmitted. This
