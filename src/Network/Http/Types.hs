@@ -104,6 +104,7 @@ data Request
         qHost    :: ByteString,
         qPath    :: ByteString,
         qBody    :: EntityBody,
+        qExpect  :: Bool,
         qHeaders :: Headers
     }
 
@@ -113,7 +114,6 @@ instance Show Request where
 
 
 data EntityBody = Empty | Chunking | Static Int
-
 
 {-
     The bit that builds up the actual string to be transmitted. This

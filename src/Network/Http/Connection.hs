@@ -10,6 +10,7 @@
 --
 
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DoAndIfThenElse    #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
 module Network.Http.Connection (
@@ -257,6 +258,24 @@ sendRequest c q handler = do
 
     Streams.write (Just msg) o2
 
+    -- deal with the expect-continue mess
+
+    if t
+    then do
+        Streams.write (Just Builder.flush) o2
+
+        p  <- readResponseHeader i
+
+        putStr $ show p
+        case getStatusCode p of
+            100 -> do
+                    return () -- ok to send
+            417 -> error "FIXME, handle expectation failed"
+            _   -> error "FIXME, now what?"
+    else
+        return ()
+
+
     -- write the body, if there is one
 
     x <- case e of
@@ -271,7 +290,7 @@ sendRequest c q handler = do
             Streams.write (Just Builder.chunkedTransferTerminator) o2
             return y
 
-        (Static n) -> do
+        (Static _) -> do
 --          o3 <- Streams.giveBytes (fromIntegral n :: Int64) o2
             y  <- handler o2
             return y
@@ -286,7 +305,9 @@ sendRequest c q handler = do
   where
     o1 = cOut c
     e = qBody q
+    t = qExpect q
     msg = composeRequestBytes q
+    i = cIn c
 
 
 --

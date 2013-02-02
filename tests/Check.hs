@@ -67,6 +67,9 @@ suite = do
         testContentLength
         testCompressedResponse
 
+    describe "Expectation handling" $ do
+        testExpectationContinue
+
     describe "Convenience API" $ do
         testPutChunks
         testPostChunks
@@ -171,7 +174,7 @@ testChunkedEncoding =
 
 testContentLength =
     it "recognzies fixed length message" $ do
-        c <- openConnection "127.0.0.1" 56981
+        c <- openConnection "127.0.0.1" localPort
 
         q <- buildRequest c $ do
             http GET "/static/statler.jpg"
@@ -202,7 +205,7 @@ testContentLength =
 -}
 testCompressedResponse =
     it "recognizes gzip content encoding and decompresses" $ do
-        c <- openConnection "127.0.0.1" 56981
+        c <- openConnection "127.0.0.1" localPort
 
         q <- buildRequest c $ do
             http GET "/static/hello.html"
@@ -224,6 +227,28 @@ testCompressedResponse =
 
             end <- Streams.atEOF i
             assertBool "Expected end of stream" end)
+
+
+testExpectationContinue =
+    it "sends expectation and handles 100 response" $ do
+        c <- openConnection "127.0.0.1" localPort
+
+        q <- buildRequest c $ do
+            http PUT "/resource/x149"
+            setExpectContinue
+
+        sendRequest c q (\o -> do
+            Streams.write (Just "Hello world\n") o)
+
+        receiveResponse c (\p i -> do
+            x' <- Streams.readExactly 12 i
+
+            end <- Streams.atEOF i
+            assertBool "Expected end of stream" end
+
+            assertEqual "Incorrect body" "Hello world\n" x')
+
+        closeConnection c
 
 
 assertMaybe :: String -> Maybe a -> Assertion
