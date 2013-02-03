@@ -26,10 +26,16 @@ module Network.Http.RequestBuilder (
     setHeader
 ) where
 
+import Blaze.ByteString.Builder (Builder)
+import qualified Blaze.ByteString.Builder as Builder (fromByteString,
+                                                      toByteString)
+import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow)
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import Data.ByteString.Char8 ()
 import qualified Data.ByteString.Char8 as S
+import Data.List (intersperse)
+import Data.Monoid (mconcat)
 
 import Network.Http.Connection
 import Network.Http.Types
@@ -72,7 +78,7 @@ buildRequest c mm = do
 -- | Begin constructing a Request, starting with the request line.
 --
 http :: Method -> ByteString -> RequestBuilder ()
-http m p = do
+http m p' = do
     q <- get
     let h0 = qHeaders q
     let h1 = updateHeader h0 "User-Agent" "http-streams/0.2.0"
@@ -90,7 +96,7 @@ http m p = do
 
     put q {
         qMethod = m,
-        qPath = p,
+        qPath = p',
         qBody = e,
         qHeaders = h3
     }
@@ -102,10 +108,10 @@ http m p = do
 -- you connected to when calling 'Network.Http.Connection.openConnection'.
 --
 setHostname :: ByteString -> RequestBuilder ()
-setHostname v = do
+setHostname v' = do
     q <- get
     put q {
-        qHost = v
+        qHost = v'
     }
 
 --
@@ -115,23 +121,24 @@ setHostname v = do
 -- stronger types.
 --
 setHeader :: ByteString -> ByteString -> RequestBuilder ()
-setHeader k v = do
+setHeader k' v' = do
     q <- get
     let h0 = qHeaders q
-    let h1 = updateHeader h0 k v
+    let h1 = updateHeader h0 k' v'
     put q {
         qHeaders = h1
     }
 
 deleteHeader :: ByteString -> RequestBuilder ()
-deleteHeader k = do
+deleteHeader k' = do
     q <- get
     let h0 = qHeaders q
-    let h1 = removeHeader h0 k
+    let h1 = removeHeader h0 k'
     put q {
         qHeaders = h1
     }
 
+{-# INLINE setEntityBody #-}
 setEntityBody :: EntityBody -> RequestBuilder ()
 setEntityBody e = do
     q <- get
@@ -139,6 +146,7 @@ setEntityBody e = do
         qBody = e
     }
 
+{-# INLINE setExpectMode #-}
 setExpectMode :: ExpectMode -> RequestBuilder ()
 setExpectMode e = do
     q <- get
@@ -152,8 +160,8 @@ setExpectMode e = do
 -- 'setAccept''.
 --
 setAccept :: ByteString -> RequestBuilder ()
-setAccept v = do
-    setHeader "Accept" v
+setAccept v' = do
+    setHeader "Accept" v'
 
 --
 -- | Indicate the content types you are willing to receive in a reply
@@ -169,13 +177,17 @@ setAccept v = do
 --
 setAccept' :: [(ByteString,Float)] -> RequestBuilder ()
 setAccept' tqs = do
-    setHeader "Accept" v
+    setHeader "Accept" v'
   where
-    v = S.intercalate ", " $ map format tqs
+    v' = Builder.toByteString v
+    v  = mconcat $ intersperse ", " $ map format tqs
 
-    format :: (ByteString,Float) -> ByteString
-    format (t,q) =
-        S.concat [t, "; q=", S.pack $ show q]
+    format :: (ByteString,Float) -> Builder
+    format (t',q) =
+        mconcat
+           [Builder.fromByteString t',
+            "; q=",
+            Builder.fromShow q]
 
 type ContentType = ByteString
 
@@ -185,8 +197,8 @@ type ContentType = ByteString
 -- this if 'PUT'ting.
 --
 setContentType :: ContentType -> RequestBuilder ()
-setContentType v = do
-    setHeader "Content-Type" v
+setContentType v' = do
+    setHeader "Content-Type" v'
 
 --
 -- | Specify the length of the request body, in bytes.
