@@ -74,6 +74,7 @@ suite = do
         testPutChunks
         testPostChunks
         testPostWithForm
+        testGetRedirects
 
 
 testRequestTermination =
@@ -265,7 +266,6 @@ assertMaybe prefix m0 =
         Just _  -> assertBool "" True
 
 
-
 testPutChunks =
     it "PUT correctly chunks known size entity body" $ do
         let url = S.concat ["http://", localhost, "/size"]
@@ -325,4 +325,22 @@ testPostWithForm =
             assertBool "Expected end of stream" end
 
             assertEqual "Incorrect URL encoding" "name=Kermit&role=St%26gehand" b'
+
+
+testGetRedirects =
+    it "GET to a 307 results in a redirect" $ do
+        let url = S.concat ["http://", localhost, "/bounce"]
+
+        get url handler
+      where
+        handler :: Response -> InputStream ByteString -> IO ()
+        handler p i1 = do
+            let code = getStatusCode p
+            assertEqual "Should have been final code" 200 code
+
+            (i2, getCount) <- Streams.countInput i1
+            Streams.skipToEof i2
+
+            len <- getCount
+            assertEqual "Incorrect number of bytes read" 29 len
 

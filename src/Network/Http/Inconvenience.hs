@@ -192,6 +192,8 @@ path u = S.pack $ concat [uriPath u, uriQuery u, uriFragment u]
 -- anything intelligent with the HTTP response status code. Better
 -- to write your own handler function.
 --
+-- This convenience function will follow redirects.
+--
 get :: URL
     -- ^ Resource to GET from.
     -> (Response -> InputStream ByteString -> IO β)
@@ -214,7 +216,31 @@ get r' handler = bracket
 
         sendRequest c q emptyBody
 
-        receiveResponse c handler
+        receiveResponse c (wrapRedirect handler)
+
+{-
+    This is fairly simple-minded. Improvements could include reusing
+    the Connection if the redirect is to the same host, and closing
+    the original Connection if it is not. These are both things that
+    can be done manually if using the full API, so not worried about
+    it for now. There should also probably be a limit on recursion
+    depth, but whatever.
+-}
+
+wrapRedirect
+    :: (Response -> InputStream ByteString -> IO β)
+    -> Response
+    -> InputStream ByteString
+    -> IO β
+wrapRedirect handler p i = do
+    if (s == 301 || s == 302 || s == 303 || s == 307)
+        then case lm of
+                Just l  -> get l handler
+                Nothing -> handler p i
+        else handler p i
+  where
+    s  = getStatusCode p
+    lm = getHeader p "Location"
 
 --
 -- | Send content to a server via an HTTP POST request. Use this
