@@ -67,6 +67,7 @@ routeRequests =
             [("resource/:id", serveResource),
              ("static/:id", method GET serveStatic),
              ("time", serveTime),
+             ("bounce", serveRedirect),
              ("postbox", method POST handlePostMethod),
              ("size", handleSizeRequest)]
     <|> serveNotFound
@@ -131,6 +132,13 @@ handleAsText :: Snap ()
 handleAsText = do
     modifyResponse $ setContentType "text/plain"
     writeBS "Sounds good to me\n"
+
+
+serveRedirect :: Snap ()
+serveRedirect = do
+    modifyResponse $ setResponseStatus 307 "Temporary Redirect"
+    modifyResponse $ setHeader "Cache-Control" "no-cache"
+    modifyResponse $ setHeader "Location" "http://localhost:56981/time"
 
 
 handlePostMethod :: Snap ()
