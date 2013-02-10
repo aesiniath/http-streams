@@ -18,7 +18,6 @@ import Network.Http.Client
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
-import System.IO (BufferMode (..), IOMode (..))
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 
@@ -39,8 +38,6 @@ sampleViaHttpStreams = do
     receiveResponse c (\p i ->
         Streams.withFileAsOutput
             "/tmp/http-streams.out"
-            WriteMode
-            (BlockBuffering Nothing)
             (\o -> do
                 Streams.write (Just (S.pack $ show p)) o
                 Streams.connect i o))
