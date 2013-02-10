@@ -41,8 +41,8 @@ the underlying API is straight-forward. In particular, constructing the
 \     c <- 'openConnection' \"www.example.com\" 80
 
 \     q <- 'buildRequest' c $ do
-          'http' GET \"\/\"
-          'setAccept' \"text/html\"
+\         'http' GET \"\/\"
+\         'setAccept' \"text/html\"
 
 \     'sendRequest' c q 'emptyBody'
 

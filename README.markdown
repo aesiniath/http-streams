@@ -39,10 +39,17 @@ There are also convenience functions for the common case of making
 straight-forward GET and POST requests; for instance:
 
 ```haskell
-    get "http://www.example.com/" (\p i -> Streams.connect i stdout)
+    get "http://www.example.com/" (\_ i -> Streams.connect i stdout)
 ```
 
-will _{ahem}_ stream the response body to stdout.
+will _{ahem}_ stream the response body to stdout. Perhaps more
+interesting (though less streams-oriented), is simply gettnig the
+response as a ByteString:
+
+```haskell
+    x' <- get "http://www.example.com/" concatHandler
+```
+
 
 See the documentation in
 [Network.Http.Client](http://research.operationaldynamics.com/projects/http-streams/doc/Network-Http-Client.html)
