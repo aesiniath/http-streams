@@ -14,7 +14,8 @@
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar)
-import Control.Exception (bracket)
+import Control.Exception (Exception, bracket, handleJust)
+import Control.Monad (guard)
 import Data.Bits
 import Data.Maybe (fromJust)
 import Data.Monoid
@@ -40,6 +41,7 @@ import qualified System.IO.Streams as Streams
 
 import Network.Http.Client
 import Network.Http.Connection (Connection (..))
+import Network.Http.Inconvenience (TooManyRedirects (..))
 import Network.Http.ResponseParser (parseResponse, readDecimal)
 import Network.Http.Types (Request (..), composeRequestBytes, lookupHeader)
 import TestServer (localPort, runTestServer)
@@ -75,6 +77,7 @@ suite = do
         testPostChunks
         testPostWithForm
         testGetRedirects
+        testExcessiveRedirects
 
 
 testRequestTermination =
@@ -343,4 +346,29 @@ testGetRedirects =
 
             len <- getCount
             assertEqual "Incorrect number of bytes read" 29 len
+
+
+testExcessiveRedirects =
+    it "too many redirects result in an exception" $ do
+        let url = S.concat ["http://", localhost, "/loop"]
+
+        assertException (TooManyRedirects 5) (get url handler)
+      where
+        handler :: Response -> InputStream ByteString -> IO ()
+        handler _ _ = do
+            assertBool "Should have thrown exception before getting here" False
+
+
+{-
+    From http://stackoverflow.com/questions/6147435/is-there-an-assertexception-in-any-of-the-haskell-test-frameworks
+    because "although HUnit doesn't have this, it's easy to write your
+    own". Uh huh. Surely there's an easier way to do this.
+-}
+
+assertException :: (Exception e, Eq e) => e -> IO a -> IO ()
+assertException ex action =
+    handleJust isWanted (const $ return ()) $ do
+        _ <- action
+        assertFailure $ "Expected exception: " ++ show ex
+  where isWanted = guard . (== ex)
 

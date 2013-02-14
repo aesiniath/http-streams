@@ -9,10 +9,11 @@
 -- the BSD licence.
 --
 
-{-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE CPP               #-}
-{-# LANGUAGE MagicHash         #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE CPP                #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE MagicHash          #-}
+{-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS -fno-warn-orphans  #-}
 
 module Network.Http.Inconvenience (
@@ -21,13 +22,16 @@ module Network.Http.Inconvenience (
     post,
     postForm,
     put,
-    baselineContextSSL
+    baselineContextSSL,
+
+    -- for testing
+    TooManyRedirects(..)
 ) where
 
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       fromWord8, toByteString)
-import Control.Exception (bracket)
+import Control.Exception (Exception, bracket, throw)
 import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S
@@ -37,6 +41,7 @@ import Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
 import Data.List (intersperse)
 import Data.Monoid (Monoid (..))
+import Data.Typeable (Typeable)
 import GHC.Exts
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), nullURI, parseURI)
@@ -199,7 +204,9 @@ get :: URL
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-get r' handler = bracket
+get r' handler = getN 0 r' handler
+
+getN n r' handler = bracket
     (establish u)
     (teardown)
     (process)
@@ -216,31 +223,41 @@ get r' handler = bracket
 
         sendRequest c q emptyBody
 
-        receiveResponse c (wrapRedirect handler)
+        receiveResponse c (wrapRedirect n handler)
+
 
 {-
     This is fairly simple-minded. Improvements could include reusing
     the Connection if the redirect is to the same host, and closing
     the original Connection if it is not. These are both things that
     can be done manually if using the full API, so not worried about
-    it for now. There should also probably be a limit on recursion
-    depth, but whatever.
+    it for now.
 -}
 
 wrapRedirect
-    :: (Response -> InputStream ByteString -> IO β)
+    :: Int
+    -> (Response -> InputStream ByteString -> IO β)
     -> Response
     -> InputStream ByteString
     -> IO β
-wrapRedirect handler p i = do
+wrapRedirect n handler p i = do
     if (s == 301 || s == 302 || s == 303 || s == 307)
         then case lm of
-                Just l  -> get l handler
+                Just l  -> getN n' l handler
                 Nothing -> handler p i
         else handler p i
   where
     s  = getStatusCode p
     lm = getHeader p "Location"
+    !n' = if n < 5
+            then n + 1
+            else throw $! TooManyRedirects n
+
+data TooManyRedirects = TooManyRedirects Int
+        deriving (Typeable, Show, Eq)
+
+instance Exception TooManyRedirects
+
 
 --
 -- | Send content to a server via an HTTP POST request. Use this

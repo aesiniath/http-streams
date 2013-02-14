@@ -30,6 +30,7 @@ import Snap.Http.Server
 import Snap.Util.FileServe
 import System.IO (hFlush, hPutStrLn, stderr)
 
+localHost = "127.0.0.1" :: ByteString
 localPort = 56981
 
 main :: IO ()
@@ -40,8 +41,8 @@ go = httpServe c site
   where
     c = setAccessLog ConfigNoLog $
         setErrorLog ConfigNoLog $
-        setHostname "127.0.0.1" $
-        setBind "127.0.0.1" $
+        setHostname localHost $
+        setBind localHost $
         setPort localPort $
         setVerbose False emptyConfig
 
@@ -68,6 +69,7 @@ routeRequests =
              ("static/:id", method GET serveStatic),
              ("time", serveTime),
              ("bounce", serveRedirect),
+             ("loop", serveRedirectEndlessly),
              ("postbox", method POST handlePostMethod),
              ("size", handleSizeRequest)]
     <|> serveNotFound
@@ -138,7 +140,17 @@ serveRedirect :: Snap ()
 serveRedirect = do
     modifyResponse $ setResponseStatus 307 "Temporary Redirect"
     modifyResponse $ setHeader "Cache-Control" "no-cache"
-    modifyResponse $ setHeader "Location" "http://localhost:56981/time"
+    modifyResponse $ setHeader "Location" r'
+  where
+    r' = S.concat ["http://", localHost, ":", S.pack $ show $ localPort, "/time"]
+
+serveRedirectEndlessly :: Snap ()
+serveRedirectEndlessly = do
+    modifyResponse $ setResponseStatus 307 "Temporary Redirect"
+    modifyResponse $ setHeader "Cache-Control" "no-cache"
+    modifyResponse $ setHeader "Location" r'
+  where
+    r' = S.concat ["http://", localHost, ":", S.pack $ show $ localPort, "/loop"]
 
 
 handlePostMethod :: Snap ()
