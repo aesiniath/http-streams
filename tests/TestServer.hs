@@ -138,7 +138,7 @@ serveRedirect :: Snap ()
 serveRedirect = do
     modifyResponse $ setResponseStatus 307 "Temporary Redirect"
     modifyResponse $ setHeader "Cache-Control" "no-cache"
-    modifyResponse $ setHeader "Location" "http://localhost:56981/time"
+    modifyResponse $ setHeader "Location" "http://127.0.0.1:56981/time"
 
 
 handlePostMethod :: Snap ()

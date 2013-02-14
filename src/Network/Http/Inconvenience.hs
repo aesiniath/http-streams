@@ -39,7 +39,7 @@ import Data.List (intersperse)
 import Data.Monoid (Monoid (..))
 import GHC.Exts
 import GHC.Word (Word8 (..))
-import Network.URI (URI (..), URIAuth (..), nullURI, parseURI)
+import Network.URI (URI (..), URIAuth (..), parseURI)
 import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
