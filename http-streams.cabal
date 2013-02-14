@@ -39,6 +39,7 @@ library
                      openssl-streams >= 1.0 && <1.1,
                      mtl,
                      network,
+                     text,
                      unordered-containers
 
   hs-source-dirs:    src

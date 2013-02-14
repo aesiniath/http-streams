@@ -40,12 +40,13 @@ import Data.Char (intToDigit, isAlphaNum)
 import Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
 import Data.List (intersperse)
-import Data.Monoid (Monoid (..))
+import Data.Monoid (Monoid (..), (<>))
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Data.Typeable (Typeable)
 import GHC.Exts
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), parseURI)
-import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream)
@@ -78,15 +79,16 @@ urlEncodeBuilder = go mempty
     go !b !s = maybe b' esc (S.uncons y)
       where
         (x,y)     = S.span (flip HashSet.member urlEncodeTable) s
-        b'        = b `mappend` Builder.fromByteString x
+        b'        = b <> Builder.fromByteString x
         esc (c,r) = let b'' = if c == ' '
-                                then b' `mappend` Builder.fromWord8 (c2w '+')
-                                else b' `mappend` hexd c
+                                then b' <> Builder.fromWord8 (c2w '+')
+                                else b' <> hexd c
                     in go b'' r
 
 
 hexd :: Char -> Builder
-hexd c0 = Builder.fromWord8 (c2w '%') `mappend` Builder.fromWord8 hi `mappend` Builder.fromWord8 low
+hexd c0 = Builder.fromWord8 (c2w '%') <> Builder.fromWord8 hi
+                                      <> Builder.fromWord8 low
   where
     !c        = c2w c0
     toDigit   = c2w . intToDigit
@@ -109,9 +111,9 @@ establish :: URI -> IO (Connection)
 establish u =
     case scheme of
         "http:" -> openConnection host port
-        "https:"-> withOpenSSL $ do
-                    ctx <- baselineContextSSL
-                    openConnectionSSL ctx host ports
+        "https:"-> do
+                     ctx <- baselineContextSSL
+                     openConnectionSSL ctx host ports
         _       -> error ("Unknown URI scheme " ++ scheme)
   where
     scheme = uriScheme u
@@ -129,36 +131,38 @@ establish u =
         _   -> read $ tail $ uriPort auth :: Int
 
 
+-- | Creates a basic SSL context. This is the SSL context used if you make an
+-- @\"https:\/\/\"@ request using one of the convenience functions. It
+-- configures OpenSSL to use the default set of ciphers.
 --
--- | A basic SSL context suitable for production use. It is configured
--- to use the default set of ciphers, and to verify certificates using
--- the system certificates directory. You can use this value as the
--- starting point and then make further calls to refine the settings if
--- necessary.
---
--- This is the SSL context used if you make an @\"https:\/\/\"@ request
--- using one of the convenience functions.
+-- On Linux systems, this function also configures OpenSSL to verify
+-- certificates using the system certificates stored in @\/etc\/ssl\/certs@. On
+-- other systems, /no certificate validation is performed/ by the generated
+-- 'SSLContext' because there is no canonical place to find the set of system
+-- certificates. When using this library in a context where certificate
+-- validation would be important on a non-Linux system, you are encouraged to
+-- install the system certificates somewhere and create your own 'SSLContext'.
 --
 {-
-    FIXME Is there a standard define set at Haskell CPP time which says
-    which OS you're on? I'm guessing no. People with non-free systems
-    are welcome to contribute a patch.
+
+FIXME I'm not sure this is ideal from an API standpoint -- if you're on Mac or
+Windows, you don't get to use the convenience functions? We should probably
+offer convenience functions that accept an SSLContext. Also, creating an
+SSLContext is really expensive; if we're making a lot of https requests, we'll
+want to reuse it.
+
 -}
 baselineContextSSL :: IO SSLContext
 baselineContextSSL = do
     ctx <- SSL.context
     SSL.contextSetDefaultCiphers ctx
-#if defined __MACOSX__
-    error "Defaut SSL certificate directory not specified for Mac OS X"
-    SSL.contextSetCADirectory ctx "FIXME"
-#elif defined __WIN32__
-    error "FIXME, defaut SSL certificate directory not specified for Windows"
-    SSL.contextSetCADirectory ctx "FIXME"
-#else
+#if defined __LINUX__
     SSL.contextSetCADirectory ctx "/etc/ssl/certs"
-#endif
     SSL.contextSetVerificationMode ctx $
         SSL.VerifyPeer True True Nothing
+#else
+    SSL.contextSetVerificationMode ctx SSL.VerifyNone
+#endif
     return ctx
 
 
@@ -168,12 +172,13 @@ parseURL r' =
         Just u  -> u
         Nothing -> error ("Can't parse URI " ++ r)
   where
-    r = S.unpack r'
+    r = T.unpack $ T.decodeUtf8 r'
 
 ------------------------------------------------------------------------------
 
 path :: URI -> ByteString
-path u = S.pack $ concat [uriPath u, uriQuery u, uriFragment u]
+path u = T.encodeUtf8 $! T.pack
+                      $! concat [uriPath u, uriQuery u, uriFragment u]
 
 
 ------------------------------------------------------------------------------
@@ -191,7 +196,10 @@ path u = S.pack $ concat [uriPath u, uriQuery u, uriFragment u]
 -- anything intelligent with the HTTP response status code. Better
 -- to write your own handler function.
 --
--- This convenience function will follow redirects.
+-- This convenience function will follow redirects. Note that if you use this
+-- function to retrieve an @https@ URL, you /must/ wrap your @main@ function
+-- with 'OpenSSL.withOpenSSL' to initialize the OpenSSL library, or your
+-- program will segfault.
 --
 get :: URL
     -- ^ Resource to GET from.
@@ -257,6 +265,10 @@ instance Exception TooManyRedirects
 -- | Send content to a server via an HTTP POST request. Use this
 -- function if you have an 'OutputStream' with the body content.
 --
+-- Note that if you use this function to retrieve an @https@ URL, you /must/
+-- wrap your @main@ function with 'OpenSSL.withOpenSSL' to initialize the
+-- OpenSSL library, or your program will segfault.
+--
 post :: URL
     -- ^ Resource to POST to.
     -> ContentType
@@ -293,6 +305,10 @@ post r' t body handler = bracket
 -- @application/x-www-form-urlencoded@ as this is what conventional
 -- web browsers send on form submission. If you want to POST to a URL
 -- with an arbitrary Content-Type, use 'post'.
+--
+-- Note that if you use this function to retrieve an @https@ URL, you /must/
+-- wrap your @main@ function with 'OpenSSL.withOpenSSL' to initialize the
+-- OpenSSL library, or your program will segfault.
 --
 postForm
     :: URL
@@ -342,6 +358,10 @@ postForm r' nvs handler = bracket
 -- >             putStr $ show p
 -- >             Streams.connect i stdout)
 --
+-- Note that if you use this function to retrieve an @https@ URL, you /must/
+-- wrap your @main@ function with 'OpenSSL.withOpenSSL' to initialize the
+-- OpenSSL library, or your program will segfault.
+--
 put :: URL
     -- ^ Resource to PUT to.
     -> ContentType
@@ -370,4 +390,3 @@ put r' t body handler = bracket
 
         x <- receiveResponse c handler
         return x
-
