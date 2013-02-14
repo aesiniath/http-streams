@@ -50,12 +50,6 @@ import Network.Http.Connection
 import Network.Http.RequestBuilder
 import Network.Http.Types
 
-
-instance IsString URI where
-    fromString str = case parseURI str of
-        Just uri    -> uri
-        Nothing     -> nullURI
-
 type URL = ByteString
 
 ------------------------------------------------------------------------------
