@@ -32,6 +32,7 @@ import Test.HUnit
 import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, parseTest)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
+import Debug.Trace
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
 
@@ -80,6 +81,7 @@ suite = do
         testGetRedirects
         testExcessiveRedirects
         testGeneralHandler
+        testEstablishConnection
 
 
 testRequestTermination =
@@ -380,3 +382,19 @@ testGeneralHandler =
         let url = S.concat ["http://", localhost, "/booga"]
 
         assertException (HttpClientError 404 "Not Found") (get url concatHandler')
+
+testEstablishConnection =
+    it "public establish function behaves correctly" $ do
+        let url = S.concat ["http://", localhost, "/static/statler.jpg"]
+
+        x' <- withConnection (establishConnection url) $ (\c -> do
+            q <- buildRequest c $ do
+                http GET "/static/statler.jpg"
+                    -- TODO be nice if we could replace that with 'url';
+                    -- fix the routeRequests function in TestServer maybe?
+            sendRequest c q emptyBody
+            receiveResponse c concatHandler')
+
+        let len = S.length x'
+        assertEqual "Incorrect number of bytes read" 4611 len
+

@@ -18,6 +18,7 @@
 
 module Network.Http.Inconvenience (
     URL,
+    establishConnection,
     get,
     post,
     postForm,
@@ -107,6 +108,31 @@ urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
 
 
 ------------------------------------------------------------------------------
+
+--
+-- | Given a URL, work out whether it is normal or secure, and then
+-- open the connecction to the webserver including setting the
+-- appropriate default port if one was not specified in the URL. This
+-- is what powers the convenience API, but you may find it useful in
+-- composing your own similar functions.
+--
+-- For example (on the assumption that your server behaves when given
+-- an absolute URI as the request path), this will open a connection
+-- to server @www.example.com@ port @443@ and request @/photo.jpg@:
+--
+-- >     let url = "https://www.example.com/photo.jpg"
+-- >
+-- >     c <- establishConnection url
+-- >     q <- buildRequest c $ do
+-- >         http GET url
+-- >     ...
+--
+establishConnection :: URL -> IO (Connection)
+establishConnection r' = do
+    establish u
+  where
+    u = parseURL r'
+{-# INLINE establishConnection #-}
 
 
 establish :: URI -> IO (Connection)

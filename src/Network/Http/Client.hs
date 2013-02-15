@@ -155,7 +155,8 @@ module Network.Http.Client (
 
     -- * Secure connections
     openConnectionSSL,
-    baselineContextSSL
+    baselineContextSSL,
+    establishConnection
 ) where
 
 import Network.Http.Connection
