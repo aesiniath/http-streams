@@ -393,7 +393,7 @@ generalPurposeHandler p i =
   where
     s = getStatusCode p
     m = getStatusMessage p
-        
+
 data HttpClientError = HttpClientError Int ByteString
         deriving (Typeable, Eq)
 
@@ -401,5 +401,12 @@ instance Exception HttpClientError
 
 instance Show HttpClientError where
     show (HttpClientError s msg) = Prelude.show s ++ " " ++ S.unpack msg
+
+{-
+    There should probably also be HttpServerError and maybe even
+    HttpRedirectError, but as these names don't seem to show up
+    in the runtime when raised, not sure it's worth the bother. It's
+    not like we'd want anything different in their Show instances.
+-}
 
 

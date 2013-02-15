@@ -41,7 +41,8 @@ import qualified System.IO.Streams as Streams
 
 import Network.Http.Client
 import Network.Http.Connection (Connection (..))
-import Network.Http.Inconvenience (TooManyRedirects (..), HttpClientError(..))
+import Network.Http.Inconvenience (HttpClientError (..),
+                                   TooManyRedirects (..))
 import Network.Http.ResponseParser (parseResponse, readDecimal)
 import Network.Http.Types (Request (..), composeRequestBytes, lookupHeader)
 import TestServer (localPort, runTestServer)
