@@ -53,17 +53,19 @@ main = do
     runTestServer
     hspec suite
 
-localhost = S.pack ("127.0.0.1:" ++ show localPort)
+{- FIXME verify works again on IPv6? -}
+localhost = S.pack ("localhost:" ++ show localPort)
 
 suite :: Spec
 suite = do
+    describe "Opening a connection" $ do
+        testConnectionHost
+
     describe "Request, when serialized" $ do
         testRequestLineFormat
         testRequestTermination
         testAcceptHeaderFormat
-
-    describe "Opening a connection" $ do
-        testConnectionHost
+        testEnsureHostField
 
     describe "Parsing responses" $ do
         testResponseParser1
@@ -138,20 +140,35 @@ testAcceptHeaderFormat =
         assertEqual "Failed to format header" "text/html; q=1.0, */*; q=0.0" a
 
 
-testConnectionHost =
+testConnectionHost = do
     it "properly caches hostname and port" $ do
-        bracket (openConnection "127.0.0.1" localPort)
+        bracket (openConnection "localhost" localPort)
                 closeConnection
                 (\c -> do
                      let h' = cHost c
                      assertEqual "Host value needs to be name, not IP address"
                                  localhost h')
 
-        -- this code throws a connect exception on my system... why port 80?
-        -- bracket (openConnection "127.0.0.1" 80) (closeConnection) (\c -> do
-        --     let h' = cHost c
-        --     assertEqual "Host value needs to be name only, given port 80"
-        --         "127.0.0.1" h')}
+
+{-
+    Incidentally, Host is *not* stored in the Headers map, but is a field
+    of the Request object.
+-}
+testEnsureHostField =
+    it "has a properly formatted Host header" $ do
+        c <- fakeConnection
+        q1 <- buildRequest c $ do
+            http GET "/hello.txt"
+
+        let h1 = qHost q1
+        assertEqual "Incorrect Host header" "www.example.com" h1
+
+        q2 <- buildRequest c $ do
+            http GET "/hello.txt"
+            setHostname "other.example.com"
+
+        let h2 = qHost q2
+        assertEqual "Incorrect Host header" "other.example.com" h2
 
 
 testResponseParser1 =
