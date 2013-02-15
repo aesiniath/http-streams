@@ -87,6 +87,7 @@ test-suite           check
                      snap-server     >= 0.9    && < 1.0,
                      system-fileio   >= 0.3.10 && < 0.4,
                      system-filepath >= 0.4.1  && < 0.5,
+                     text,
                      unordered-containers
 
   hs-source-dirs:    src,tests
