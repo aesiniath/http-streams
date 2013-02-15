@@ -131,6 +131,7 @@ module Network.Http.Client (
     getHeader,
     debugHandler,
     concatHandler,
+    generalPurposeHandler,
 
     -- * Resource cleanup
     closeConnection,

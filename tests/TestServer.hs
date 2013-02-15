@@ -218,7 +218,8 @@ serveNotFound :: Snap a
 serveNotFound = do
     modifyResponse $ setResponseStatus 404 "Not Found"
     modifyResponse $ setHeader "Content-Type" "text/html"
-    sendFile "content/404.html"
+
+    writeBS "404 Not Found"
 
     r <- getResponse
     finishWith r

@@ -41,7 +41,7 @@ import qualified System.IO.Streams as Streams
 
 import Network.Http.Client
 import Network.Http.Connection (Connection (..))
-import Network.Http.Inconvenience (TooManyRedirects (..))
+import Network.Http.Inconvenience (TooManyRedirects (..), HttpClientError(..))
 import Network.Http.ResponseParser (parseResponse, readDecimal)
 import Network.Http.Types (Request (..), composeRequestBytes, lookupHeader)
 import TestServer (localPort, runTestServer)
@@ -78,6 +78,7 @@ suite = do
         testPostWithForm
         testGetRedirects
         testExcessiveRedirects
+        testGeneralHandler
 
 
 testRequestTermination =
@@ -331,7 +332,7 @@ testPostWithForm =
 
 
 testGetRedirects =
-    it "GET to a 307 results in a redirect" $ do
+    it "GET internal handler follows redirect on 307" $ do
         let url = S.concat ["http://", localhost, "/bounce"]
 
         get url handler
@@ -372,3 +373,9 @@ assertException ex action =
         assertFailure $ "Expected exception: " ++ show ex
   where isWanted = guard . (== ex)
 
+
+testGeneralHandler =
+    it "GET with general purpose handler throws exception on 404" $ do
+        let url = S.concat ["http://", localhost, "/booga"]
+
+        assertException (HttpClientError 404) (get url generalPurposeHandler)

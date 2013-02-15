@@ -23,9 +23,11 @@ module Network.Http.Inconvenience (
     postForm,
     put,
     baselineContextSSL,
+    generalPurposeHandler,
 
     -- for testing
-    TooManyRedirects(..)
+    TooManyRedirects(..),
+    HttpClientError(..)
 ) where
 
 import Blaze.ByteString.Builder (Builder)
@@ -376,4 +378,27 @@ put r' t body handler = bracket
 
         x <- receiveResponse c handler
         return x
+
+
+--
+-- | A special case of 'concatHandler', this function will return the
+-- response body, but will throw an exception if the response status
+-- code was other than @2xx@.
+--
+generalPurposeHandler :: Response -> InputStream ByteString -> IO ByteString
+generalPurposeHandler p i =
+    if s >= 300
+        then throw (HttpClientError s)
+        else concatHandler p i
+  where
+    s = getStatusCode p
+        
+data HttpClientError = HttpClientError Int
+        deriving (Typeable, Eq)
+
+instance Exception HttpClientError
+
+instance Show HttpClientError where
+    show (HttpClientError s) = Prelude.show s
+
 
