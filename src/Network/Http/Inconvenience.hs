@@ -224,7 +224,7 @@ path u = T.encodeUtf8 $! T.pack
 -- anything intelligent with the HTTP response status code. If you want
 -- an exception raised in the event of a non @2xx@ response, you can use:
 --
--- >     x' <- get "http://www.bbc.co.uk/news/" generalPurposeHandler
+-- >     x' <- get "http://www.bbc.co.uk/news/" concatHandler'
 --
 -- but for anything more refined you'll find it easy to simply write
 -- your own handler function.
