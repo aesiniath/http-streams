@@ -39,6 +39,7 @@ library
                      openssl-streams >= 1.0 && <1.1,
                      mtl,
                      network,
+                     text,
                      unordered-containers
 
   hs-source-dirs:    src
@@ -69,6 +70,7 @@ test-suite           check
 
   build-depends:
                      HUnit,
+                     HsOpenSSL,
                      MonadCatchIO-transformers,
                      attoparsec,
                      base,
@@ -79,6 +81,7 @@ test-suite           check
                      io-streams,
                      mtl,
                      network,
+                     openssl-streams >= 1.0 && <1.1,
                      snap            >= 0.9    && < 1.0,
                      snap-core       >= 0.9    && < 1.0,
                      snap-server     >= 0.9    && < 1.0,

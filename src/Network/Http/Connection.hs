@@ -150,11 +150,11 @@ withConnection mkC =
 --
 openConnection :: Hostname -> Port -> IO Connection
 openConnection h p = do
-    s <- socket AF_INET Stream defaultProtocol
+    is <- getAddrInfo (Just hints) (Just h) (Just $ show p)
+    let addr = head is
+    let a = addrAddress addr
+    s <- socket (addrFamily addr) Stream defaultProtocol
 
-    is <- getAddrInfo Nothing (Just h) (Just $ show p)
-
-    let a = addrAddress $ head is
     connect s a
     (i,o) <- Streams.socketToStreams s
     return Connection {
@@ -164,6 +164,7 @@ openConnection h p = do
         cIn    = i
     }
   where
+    hints = defaultHints {addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]}
     h' :: ByteString
     h' = if p == 80
         then S.pack h
