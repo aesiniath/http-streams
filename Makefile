@@ -9,7 +9,8 @@ MAKEFLAGS=-s -R
 REDIRECT=>/dev/null
 endif
 
-.PHONY: all dirs test build-core junk build-junk tests build-tests benchmarks build-benchmarks
+.PHONY: all dirs test build-core junk build-junk tests build-tests benchmarks \
+	build-benchmarks build-tags
 
 #
 # Disable missing signatures so that you can actually do development and
@@ -160,7 +161,7 @@ clean:
 	-rm -rf $(BUILDDIR)
 	-rm -rf dist/
 
-doc: dist/setup-config
+doc: dist/setup-config build-tags
 	@echo "CABAL\thaddock"
 	cabal haddock
 
