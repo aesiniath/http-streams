@@ -388,17 +388,18 @@ put r' t body handler = bracket
 generalPurposeHandler :: Response -> InputStream ByteString -> IO ByteString
 generalPurposeHandler p i =
     if s >= 300
-        then throw (HttpClientError s)
+        then throw (HttpClientError s m)
         else concatHandler p i
   where
     s = getStatusCode p
+    m = getStatusMessage p
         
-data HttpClientError = HttpClientError Int
+data HttpClientError = HttpClientError Int ByteString
         deriving (Typeable, Eq)
 
 instance Exception HttpClientError
 
 instance Show HttpClientError where
-    show (HttpClientError s) = Prelude.show s
+    show (HttpClientError s msg) = Prelude.show s ++ " " ++ S.unpack msg
 
 
