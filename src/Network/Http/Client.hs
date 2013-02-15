@@ -141,6 +141,12 @@ module Network.Http.Client (
     -- | Some simple functions for making requests with useful defaults.
     -- There's no @head@ function for the usual reason of needing to
     -- avoid collision with @Prelude@.
+    --
+    -- These convenience functions work with @http@ and @https@, but
+    --  note that if you retrieve an @https@ URL, you /must/ wrap your
+    -- @main@ function with 'OpenSSL.withOpenSSL' to initialize the
+    -- native openssl library code.
+    --
     URL,
     get,
     post,

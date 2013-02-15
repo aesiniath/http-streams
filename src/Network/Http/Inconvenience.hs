@@ -133,37 +133,36 @@ establish u =
         _   -> read $ tail $ uriPort auth :: Int
 
 
+--
 -- | Creates a basic SSL context. This is the SSL context used if you make an
 -- @\"https:\/\/\"@ request using one of the convenience functions. It
 -- configures OpenSSL to use the default set of ciphers.
 --
 -- On Linux systems, this function also configures OpenSSL to verify
--- certificates using the system certificates stored in @\/etc\/ssl\/certs@. On
--- other systems, /no certificate validation is performed/ by the generated
--- 'SSLContext' because there is no canonical place to find the set of system
--- certificates. When using this library in a context where certificate
--- validation would be important on a non-Linux system, you are encouraged to
--- install the system certificates somewhere and create your own 'SSLContext'.
+-- certificates using the system certificates stored in @\/etc\/ssl\/certs@.
+--
+-- On other systems, /no certificate validation is performed/ by the
+-- generated 'SSLContext' because there is no canonical place to find
+-- the set of system certificates. When using this library on a
+-- non-Linux system, you are encouraged to install the system
+-- certificates somewhere and create your own 'SSLContext'.
 --
 {-
-
-FIXME I'm not sure this is ideal from an API standpoint -- if you're on Mac or
-Windows, you don't get to use the convenience functions? We should probably
-offer convenience functions that accept an SSLContext. Also, creating an
-SSLContext is really expensive; if we're making a lot of https requests, we'll
-want to reuse it.
-
+    People on non-free systems are encouraged to file a bug with their vendor
+    to get certificates installed somewhere discoverable.
 -}
 baselineContextSSL :: IO SSLContext
 baselineContextSSL = do
     ctx <- SSL.context
     SSL.contextSetDefaultCiphers ctx
-#if defined __LINUX__
+#if defined __MACOSX__
+    SSL.contextSetVerificationMode ctx SSL.VerifyNone
+#elif defined __WIN32__
+    SSL.contextSetVerificationMode ctx SSL.VerifyNone
+#else
     SSL.contextSetCADirectory ctx "/etc/ssl/certs"
     SSL.contextSetVerificationMode ctx $
         SSL.VerifyPeer True True Nothing
-#else
-    SSL.contextSetVerificationMode ctx SSL.VerifyNone
 #endif
     return ctx
 
@@ -187,7 +186,8 @@ path u = T.encodeUtf8 $! T.pack
 
 --
 -- | Issue an HTTP GET request and pass the resultant response to the
--- supplied handler function.
+-- supplied handler function. This code will silently follow redirects,
+-- to a maximum depth of 5 hops.
 --
 -- The handler function is as for 'receiveResponse', so you can use one
 -- of the supplied convenience handlers if you're in a hurry:
@@ -195,13 +195,13 @@ path u = T.encodeUtf8 $! T.pack
 -- >     x' <- get "http://www.bbc.co.uk/news/" concatHandler
 --
 -- But as ever the disadvantage of doing this is that you're not doing
--- anything intelligent with the HTTP response status code. Better
--- to write your own handler function.
+-- anything intelligent with the HTTP response status code. If you want
+-- an exception raised in the event of a non @2xx@ response, you can use:
 --
--- This convenience function will follow redirects. Note that if you use this
--- function to retrieve an @https@ URL, you /must/ wrap your @main@ function
--- with 'OpenSSL.withOpenSSL' to initialize the OpenSSL library, or your
--- program will segfault.
+-- >     x' <- get "http://www.bbc.co.uk/news/" generalPurposeHandler
+--
+-- but for anything more refined you'll find it easy to simply write
+-- your own handler function.
 --
 get :: URL
     -- ^ Resource to GET from.
@@ -267,10 +267,6 @@ instance Exception TooManyRedirects
 -- | Send content to a server via an HTTP POST request. Use this
 -- function if you have an 'OutputStream' with the body content.
 --
--- Note that if you use this function to retrieve an @https@ URL, you /must/
--- wrap your @main@ function with 'OpenSSL.withOpenSSL' to initialize the
--- OpenSSL library, or your program will segfault.
---
 post :: URL
     -- ^ Resource to POST to.
     -> ContentType
@@ -307,10 +303,6 @@ post r' t body handler = bracket
 -- @application/x-www-form-urlencoded@ as this is what conventional
 -- web browsers send on form submission. If you want to POST to a URL
 -- with an arbitrary Content-Type, use 'post'.
---
--- Note that if you use this function to retrieve an @https@ URL, you /must/
--- wrap your @main@ function with 'OpenSSL.withOpenSSL' to initialize the
--- OpenSSL library, or your program will segfault.
 --
 postForm
     :: URL
@@ -360,10 +352,6 @@ postForm r' nvs handler = bracket
 -- >             putStr $ show p
 -- >             Streams.connect i stdout)
 --
--- Note that if you use this function to retrieve an @https@ URL, you /must/
--- wrap your @main@ function with 'OpenSSL.withOpenSSL' to initialize the
--- OpenSSL library, or your program will segfault.
---
 put :: URL
     -- ^ Resource to PUT to.
     -> ContentType
@@ -396,8 +384,8 @@ put r' t body handler = bracket
 
 --
 -- | A special case of 'concatHandler', this function will return the
--- response body, but will throw an exception if the response status
--- code was other than @2xx@.
+-- entire response body as a single ByteString, but will throw an
+-- exception if the response status code was other than @2xx@.
 --
 generalPurposeHandler :: Response -> InputStream ByteString -> IO ByteString
 generalPurposeHandler p i =
