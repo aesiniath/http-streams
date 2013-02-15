@@ -30,19 +30,24 @@ import Snap.Http.Server
 import Snap.Util.FileServe
 import System.IO (hFlush, hPutStrLn, stderr)
 
-localHost = "127.0.0.1" :: ByteString
+localHost = "localhost" :: ByteString
 localPort = 56981
 
 main :: IO ()
 main = go
 
+{-
+    Binding the port to the IPv4 localhost appears to settle the problem
+    of localhost resolving ambigiously. If that doesn't work, we can
+    comment out the setBind and the resultant 0.0.0.0 does seem to work.
+-}
 go :: IO ()
 go = httpServe c site
   where
     c = setAccessLog ConfigNoLog $
         setErrorLog ConfigNoLog $
         setHostname localHost $
-        setBind localHost $
+        setBind "127.0.0.1" $
         setPort localPort $
         setVerbose False emptyConfig
 

@@ -22,9 +22,9 @@ import Data.Monoid
 import Data.String
 import Network.Socket (SockAddr (..))
 import Network.URI (parseURI)
+import OpenSSL (withOpenSSL)
 import Test.Hspec (Spec, describe, hspec, it)
 import Test.HUnit
-import OpenSSL (withOpenSSL)
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -54,7 +54,6 @@ main = withOpenSSL $ do
     runTestServer
     hspec suite
 
-{- FIXME verify works again on IPv6? -}
 localhost = S.pack ("localhost:" ++ show localPort)
 
 suite :: Spec
@@ -140,6 +139,12 @@ testAcceptHeaderFormat =
         let (Just a) = lookupHeader h "Accept"
         assertEqual "Failed to format header" "text/html; q=1.0, */*; q=0.0" a
 
+{-
+    FIXME this should indeed be a hostname and not an address; that's the
+    point of the test (to make sure the address lookup doesn't leak into the
+    Host: field). Works on an Ubuntu Quantal system with IPv6 enabled; is IPv6
+    still causing problems for you?
+-}
 
 testConnectionHost = do
     it "properly caches hostname and port" $ do
@@ -148,7 +153,9 @@ testConnectionHost = do
                 (\c -> do
                      let h' = cHost c
                      assertEqual "Host value needs to be name, not IP address"
-                                 localhost h')
+                                 expected h')
+  where
+    expected = S.pack $ "localhost:" ++ show localPort
 
 
 {-
