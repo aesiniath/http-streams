@@ -24,6 +24,7 @@ import Network.Socket (SockAddr (..))
 import Network.URI (parseURI)
 import Test.Hspec (Spec, describe, hspec, it)
 import Test.HUnit
+import OpenSSL (withOpenSSL)
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -49,7 +50,7 @@ import Network.Http.Types (Request (..), composeRequestBytes, lookupHeader)
 import TestServer (localPort, runTestServer)
 
 main :: IO ()
-main = do
+main = withOpenSSL $ do
     runTestServer
     hspec suite
 
@@ -404,7 +405,8 @@ testEstablishConnection =
     it "public establish function behaves correctly" $ do
         let url = S.concat ["http://", localhost, "/static/statler.jpg"]
 
-        x' <- withConnection (establishConnection url) $ (\c -> do
+        ctx <- baselineContextSSL
+        x' <- withConnection (establishConnection ctx url) $ (\c -> do
             q <- buildRequest c $ do
                 http GET "/static/statler.jpg"
                     -- TODO be nice if we could replace that with 'url';

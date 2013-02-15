@@ -122,26 +122,26 @@ urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
 --
 -- >     let url = "https://www.example.com/photo.jpg"
 -- >
--- >     c <- establishConnection url
+-- >     ctx <- baselineContextSSL
+-- >
+-- >     c <- establishConnection ctx url
 -- >     q <- buildRequest c $ do
 -- >         http GET url
 -- >     ...
 --
-establishConnection :: URL -> IO (Connection)
-establishConnection r' = do
-    establish u
+establishConnection :: SSLContext -> URL -> IO (Connection)
+establishConnection ctx r' = do
+    establish ctx u
   where
     u = parseURL r'
 {-# INLINE establishConnection #-}
 
 
-establish :: URI -> IO (Connection)
-establish u =
+establish :: SSLContext -> URI -> IO (Connection)
+establish ctx u =
     case scheme of
         "http:" -> openConnection host port
-        "https:"-> do
-                     ctx <- baselineContextSSL
-                     openConnectionSSL ctx host ports
+        "https:"-> openConnectionSSL ctx host ports
         _       -> error ("Unknown URI scheme " ++ scheme)
   where
     scheme = uriScheme u
@@ -236,10 +236,12 @@ get :: URL
     -> IO β
 get r' handler = getN 0 r' handler
 
-getN n r' handler = bracket
-    (establish u)
-    (teardown)
-    (process)
+getN n r' handler = do
+    ctx <- baselineContextSSL
+    bracket
+        (establish ctx u)
+        (teardown)
+        (process)
 
   where
     teardown = closeConnection
@@ -302,10 +304,12 @@ post :: URL
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-post r' t body handler = bracket
-    (establish u)
-    (teardown)
-    (process)
+post r' t body handler = do
+    ctx <- baselineContextSSL
+    bracket
+        (establish ctx u)
+        (teardown)
+        (process)
   where
     teardown = closeConnection
 
@@ -338,10 +342,12 @@ postForm
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-postForm r' nvs handler = bracket
-    (establish u)
-    (teardown)
-    (process)
+postForm r' nvs handler = do
+    ctx <- baselineContextSSL
+    bracket
+        (establish ctx u)
+        (teardown)
+        (process)
   where
     teardown = closeConnection
 
@@ -387,10 +393,12 @@ put :: URL
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-put r' t body handler = bracket
-    (establish u)
-    (teardown)
-    (process)
+put r' t body handler = do
+    ctx <- baselineContextSSL
+    bracket
+        (establish ctx u)
+        (teardown)
+        (process)
   where
     teardown = closeConnection
 
