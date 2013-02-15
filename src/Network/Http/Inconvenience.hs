@@ -23,7 +23,7 @@ module Network.Http.Inconvenience (
     postForm,
     put,
     baselineContextSSL,
-    generalPurposeHandler,
+    concatHandler',
 
     -- for testing
     TooManyRedirects(..),
@@ -387,8 +387,8 @@ put r' t body handler = bracket
 -- entire response body as a single ByteString, but will throw an
 -- exception if the response status code was other than @2xx@.
 --
-generalPurposeHandler :: Response -> InputStream ByteString -> IO ByteString
-generalPurposeHandler p i =
+concatHandler' :: Response -> InputStream ByteString -> IO ByteString
+concatHandler' p i =
     if s >= 300
         then throw (HttpClientError s m)
         else concatHandler p i

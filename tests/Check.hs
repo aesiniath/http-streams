@@ -379,4 +379,4 @@ testGeneralHandler =
     it "GET with general purpose handler throws exception on 404" $ do
         let url = S.concat ["http://", localhost, "/booga"]
 
-        assertException (HttpClientError 404 "Not Found") (get url generalPurposeHandler)
+        assertException (HttpClientError 404 "Not Found") (get url concatHandler')
