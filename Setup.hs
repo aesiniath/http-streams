@@ -9,29 +9,40 @@
 -- the BSD licence.
 --
 
+import Data.Char (toUpper)
+import Distribution.PackageDescription (PackageDescription)
+import Distribution.Simple
+import Distribution.Simple.LocalBuildInfo (LocalBuildInfo)
+import Distribution.Simple.Setup (ConfigFlags)
+import Distribution.System (OS (..), buildOS)
+import System.IO (IOMode (..), hPutStrLn, withFile)
+
+main :: IO ()
+main = defaultMainWithHooks $ simpleUserHooks {
+       postConf = configure
+    }
+
 {-
     Simple detection of which operating system we're building on;
     there's no need to link the Cabal logic into our library, so
     we'll keep using CPP in Network.Http.Inconvenience.
 -}
 
-module Configure where
+configure :: Args -> ConfigFlags -> PackageDescription -> LocalBuildInfo -> IO ()
+configure _ _ _ _  = do
 
-import Data.Char (toUpper)
-import Distribution.System (OS (..), buildOS)
-import System.IO (IOMode (..), hPutStrLn, withFile)
+    withFile "config.h" WriteMode (\h -> do
+        hPutStrLn h ("#define " ++ s))
 
-main :: IO ()
-main = do
-    let o = buildOS
-    let s = case o of
+    return ()
+
+  where
+    o = buildOS
+
+    s = case o of
             Linux   -> "__LINUX__"
             OSX     -> "__MACOSX__"
             Windows -> "__WINDOWS__"
             _       -> "__" ++ up o ++ "__"
 
-    withFile "config.h" WriteMode (\h -> do
-        hPutStrLn h ("#define " ++ s))
-
-  where
     up x = map toUpper (show x)
