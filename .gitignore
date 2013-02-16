@@ -7,3 +7,4 @@ report.html
 *.prof
 tags
 TAGS
+config.h

@@ -59,6 +59,8 @@ import Network.Http.Connection
 import Network.Http.RequestBuilder
 import Network.Http.Types
 
+#include "config.h"
+
 type URL = ByteString
 
 ------------------------------------------------------------------------------

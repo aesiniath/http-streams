@@ -10,7 +10,7 @@ REDIRECT=>/dev/null
 endif
 
 .PHONY: all dirs test build-core junk build-junk tests build-tests benchmarks \
-	build-benchmarks build-tags
+	build-benchmarks build-tags config
 
 #
 # Disable missing signatures so that you can actually do development and
@@ -45,11 +45,17 @@ $(BUILDDIR)/.dir:
 	mkdir $(BUILDDIR)/bench
 	touch $(BUILDDIR)/.dir
 
+
+config: config.h
+config.h:
+	@echo "BUILD\tconfig.h"
+	runghc Configure.hs
+
 #
 # Build core library.
 #
 
-build-core: dirs $(BUILDDIR)/core/httpclient.bin httpclient
+build-core: dirs config $(BUILDDIR)/core/httpclient.bin httpclient
 
 $(BUILDDIR)/core/httpclient.bin: $(CORE_SOURCES)
 	@echo "GHC\t$@"
@@ -57,6 +63,7 @@ $(BUILDDIR)/core/httpclient.bin: $(CORE_SOURCES)
 		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/core \
 		-i"$(BUILDDIR):src" \
+		-I"." \
 		-o $@ \
 		src/HttpClient.hs
 	@echo "STRIP\t$@"
@@ -67,7 +74,7 @@ httpclient:
 	ln -s $(BUILDDIR)/core/client.bin $@
 
 junk: build-junk
-build-junk: dirs $(BUILDDIR)/junk/snippet.bin snippet build-tags
+build-junk: dirs config $(BUILDDIR)/junk/snippet.bin snippet build-tags
 
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -75,6 +82,7 @@ $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 		-prof -fprof-auto-top \
 		-outputdir $(BUILDDIR)/junk \
 		-i"$(BUILDDIR):src:tests" \
+		-I"." \
 		-o $@ \
 		-Wwarn \
 		-main-is Snippet.main \
@@ -103,7 +111,7 @@ build-tags: $(CORE_SOURCES) $(TEST_SOURCES)
 #
 
 tests: build-tests
-build-tests: dirs $(BUILDDIR)/tests/check.bin check build-tags
+build-tests: dirs config $(BUILDDIR)/tests/check.bin check build-tags
 
 $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -111,6 +119,7 @@ $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/tests \
 		-i"$(BUILDDIR):src:tests" \
+		-I"." \
 		-o $@ \
 		tests/Check.hs
 	@echo "STRIP\t$@"
@@ -156,6 +165,7 @@ bench:
 
 clean: 
 	@echo "RM\ttemp files"
+	-rm -f config.h
 	-rm -f *.hi *.o snippet check tags benchmark
 	-rm -f *.prof
 	-rm -rf $(BUILDDIR)
