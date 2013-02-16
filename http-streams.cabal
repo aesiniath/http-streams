@@ -51,7 +51,6 @@ library
                      Network.Http.Inconvenience
 
   ghc-options:       -O2
-                     -threaded
                      -Wall
                      -Wwarn
                      -fwarn-tabs
@@ -104,6 +103,10 @@ test-suite           check
                      -fno-warn-missing-signatures
                      -fno-warn-unused-binds
                      -fno-warn-unused-do-bind
+
+source-repository    head
+  type:              git
+  location:          git://github.com/afcowie/http-streams.git
 
 
 -- vim: set tabstop=21 expandtab:
