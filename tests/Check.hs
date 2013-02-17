@@ -412,8 +412,7 @@ testEstablishConnection =
     it "public establish function behaves correctly" $ do
         let url = S.concat ["http://", localhost, "/static/statler.jpg"]
 
-        ctx <- baselineContextSSL
-        x' <- withConnection (establishConnection ctx url) $ (\c -> do
+        x' <- withConnection (establishConnection url) $ (\c -> do
             q <- buildRequest c $ do
                 http GET "/static/statler.jpg"
                     -- TODO be nice if we could replace that with 'url';
