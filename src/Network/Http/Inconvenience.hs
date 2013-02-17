@@ -131,7 +131,7 @@ global = unsafePerformIO $ do
 
 --
 -- | Modify the context being used to configure the SSL tunnel used by
--- the convenience API functiosn to make @https://@ connections. The
+-- the convenience API functions to make @https://@ connections. The
 -- default is that setup by 'baselineContextSSL'.
 --
 modifyContextSSL :: (SSLContext -> IO SSLContext) -> IO ()
