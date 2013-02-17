@@ -156,6 +156,7 @@ module Network.Http.Client (
     -- * Secure connections
     openConnectionSSL,
     baselineContextSSL,
+    modifyContextSSL,
     establishConnection
 ) where
 

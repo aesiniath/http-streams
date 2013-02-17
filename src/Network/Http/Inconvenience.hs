@@ -18,6 +18,7 @@
 
 module Network.Http.Inconvenience (
     URL,
+    modifyContextSSL,
     establishConnection,
     get,
     post,
@@ -54,6 +55,8 @@ import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
+import Data.IORef (IORef, newIORef, readIORef, writeIORef)
+import System.IO.Unsafe (unsafePerformIO)
 
 import Network.Http.Connection
 import Network.Http.RequestBuilder
@@ -111,6 +114,32 @@ urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
 
 ------------------------------------------------------------------------------
 
+{-
+    The default SSLContext used by the convenience APIs in the http-streams
+    library. This is a kludge, unsafe bad yada yada. The technique, however,
+    was described on a Haskell Wiki page, so that makes it an officially
+    supported kludge. The justification for doing this is a) the functions
+    accessing this IORef are themselves all in the IO monad, and b) these
+    contortions are necessary to allow the library to be used for http:// URLs
+    *without* requiring the developer to do 'withOpenSSL'.
+-}
+global :: IORef SSLContext
+global = unsafePerformIO $ do
+    ctx <- baselineContextSSL
+    newIORef ctx
+{-# NOINLINE global #-}
+
+--
+-- | Modify the context being used to configure the SSL tunnel used by
+-- the convenience API functiosn to make @https://@ connections. The
+-- default is that setup by 'baselineContextSSL'.
+--
+modifyContextSSL :: (SSLContext -> IO SSLContext) -> IO ()
+modifyContextSSL f = do
+    ctx <- readIORef global
+    ctx' <- f ctx
+    writeIORef global ctx'
+
 --
 -- | Given a URL, work out whether it is normal or secure, and then
 -- open the connecction to the webserver including setting the
@@ -124,27 +153,27 @@ urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
 --
 -- >     let url = "https://www.example.com/photo.jpg"
 -- >
--- >     ctx <- baselineContextSSL
--- >
--- >     c <- establishConnection ctx url
+-- >     c <- establishConnection url
 -- >     q <- buildRequest c $ do
 -- >         http GET url
 -- >     ...
 --
-establishConnection :: SSLContext -> URL -> IO (Connection)
-establishConnection ctx r' = do
-    establish ctx u
+establishConnection :: URL -> IO (Connection)
+establishConnection r' = do
+    establish u
   where
     u = parseURL r'
 {-# INLINE establishConnection #-}
 
-
-establish :: SSLContext -> URI -> IO (Connection)
-establish ctx u =
+establish :: URI -> IO (Connection)
+establish u =
     case scheme of
-        "http:" -> openConnection host port
-        "https:"-> openConnectionSSL ctx host ports
-        _       -> error ("Unknown URI scheme " ++ scheme)
+        "http:"  -> do
+                        openConnection host port
+        "https:" -> do
+                        ctx <- readIORef global
+                        openConnectionSSL ctx host ports
+        _        -> error ("Unknown URI scheme " ++ scheme)
   where
     scheme = uriScheme u
 
@@ -176,8 +205,10 @@ establish ctx u =
 -- certificates somewhere and create your own 'SSLContext'.
 --
 {-
-    People on non-free systems are encouraged to file a bug with their vendor
-    to get certificates installed somewhere discoverable.
+    We would like to turn certificate verification on for everyone, but
+    this has proved contingent on leveraging platform specific mechanisms
+    to reach the certificate store. That logic should probably be in
+    hsopenssl, but feel free to change this as appropriate for your OS.
 -}
 baselineContextSSL :: IO SSLContext
 baselineContextSSL = do
@@ -239,9 +270,8 @@ get :: URL
 get r' handler = getN 0 r' handler
 
 getN n r' handler = do
-    ctx <- baselineContextSSL
     bracket
-        (establish ctx u)
+        (establish u)
         (teardown)
         (process)
 
@@ -307,9 +337,8 @@ post :: URL
     -- ^ Handler function to receive the response from the server.
     -> IO β
 post r' t body handler = do
-    ctx <- baselineContextSSL
     bracket
-        (establish ctx u)
+        (establish u)
         (teardown)
         (process)
   where
@@ -345,9 +374,8 @@ postForm
     -- ^ Handler function to receive the response from the server.
     -> IO β
 postForm r' nvs handler = do
-    ctx <- baselineContextSSL
     bracket
-        (establish ctx u)
+        (establish u)
         (teardown)
         (process)
   where
@@ -396,9 +424,8 @@ put :: URL
     -- ^ Handler function to receive the response from the server.
     -> IO β
 put r' t body handler = do
-    ctx <- baselineContextSSL
     bracket
-        (establish ctx u)
+        (establish u)
         (teardown)
         (process)
   where
