@@ -48,8 +48,9 @@ $(BUILDDIR)/.dir:
 
 config: config.h
 config.h:
-	@echo "BUILD\tconfig.h"
-	runghc Configure.hs
+	@echo "CABAL\tconfigure"
+	cabal configure
+
 
 #
 # Build core library.
@@ -74,7 +75,7 @@ httpclient:
 	ln -s $(BUILDDIR)/core/client.bin $@
 
 junk: build-junk
-build-junk: dirs config $(BUILDDIR)/junk/snippet.bin snippet build-tags
+build-junk: dirs config $(BUILDDIR)/junk/snippet.bin snippet tags
 
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -94,17 +95,13 @@ snippet:
 	@echo "LN -s\t$@"
 	ln -s $(BUILDDIR)/junk/snippet.bin $@
 
-#
-# `make tags` from command line should force rebuild
-#
-tags: clean-tags build-tags
-
-clean-tags:
-	@if [ -f tags ] ; then echo "RM\ttags" ; rm -f tags ; fi
-
-build-tags: $(CORE_SOURCES) $(TEST_SOURCES)
+tags: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "CTAGS\ttags"
 	hothasktags $^ > tags
+
+clean-tags:
+
+build-tags: $(CORE_SOURCES) $(TEST_SOURCES)
 
 #
 # Build test suite code
@@ -162,22 +159,18 @@ bench:
 	@echo "LN -s\t$@"
 	ln -s $(BUILDDIR)/bench/bench.bin $@
 
-
 clean: 
-	@echo "RM\ttemp files"
-	-rm -f config.h
-	-rm -f *.hi *.o snippet check tags benchmark
+	@echo "RM\tbuild artifacts"
+	-rm -f *.hi *.o snippet check benchmark
 	-rm -f *.prof
 	-rm -rf $(BUILDDIR)
 	-rm -rf dist/
+	@if [ -f tags ] ; then echo "RM\ttags" ; rm tags ; fi
+	@if [ -f config.h ] ; then echo "RM\tconfig.h" ; rm config.h ; fi
 
 doc: dist/setup-config build-tags
 	@echo "CABAL\thaddock"
 	cabal haddock
-
-dist/setup-config:
-	@echo "CABAL\tconfigure"
-	cabal configure
 
 format: $(CORE_SOURCES) $(TEST_SOURCES)
 	stylish-haskell -i $^
