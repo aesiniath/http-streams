@@ -99,16 +99,12 @@ tags: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "CTAGS\ttags"
 	hothasktags $^ > tags
 
-clean-tags:
-
-build-tags: $(CORE_SOURCES) $(TEST_SOURCES)
-
 #
 # Build test suite code
 #
 
 tests: build-tests
-build-tests: dirs config $(BUILDDIR)/tests/check.bin check build-tags
+build-tests: dirs config $(BUILDDIR)/tests/check.bin check tags
 
 $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -142,7 +138,7 @@ test: build-tests
 
 benchmark: build-benchmarks
 benchmarks: build-benchmarks
-build-benchmarks: dirs $(BUILDDIR)/bench/bench.bin bench build-tags
+build-benchmarks: dirs $(BUILDDIR)/bench/bench.bin bench tags
 
 $(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -168,7 +164,7 @@ clean:
 	@if [ -f tags ] ; then echo "RM\ttags" ; rm tags ; fi
 	@if [ -f config.h ] ; then echo "RM\tconfig.h" ; rm config.h ; fi
 
-doc: dist/setup-config build-tags
+doc: dist/setup-config tags
 	@echo "CABAL\thaddock"
 	cabal haddock
 

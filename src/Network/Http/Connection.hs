@@ -115,7 +115,7 @@ makeConnection h c o i =
 --
 -- Wraps @Control.Exception@'s 'Control.Exception.bracket'.
 --
-withConnection :: IO Connection -> (Connection -> IO α) -> IO α
+withConnection :: IO Connection -> (Connection -> IO γ) -> IO γ
 withConnection mkC =
     bracket mkC closeConnection
 
@@ -345,7 +345,7 @@ sendRequest c q handler = do
     InputStream ByteString in Connection remains unconsumed beyond the
     threshold of the current response, which is exactly what we need.
 -}
-receiveResponse :: Connection -> (Response -> InputStream ByteString -> IO α) -> IO α
+receiveResponse :: Connection -> (Response -> InputStream ByteString -> IO β) -> IO β
 receiveResponse c handler = do
     p  <- readResponseHeader i
     i' <- readResponseBody p i
@@ -451,7 +451,22 @@ debugHandler p i = do
 
 --
 -- | Sometimes you just want the entire response body as a single blob.
--- You can use @concatHandler@. The usual caveats about allocating a
+-- This function concatonates all the bytes from the response into a
+-- ByteString. If using the main @http-streams@ API, you would use it
+-- as follows:
+--
+-- >    ...
+-- >    x' <- receiveResponse c concatHandler
+-- >    ...
+--
+-- The methods in the convenience API all take a function to handle the
+-- response; this function is passed directly to the 'receiveResponse'
+-- call underlying the request. Thus this utility function can be used
+-- for 'get' as well:
+--
+-- >    x' <- get "http://www.example.com/document.txt" concatHandler
+--
+-- Either way, the usual caveats about allocating a
 -- single object from streaming I/O apply: do not use this if you are
 -- not absolutely certain that the response body will fit in a
 -- reasonable amount of memory.
