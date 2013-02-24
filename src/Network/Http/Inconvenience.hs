@@ -43,6 +43,7 @@ import Data.ByteString.Internal (c2w, w2c)
 import Data.Char (intToDigit, isAlphaNum)
 import Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
+import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Data.List (intersperse)
 import Data.Monoid (Monoid (..), (<>))
 import qualified Data.Text as T
@@ -55,7 +56,6 @@ import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
-import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import System.IO.Unsafe (unsafePerformIO)
 
 import Network.Http.Connection
@@ -142,7 +142,7 @@ modifyContextSSL f = do
 
 --
 -- | Given a URL, work out whether it is normal or secure, and then
--- open the connecction to the webserver including setting the
+-- open the connection to the webserver including setting the
 -- appropriate default port if one was not specified in the URL. This
 -- is what powers the convenience API, but you may find it useful in
 -- composing your own similar functions.
