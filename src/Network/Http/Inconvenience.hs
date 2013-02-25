@@ -23,6 +23,7 @@ module Network.Http.Inconvenience (
     get,
     post,
     postForm,
+    encodedFormBody,
     put,
     baselineContextSSL,
     concatHandler',
@@ -383,25 +384,45 @@ postForm r' nvs handler = do
 
     u = parseURL r'
 
-    b = mconcat $ intersperse "&" $ map combine nvs
-
-    combine :: (ByteString,ByteString) -> Builder
-    combine (n',v') = mconcat [urlEncodeBuilder n', "=", urlEncodeBuilder v']
-
-    parameters :: OutputStream Builder -> IO ()
-    parameters o = do
-        Streams.write (Just b) o
-
     process c = do
         q <- buildRequest c $ do
             http POST (path u)
             setAccept "*/*"
             setContentType "application/x-www-form-urlencoded"
 
-        _ <- sendRequest c q parameters
+        _ <- sendRequest c q (encodedFormBody nvs)
 
         x <- receiveResponse c handler
         return x
+
+
+--
+-- | Specify name/value pairs to be sent to the server in the manner
+-- used by web browsers when submitting a form via a POST request.
+-- Parameters will be URL encoded per RFC 2396 and combined into a
+-- single string which will be sent as the body of your request.
+--
+-- You use this partially applied:
+--
+-- >     let nvs = [("name","Kermit"),
+-- >                ("type","frog")]
+-- >                ("role","stagehand")]
+-- >
+-- >     sendRequest c q (encodedFormBody nvs)
+--
+-- Note that it's going to be up to you to call 'setContentType' with
+-- a value of @\"application/x-www-form-urlencoded\"@ when building the
+-- Request object; the 'postForm' convenience (which uses this
+-- @encodedFormBody@ function) takes care of this for you, obviously.
+--
+encodedFormBody :: [(ByteString,ByteString)] -> OutputStream Builder -> IO ()
+encodedFormBody nvs o = do
+    Streams.write (Just b) o
+  where
+    b = mconcat $ intersperse "&" $ map combine nvs
+
+    combine :: (ByteString,ByteString) -> Builder
+    combine (n',v') = mconcat [urlEncodeBuilder n', "=", urlEncodeBuilder v']
 
 
 --

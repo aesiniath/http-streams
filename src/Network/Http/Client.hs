@@ -122,6 +122,7 @@ module Network.Http.Client (
     emptyBody,
     fileBody,
     inputStreamBody,
+    encodedFormBody,
 
     -- * Processing HTTP response
     receiveResponse,

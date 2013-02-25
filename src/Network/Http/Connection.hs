@@ -396,7 +396,7 @@ fileBody p o = do
 -- something else has handed you stream to read from and you want to use
 -- it as the entity body for the request.
 --
--- Use it curried:
+-- You use this partially applied:
 --
 -- >     i <- getStreamFromVault                    -- magic, clearly
 -- >     sendRequest c q (inputStreamBody i)
