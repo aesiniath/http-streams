@@ -481,7 +481,7 @@ concatHandler' p i =
     m = getStatusMessage p
 
 data HttpClientError = HttpClientError Int ByteString
-        deriving (Typeable, Eq)
+        deriving (Typeable)
 
 instance Exception HttpClientError
 

@@ -24,6 +24,7 @@ import Network.Socket (SockAddr (..))
 import Network.URI (parseURI)
 import OpenSSL (withOpenSSL)
 import Test.Hspec (Spec, describe, hspec, it)
+import Test.Hspec.Expectations (shouldThrow, Selector, anyException)
 import Test.HUnit
 
 --
@@ -381,7 +382,7 @@ testExcessiveRedirects =
     it "too many redirects result in an exception" $ do
         let url = S.concat ["http://", localhost, "/loop"]
 
-        assertException (TooManyRedirects 5) (get url handler)
+        get url handler `shouldThrow` tooManyRedirects
       where
         handler :: Response -> InputStream ByteString -> IO ()
         handler _ _ = do
@@ -406,7 +407,17 @@ testGeneralHandler =
     it "GET with general purpose handler throws exception on 404" $ do
         let url = S.concat ["http://", localhost, "/booga"]
 
-        assertException (HttpClientError 404 "Not Found") (get url concatHandler')
+        get url concatHandler' `shouldThrow` httpClientError 404
+
+
+tooManyRedirects :: Selector TooManyRedirects
+tooManyRedirects = const True
+
+--              :: Int -> Selector HttpClientError
+httpClientError :: Int -> HttpClientError -> Bool
+httpClientError expected (HttpClientError actual _) = expected == actual
+
+
 
 testEstablishConnection =
     it "public establish function behaves correctly" $ do
