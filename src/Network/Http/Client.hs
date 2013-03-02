@@ -107,6 +107,7 @@ module Network.Http.Client (
     setHostname,
     setAccept,
     setAccept',
+    setBasicAuth,
     ContentType,
     setContentType,
     setContentLength,

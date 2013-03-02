@@ -19,6 +19,7 @@ module Network.Http.RequestBuilder (
     setHostname,
     setAccept,
     setAccept',
+    setBasicAuth,
     ContentType,
     setContentType,
     setContentLength,
@@ -32,6 +33,7 @@ import qualified Blaze.ByteString.Builder as Builder (fromByteString,
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow)
 import Control.Monad.State
 import Data.ByteString (ByteString)
+import qualified Data.ByteString.Base64 as BS64
 import Data.ByteString.Char8 ()
 import qualified Data.ByteString.Char8 as S
 import Data.List (intersperse)
@@ -189,7 +191,17 @@ setAccept' tqs = do
             "; q=",
             Builder.fromShow q]
 
+
+--
+-- | Set basic auth header to be sent in the HTTP request.
+--
+setBasicAuth :: ByteString -> ByteString -> RequestBuilder ()
+setBasicAuth user passwd = do
+    setHeader "Authorization" basicAuth
+  where
+    basicAuth = S.append "Basic " (BS64.encode $ S.concat [ user, ":", passwd ])
 type ContentType = ByteString
+
 
 --
 -- | Set the MIME type corresponding to the body of the request you are
