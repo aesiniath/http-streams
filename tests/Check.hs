@@ -65,8 +65,9 @@ suite = do
     describe "Request, when serialized" $ do
         testRequestLineFormat
         testRequestTermination
-        testAcceptHeaderFormat
         testEnsureHostField
+        testAcceptHeaderFormat
+        testBasicAuthorizatonHeader
 
     describe "Parsing responses" $ do
         testResponseParser1
@@ -131,7 +132,7 @@ fakeConnection = do
 
 
 testAcceptHeaderFormat =
-    it "has a properly formatted Accept header" $ do
+    it "properly formats Accept header" $ do
         c <- fakeConnection
         q <- buildRequest c $ do
             setAccept' [("text/html", 1),("*/*", 0.0)]
@@ -139,6 +140,16 @@ testAcceptHeaderFormat =
         let h = qHeaders q
         let (Just a) = lookupHeader h "Accept"
         assertEqual "Failed to format header" "text/html; q=1.0, */*; q=0.0" a
+
+testBasicAuthorizatonHeader =
+    it "properly formats Authorization header" $ do
+        c <- fakeConnection
+        q <- buildRequest c $ do
+            setAuthorizationBasic "Aladdin" "open sesame"
+
+        let h = qHeaders q
+        let (Just a) = lookupHeader h "Authorization"
+        assertEqual "Failed to format header" "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" a
 
 {-
     FIXME this should indeed be a hostname and not an address; that's the

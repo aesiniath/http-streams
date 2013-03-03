@@ -19,7 +19,7 @@ module Network.Http.RequestBuilder (
     setHostname,
     setAccept,
     setAccept',
-    setBasicAuth,
+    setAuthorizationBasic,
     ContentType,
     setContentType,
     setContentLength,
@@ -83,7 +83,7 @@ http :: Method -> ByteString -> RequestBuilder ()
 http m p' = do
     q <- get
     let h0 = qHeaders q
-    let h1 = updateHeader h0 "User-Agent" "http-streams/0.3.0"
+    let h1 = updateHeader h0 "User-Agent" "http-streams/0.3.1"
     let h2 = updateHeader h1 "Accept-Encoding" "gzip"
 
     let e  = case m of
@@ -195,11 +195,18 @@ setAccept' tqs = do
 --
 -- | Set basic auth header to be sent in the HTTP request.
 --
-setBasicAuth :: ByteString -> ByteString -> RequestBuilder ()
-setBasicAuth user passwd = do
-    setHeader "Authorization" basicAuth
+{-
+    This would be better using Builder, right?
+-}
+setAuthorizationBasic :: ByteString -> ByteString -> RequestBuilder ()
+setAuthorizationBasic user' passwd' = do
+    setHeader "Authorization" v'
   where
-    basicAuth = S.append "Basic " (BS64.encode $ S.concat [ user, ":", passwd ])
+    v'   = S.concat ["Basic ", msg']
+    msg' = BS64.encode str'
+    str' = S.concat [user', ":", passwd']
+
+
 type ContentType = ByteString
 
 
