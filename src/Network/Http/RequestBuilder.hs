@@ -193,7 +193,25 @@ setAccept' tqs = do
 
 
 --
--- | Set basic auth header to be sent in the HTTP request.
+-- | Set username and password credentials per the HTTP basic
+-- authentication method.
+--
+-- >         setAuthorizationBasic "Aladdin" "open sesame"
+--
+-- will result in an @Authorization:@ header value of
+-- @Basic: QWxhZGRpbjpvcGVuIHNlc2FtZQ==@.
+--
+-- Basic authentication does /not/ use a message digest function to
+-- encipher the password; the above string is only base-64 encoded and
+-- is thus plain-text visible to any observer on the wire and all
+-- caches and servers at the other end, making basic authentication
+-- completely insecure. A number of web services, however, use SSL to
+-- encrypt the connection that then use HTTP basic authentication to
+-- validate requests. Keep in mind in these cases the secret is still
+-- sent to the servers on the other side and passes in clear through
+-- all layers after the SSL termination. Do /not/ use basic
+-- authentication to protect secure or user-originaed privacy-sensitve
+-- information.
 --
 {-
     This would be better using Builder, right?
