@@ -199,7 +199,7 @@ setAccept' tqs = do
 -- >         setAuthorizationBasic "Aladdin" "open sesame"
 --
 -- will result in an @Authorization:@ header value of
--- @Basic: QWxhZGRpbjpvcGVuIHNlc2FtZQ==@.
+-- @Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==@.
 --
 -- Basic authentication does /not/ use a message digest function to
 -- encipher the password; the above string is only base-64 encoded and
