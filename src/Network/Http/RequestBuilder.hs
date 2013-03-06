@@ -210,7 +210,7 @@ setAccept' tqs = do
 -- validate requests. Keep in mind in these cases the secret is still
 -- sent to the servers on the other side and passes in clear through
 -- all layers after the SSL termination. Do /not/ use basic
--- authentication to protect secure or user-originaed privacy-sensitve
+-- authentication to protect secure or user-originated privacy-sensitve
 -- information.
 --
 {-
