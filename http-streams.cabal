@@ -1,6 +1,6 @@
 cabal-version:       >= 1.10
 name:                http-streams
-version:             0.3.1
+version:             0.3.1.0
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
