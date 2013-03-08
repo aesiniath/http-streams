@@ -24,19 +24,18 @@ import System.IO (IOMode (..), hClose, openFile)
 
 main :: IO ()
 main = do
-    sampleViaHttpConduit
+    withManager $ liftIO . sampleViaHttpConduit
 
-sampleViaHttpConduit :: IO ()
-sampleViaHttpConduit = do
+sampleViaHttpConduit :: Manager -> IO ()
+sampleViaHttpConduit manager = do
 
     runResourceT $ do
 
-        manager <- liftIO $ newManager def
-
         req <- parseUrl "http://localhost/"
         let req2 = req {
-            checkStatus = \_ _ -> Nothing,
-            requestHeaders = [(hAccept, "text/html")]
+            checkStatus = \_ _ _ -> Nothing,
+            requestHeaders = [(hAccept, "text/html")],
+            responseTimeout = Nothing
         }
 
         res <- http req2 manager
@@ -47,12 +46,12 @@ sampleViaHttpConduit = do
 
         handle <- liftIO $ openFile "/tmp/http-conduit.out" WriteMode
 
-        sourceLbs (joinStatus sta ver) $$ sinkHandle handle
-        sourceLbs (join hdr) $$ sinkHandle handle
+        let src = do
+                sourceLbs (joinStatus sta ver)
+                sourceLbs (join hdr)
+        src $$ sinkHandle handle
         responseBody res $$+- sinkHandle handle
         liftIO $ hClose handle
-
-        liftIO $ closeManager manager
 
 
 joinStatus :: Status -> HttpVersion -> L.ByteString

@@ -21,12 +21,14 @@ import GHC.Conc
 
 import ConduitSample (sampleViaHttpConduit)
 import StreamsSample (sampleViaHttpStreams)
+import Network.HTTP.Conduit (def, newManager)
 
 main :: IO ()
 main = do
     GHC.Conc.setNumCapabilities 4
+    man <- newManager def
     defaultMain
        [bench "http-streams" (sampleViaHttpStreams),
-        bench "http-conduit" (sampleViaHttpConduit)]
+        bench "http-conduit" (sampleViaHttpConduit man)]
     putStrLn "Complete."
 
