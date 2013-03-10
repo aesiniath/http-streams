@@ -155,7 +155,7 @@ modifyContextSSL f = do
 -- >     let url = "https://www.example.com/photo.jpg"
 -- >
 -- >     c <- establishConnection url
--- >     q <- buildRequest c $ do
+-- >     q <- buildRequest $ do
 -- >         http GET url
 -- >     ...
 --

@@ -54,13 +54,21 @@ newtype RequestBuilder α = RequestBuilder (State Request α)
 -- | Run a RequestBuilder, yielding a Request object you can use on the
 -- given connection.
 --
--- >     q <- buildRequest c $ do
+-- >     q <- buildRequest $ do
 -- >         http POST "/api/v1/messages"
 -- >         setContentType "application/json"
+-- >         setHostname "clue.example.com" 80
 -- >         setAccept "text/html"
 -- >         setHeader "X-WhoDoneIt" "The Butler"
 --
 -- Obviously it's up to you to later actually /send/ JSON data.
+--
+-- /Note/
+--
+-- The API of this function changed from version 0.3.1 to verison 0.4.0;
+-- the original requirement to pass a Connection object has been removed,
+-- thereby allowing you to build your Request before opening the
+-- connection to the web server.
 --
 buildRequest :: RequestBuilder α -> IO Request
 buildRequest mm = do

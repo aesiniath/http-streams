@@ -99,6 +99,11 @@ instance Eq Method where
 -- line and headers (as it will be sent over the wire but with the @\\r@
 -- characters stripped) which can be handy for debugging.
 --
+-- Note that the @Host:@ header is not set until
+-- 'Network.Http.Connection.sendRequest' is called, so you will not see
+-- it in the Show instance (unless you call 'setHostname' to override
+-- the value inherited from the @Connection@).
+--
 data Request
     = Request {
         qMethod  :: Method,

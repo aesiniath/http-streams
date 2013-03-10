@@ -23,7 +23,7 @@ main :: IO ()
 main = do
     c <- openConnection "www.example.com" 80
     
-    q <- buildRequest c $ do
+    q <- buildRequest $ do
         http GET "/"
         setAccept "text/html"
     
