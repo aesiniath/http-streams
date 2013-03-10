@@ -47,7 +47,7 @@ basic :: IO ()
 basic = do
     c <- openConnection "research.laptop" 80
 
-    q <- buildRequest c $ do
+    q <- buildRequest $ do
         http GET "/~andrew/talks/TheWebProblem,SolvingItInHaskell/"
         setAccept "text/plain"
     putStr $ show q

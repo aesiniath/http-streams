@@ -146,6 +146,7 @@ $(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/bench \
 		-i"$(BUILDDIR):src:tests" \
+		-I"." \
 		-o $@ \
 		tests/Benchmark.hs
 	@echo "STRIP\t$@"

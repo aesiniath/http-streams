@@ -30,7 +30,8 @@ module Network.Http.RequestBuilder (
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       toByteString)
-import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow)
+import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow,
+                                                            fromString)
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Base64 as BS64
@@ -53,20 +54,27 @@ newtype RequestBuilder α = RequestBuilder (State Request α)
 -- | Run a RequestBuilder, yielding a Request object you can use on the
 -- given connection.
 --
--- >     q <- buildRequest c $ do
+-- >     q <- buildRequest $ do
 -- >         http POST "/api/v1/messages"
 -- >         setContentType "application/json"
+-- >         setHostname "clue.example.com" 80
 -- >         setAccept "text/html"
 -- >         setHeader "X-WhoDoneIt" "The Butler"
 --
 -- Obviously it's up to you to later actually /send/ JSON data.
 --
-buildRequest :: Connection -> RequestBuilder α -> IO Request
-buildRequest c mm = do
+-- /Note/
+--
+-- The API of this function changed from version 0.3.1 to verison 0.4.0;
+-- the original requirement to pass a Connection object has been removed,
+-- thereby allowing you to build your Request before opening the
+-- connection to the web server.
+--
+buildRequest :: RequestBuilder α -> IO Request
+buildRequest mm = do
     let (RequestBuilder s) = (mm)
-    let h = cHost c
     let q = Request {
-        qHost = h,
+        qHost = Nothing,
         qMethod = GET,
         qPath = "/",
         qBody = Empty,
@@ -83,7 +91,7 @@ http :: Method -> ByteString -> RequestBuilder ()
 http m p' = do
     q <- get
     let h0 = qHeaders q
-    let h1 = updateHeader h0 "User-Agent" "http-streams/0.3.1.0"
+    let h1 = updateHeader h0 "User-Agent" "http-streams/0.4.0.0"
     let h2 = updateHeader h1 "Accept-Encoding" "gzip"
 
     let e  = case m of
@@ -109,12 +117,20 @@ http m p' = do
 -- header in HTTP 1.1 and is set directly from the name of the server
 -- you connected to when calling 'Network.Http.Connection.openConnection'.
 --
-setHostname :: ByteString -> RequestBuilder ()
-setHostname v' = do
+setHostname :: Hostname -> Port -> RequestBuilder ()
+setHostname h p = do
     q <- get
     put q {
-        qHost = v'
+        qHost = Just v'
     }
+  where
+    v' :: ByteString
+    v' = if p == 80
+        then S.pack h
+        else Builder.toByteString $ mconcat
+           [Builder.fromString h,
+            ":",
+            Builder.fromShow p]
 
 --
 -- | Set a generic header to be sent in the HTTP request. The other

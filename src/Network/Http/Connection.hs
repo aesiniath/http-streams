@@ -23,6 +23,7 @@ module Network.Http.Connection (
     openConnection,
     openConnectionSSL,
     closeConnection,
+    getHostname,
     sendRequest,
     receiveResponse,
     emptyBody,
@@ -104,7 +105,7 @@ makeConnection h c o i =
 -- @Connection@ afterwards.
 --
 -- >     x <- withConnection (openConnection "s3.example.com" 80) $ (\c -> do
--- >         q <- buildRequest c $ do
+-- >         q <- buildRequest $ do
 -- >             http GET "/bucket42/object/149"
 -- >         sendRequest c q emptyBody
 -- >         ...
@@ -309,9 +310,23 @@ sendRequest c q handler = do
     o1 = cOut c
     e = qBody q
     t = qExpect q
-    msg = composeRequestBytes q
+    msg = composeRequestBytes q h'
+    h' = cHost c
     i = cIn c
     rsp p = Builder.toByteString $ composeResponseBytes p
+
+
+--
+-- | Get the virtual hostname that will be used as the @Host:@ header in
+-- the HTTP 1.1 request. Per RFC 2616 § 14.23, this will be of the form
+-- @hostname:port@ if the port number is other than the default, ie 80
+-- for HTTP.
+--
+getHostname :: Connection -> Request -> ByteString
+getHostname c q =
+    case qHost q of
+        Just h' -> h'
+        Nothing -> cHost c
 
 
 --
@@ -422,7 +437,7 @@ inputStreamBody i1 o = do
 --
 -- >     c <- openConnection "kernel.operationaldynamics.com" 58080
 -- >
--- >     q <- buildRequest c $ do
+-- >     q <- buildRequest $ do
 -- >         http GET "/time"
 -- >
 -- >     sendRequest c q emptyBody

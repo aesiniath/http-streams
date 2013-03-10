@@ -16,7 +16,6 @@ module Network.Http.Types (
     Request(..),
     EntityBody(..),
     ExpectMode(..),
-    getHostname,
     Response(..),
     StatusCode,
     getStatusCode,
@@ -100,10 +99,15 @@ instance Eq Method where
 -- line and headers (as it will be sent over the wire but with the @\\r@
 -- characters stripped) which can be handy for debugging.
 --
+-- Note that the @Host:@ header is not set until
+-- 'Network.Http.Connection.sendRequest' is called, so you will not see
+-- it in the Show instance (unless you call 'setHostname' to override
+-- the value inherited from the @Connection@).
+--
 data Request
     = Request {
         qMethod  :: Method,
-        qHost    :: ByteString,
+        qHost    :: Maybe ByteString,
         qPath    :: ByteString,
         qBody    :: EntityBody,
         qExpect  :: ExpectMode,
@@ -112,7 +116,7 @@ data Request
 
 instance Show Request where
     show q = {-# SCC "Request.show" #-}
-        S.unpack $ S.filter (/= '\r') $ Builder.toByteString $ composeRequestBytes q
+        S.unpack $ S.filter (/= '\r') $ Builder.toByteString $ composeRequestBytes q "<default>"
 
 
 data EntityBody = Empty | Chunking | Static Int
@@ -132,8 +136,8 @@ data ExpectMode = Normal | Continue
     with removing them.
 -}
 
-composeRequestBytes :: Request -> Builder
-composeRequestBytes q =
+composeRequestBytes :: Request -> ByteString -> Builder
+composeRequestBytes q h' =
     mconcat
        [requestline,
         hostLine,
@@ -152,19 +156,13 @@ composeRequestBytes q =
     version = "HTTP/1.1"
 
     hostLine = mconcat ["Host: ", hostname, "\r\n"]
-    hostname = Builder.copyByteString $ qHost q
+    hostname = case qHost q of
+        Just x' -> Builder.copyByteString x'
+        Nothing -> Builder.copyByteString h'
 
     headerFields = joinHeaders $ unWrap $ qHeaders q
 
 
---
--- | Get the virtual hostname that will be used as the @Host:@ header in
--- the HTTP 1.1 request. Per RFC 2616 § 14.23, this will be of the form
--- @hostname:port@ if the port number is other than the default, ie 80
--- for HTTP.
---
-getHostname :: Request -> ByteString
-getHostname q = qHost q
 
 type StatusCode = Int
 

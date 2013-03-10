@@ -29,7 +29,7 @@ sampleViaHttpStreams :: IO ()
 sampleViaHttpStreams = do
     c <- openConnection "localhost" 80
 
-    q <- buildRequest c $ do
+    q <- buildRequest $ do
         http GET "/"
         setAccept "text/html"
 
