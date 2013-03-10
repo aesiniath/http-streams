@@ -20,8 +20,8 @@ import GHC.Conc
 -}
 
 import ConduitSample (sampleViaHttpConduit)
-import StreamsSample (sampleViaHttpStreams)
 import Network.HTTP.Conduit (def, newManager)
+import StreamsSample (sampleViaHttpStreams)
 
 main :: IO ()
 main = do
