@@ -57,7 +57,7 @@ basic = do
     c <- openConnection "kernel.operationaldynamics.com" 58080
     putStrLn $ show c
 
-    q <- buildRequest c $ do
+    q <- buildRequest $ do
         http GET "/time"
         setAccept "text/plain"
     putStr $ show q
@@ -95,7 +95,7 @@ resource = bracket
 
 doStuff :: Connection -> IO ByteString
 doStuff c = do
-    q <- buildRequest c $ do
+    q <- buildRequest $ do
         http PUT "/put"
         setAccept "*/*"
         setContentType "text/plain"

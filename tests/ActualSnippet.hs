@@ -32,6 +32,8 @@ import qualified System.IO.Streams as Streams
 
 main :: IO ()
 main = do
+    c <- openConnection "kernel.operationaldynamics.com" 58080
+
     q <- buildRequest $ do
         http GET "/time"
         setAccept "text/plain"
@@ -39,8 +41,6 @@ main = do
             -- Requests [headers] are terminated by a double newline
             -- already. We need a better way of emitting debug
             -- information mid-stream from this library.
-
-    c <- openConnection "kernel.operationaldynamics.com" 58080
 
     sendRequest c q emptyBody
 

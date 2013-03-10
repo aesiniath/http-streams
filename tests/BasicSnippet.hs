@@ -29,7 +29,7 @@ main :: IO ()
 main = do
     c <- openConnection "kernel.operationaldynamics.com" 58080
 
-    q <- buildRequest c $ do
+    q <- buildRequest $ do
         http GET "/time"
         setAccept "text/plain"
 
