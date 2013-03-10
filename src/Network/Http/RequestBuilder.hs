@@ -30,7 +30,8 @@ module Network.Http.RequestBuilder (
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       toByteString)
-import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow)
+import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow,
+                                                            fromString)
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Base64 as BS64
@@ -61,12 +62,11 @@ newtype RequestBuilder α = RequestBuilder (State Request α)
 --
 -- Obviously it's up to you to later actually /send/ JSON data.
 --
-buildRequest :: Connection -> RequestBuilder α -> IO Request
-buildRequest c mm = do
+buildRequest :: RequestBuilder α -> IO Request
+buildRequest mm = do
     let (RequestBuilder s) = (mm)
-    let h = cHost c
     let q = Request {
-        qHost = h,
+        qHost = Nothing,
         qMethod = GET,
         qPath = "/",
         qBody = Empty,
@@ -109,12 +109,20 @@ http m p' = do
 -- header in HTTP 1.1 and is set directly from the name of the server
 -- you connected to when calling 'Network.Http.Connection.openConnection'.
 --
-setHostname :: ByteString -> RequestBuilder ()
-setHostname v' = do
+setHostname :: Hostname -> Port -> RequestBuilder ()
+setHostname h p = do
     q <- get
     put q {
-        qHost = v'
+        qHost = Just v'
     }
+  where
+    v' :: ByteString
+    v' = if p == 80
+        then S.pack h
+        else Builder.toByteString $ mconcat
+           [Builder.fromString h,
+            ":",
+            Builder.fromShow p]
 
 --
 -- | Set a generic header to be sent in the HTTP request. The other

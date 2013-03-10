@@ -282,7 +282,7 @@ getN n r' handler = do
     u = parseURL r'
 
     process c = do
-        q <- buildRequest c $ do
+        q <- buildRequest $ do
             http GET (path u)
             setAccept "*/*"
 
@@ -348,7 +348,7 @@ post r' t body handler = do
     u = parseURL r'
 
     process c = do
-        q <- buildRequest c $ do
+        q <- buildRequest $ do
             http POST (path u)
             setAccept "*/*"
             setContentType t
@@ -385,7 +385,7 @@ postForm r' nvs handler = do
     u = parseURL r'
 
     process c = do
-        q <- buildRequest c $ do
+        q <- buildRequest $ do
             http POST (path u)
             setAccept "*/*"
             setContentType "application/x-www-form-urlencoded"
@@ -455,7 +455,7 @@ put r' t body handler = do
     u = parseURL r'
 
     process c = do
-        q <- buildRequest c $ do
+        q <- buildRequest $ do
             http PUT (path u)
             setAccept "*/*"
             setHeader "Content-Type" t

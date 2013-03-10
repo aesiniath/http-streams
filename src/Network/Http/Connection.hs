@@ -23,6 +23,7 @@ module Network.Http.Connection (
     openConnection,
     openConnectionSSL,
     closeConnection,
+    getHostname,
     sendRequest,
     receiveResponse,
     emptyBody,
@@ -251,6 +252,9 @@ closeSSL s ssl = do
     cases shown here, but those functions take OutputStream ByteString,
     and we are of course working in OutputStream Builder by that point.
 -}
+{-
+    let h = cHost c
+-}
 sendRequest :: Connection -> Request -> (OutputStream Builder -> IO α) -> IO α
 sendRequest c q handler = do
     o2 <- Streams.builderStream o1
@@ -309,9 +313,23 @@ sendRequest c q handler = do
     o1 = cOut c
     e = qBody q
     t = qExpect q
-    msg = composeRequestBytes q
+    msg = composeRequestBytes q h'
+    h' = cHost c
     i = cIn c
     rsp p = Builder.toByteString $ composeResponseBytes p
+
+
+--
+-- | Get the virtual hostname that will be used as the @Host:@ header in
+-- the HTTP 1.1 request. Per RFC 2616 § 14.23, this will be of the form
+-- @hostname:port@ if the port number is other than the default, ie 80
+-- for HTTP.
+--
+getHostname :: Connection -> Request -> ByteString
+getHostname c q =
+    case qHost q of
+        Just h' -> h'
+        Nothing -> cHost c
 
 
 --
