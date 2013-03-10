@@ -252,9 +252,6 @@ closeSSL s ssl = do
     cases shown here, but those functions take OutputStream ByteString,
     and we are of course working in OutputStream Builder by that point.
 -}
-{-
-    let h = cHost c
--}
 sendRequest :: Connection -> Request -> (OutputStream Builder -> IO α) -> IO α
 sendRequest c q handler = do
     o2 <- Streams.builderStream o1
