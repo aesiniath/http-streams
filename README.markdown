@@ -55,7 +55,22 @@ response as a ByteString using one of the pre-defined handlers:
 
 See the documentation in
 [Network.Http.Client](http://research.operationaldynamics.com/projects/http-streams/doc/Network-Http-Client.html)
-for further examples and details of usage of the API.
+for further examples and details of usage of the API. There's also a [blog
+post](http://blogs.operationaldynamics.com/andrew/software/haskell/http-streams-introduction)
+introducing the library with a discussion of the design and usage.
+
+Change Log
+---------
+
+Recent API changes:
+
+* _v0.4.0_  
+	Type signature of `buildRequest` changed, removing the Connection
+	parameter. This allows you to construct Request objects before
+	opening a connetion to the web server if you wish.
+
+* _v0.3.1_  
+	Initial public release
 
 AfC
 
