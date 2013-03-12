@@ -34,21 +34,26 @@ import System.Exit (exitSuccess)
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 
+import Network.Http.Connection (makeConnection)
+
 
 main :: IO ()
 main = do
     as <- getArgs
     let a = head as
     let n = read a :: Int
-    forM_ (replicate n True) (\_ -> basic)
+
+    x' <- S.readFile "tests/example2.txt"
+
+    forM_ (replicate n True) (\_ -> basic x')
 
 
-basic :: IO ()
-basic = do
-    c <- openConnection "research.laptop" 80
+basic :: ByteString -> IO ()
+basic b' = do
+    c <- fakeConnection b'
 
     q <- buildRequest $ do
-        http GET "/~andrew/talks/TheWebProblem,SolvingItInHaskell/"
+        http GET "/"
         setAccept "text/plain"
     putStr $ show q
 
@@ -57,3 +62,10 @@ basic = do
     receiveResponse c debugHandler
 
     closeConnection c
+
+fakeConnection :: ByteString -> IO Connection
+fakeConnection b' = do
+    o <- Streams.nullOutput
+    i <- Streams.fromByteString b'
+
+    makeConnection "www.example.com:80" (return ()) o i
