@@ -71,6 +71,7 @@ suite = do
 
     describe "Parsing responses" $ do
         testResponseParser1
+        testResponseParserMismatch
         testChunkedEncoding
         testContentLength
         testCompressedResponse
@@ -198,8 +199,25 @@ testEnsureHostField =
 testResponseParser1 =
     it "parses a simple 200 response" $ do
         b' <- S.readFile "tests/example1.txt"
-        parseTest parseResponse b'
+        let re = parseOnly parseResponse b'
+        let p = case re of
+                    Left str    -> error str
+                    Right x     -> x
+
+        assertEqual "Incorrect parse of response" 200 (getStatusCode p)
         return ()
+
+testResponseParserMismatch =
+    it "parses response when HTTP version doesn't match" $ do
+        b' <- S.readFile "tests/example3.txt"
+        let re = parseOnly parseResponse b'
+        let p = case re of
+                    Left str    -> error str
+                    Right x     -> x
+
+        assertEqual "Incorrect parse of response" 200 (getStatusCode p)
+        return ()
+
 
 
 testChunkedEncoding =
