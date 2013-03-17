@@ -76,10 +76,9 @@ data Connection
 instance Show Connection where
     show c =    {-# SCC "Connection.show" #-}
         concat
-           ["Connection {",
-            "cHost = \"",
+           ["Host: ",
              S.unpack $ cHost c,
-             "\"}"]
+             "\n"]
 
 
 --

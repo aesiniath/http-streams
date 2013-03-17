@@ -237,8 +237,17 @@ parseURL r' =
 
 ------------------------------------------------------------------------------
 
+{-
+    Account for bug where "http://www.example.com" is parsed with no
+    path element, resulting in an illegal HTTP request line.
+-}
+
 path :: URI -> ByteString
-path u = T.encodeUtf8 $! T.pack
+path u = case url of
+            ""  -> "/"
+            _   -> url
+  where
+    url = T.encodeUtf8 $! T.pack
                       $! concat [uriPath u, uriQuery u, uriFragment u]
 
 

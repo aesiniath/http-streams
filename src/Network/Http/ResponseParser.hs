@@ -75,9 +75,11 @@ parseResponse = do
 
 parseStatusLine :: Parser (Int,ByteString)
 parseStatusLine = do
-    sc <- string "HTTP/1.1 " *> decimal <* char ' '
+    sc <- string "HTTP/1." *> satisfy version *> char ' ' *> decimal <* char ' '
     sm <- takeTill (== '\r') <* crlf
     return (sc,sm)
+  where
+    version c = c == '1' || c == '0'
 
 {-
     Needs to be expanded to accept multi-line headers.

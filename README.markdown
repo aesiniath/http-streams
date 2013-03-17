@@ -67,7 +67,7 @@ Recent API changes:
 * _v0.4.0_  
 	Type signature of `buildRequest` changed, removing the Connection
 	parameter. This allows you to construct Request objects before
-	opening a connetion to the web server if you wish.
+	opening a connection to the web server if you wish.
 
 * _v0.3.1_  
 	Initial public release

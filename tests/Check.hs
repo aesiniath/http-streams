@@ -71,6 +71,7 @@ suite = do
 
     describe "Parsing responses" $ do
         testResponseParser1
+        testResponseParserMismatch
         testChunkedEncoding
         testContentLength
         testCompressedResponse
@@ -83,6 +84,7 @@ suite = do
         testPostChunks
         testPostWithForm
         testGetRedirects
+        testGetFormatsRequest
         testExcessiveRedirects
         testGeneralHandler
         testEstablishConnection
@@ -198,8 +200,25 @@ testEnsureHostField =
 testResponseParser1 =
     it "parses a simple 200 response" $ do
         b' <- S.readFile "tests/example1.txt"
-        parseTest parseResponse b'
+        let re = parseOnly parseResponse b'
+        let p = case re of
+                    Left str    -> error str
+                    Right x     -> x
+
+        assertEqual "Incorrect parse of response" 200 (getStatusCode p)
         return ()
+
+testResponseParserMismatch =
+    it "parses response when HTTP version doesn't match" $ do
+        b' <- S.readFile "tests/example3.txt"
+        let re = parseOnly parseResponse b'
+        let p = case re of
+                    Left str    -> error str
+                    Right x     -> x
+
+        assertEqual "Incorrect parse of response" 200 (getStatusCode p)
+        return ()
+
 
 
 testChunkedEncoding =
@@ -392,6 +411,12 @@ testGetRedirects =
             len <- getCount
             assertEqual "Incorrect number of bytes read" 29 len
 
+testGetFormatsRequest =
+    it "GET includes a properly formatted request path" $ do
+        let url = S.concat ["http://", localhost ]
+        x' <- get "http://localhost" concatHandler'
+
+        assertBool "Incorrect context path" (S.length x' > 0)
 
 testExcessiveRedirects =
     it "too many redirects result in an exception" $ do
