@@ -23,7 +23,7 @@ import System.IO.Streams (InputStream)
 -- Non-public API
 --
 
-import Network.Http.Connection (Connection (..))
+import Network.Http.Connection (makeConnection)
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -41,44 +41,35 @@ main :: IO ()
 main = do
     GHC.Conc.setNumCapabilities 4
 
-    l <- initialize
+    x' <- S.readFile "tests/example2.txt"
+
     defaultMain
-       [bench "isolated" (actual l)]
+       [bench "isolated" (actual x')]
 
     putStrLn "Complete."
 
 
-initialize  :: IO [ByteString]
-initialize  = do
-    l <- Streams.withFileAsInput "tests/example2.txt" (\i -> Streams.toList i)
-    return l
-
-
-actual :: [ByteString] -> IO (Request, Response, InputStream ByteString)
-actual l = do
-    c <- fakeConnection l
+actual :: ByteString -> IO ()
+actual x' = do
+    c <- fakeConnection x'
 
     q <- buildRequest $ do
         http GET "/bucket42/object149"
         setAccept "text/plain"
 
-    p <- sendRequest c q emptyBody
+    sendRequest c q emptyBody
 
-    b <- receiveResponse c p
+    receiveResponse c (\p i -> do
+        n <- Streams.nullOutput
+        Streams.connect i n)
+    return ()
 
-    return (q,p,b)
 
-
-fakeConnection :: [ByteString] -> IO Connection
-fakeConnection l = do
+fakeConnection :: ByteString -> IO Connection
+fakeConnection x' = do
     o <- Streams.nullOutput
-    i <- Streams.fromList l
+    i <- Streams.fromByteString x'
 
-    return $ Connection {
-        cHost = "s3.example.com",
-        cAddr = (SockAddrInet 80 (203 + shift 113 16 + shift 15 24)),
-        cSock = undefined,
-        cIn = i,
-        cOut = o
-    }
+    c <- makeConnection "s3.example.com" (return ()) o i
+    return c
 
