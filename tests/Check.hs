@@ -84,6 +84,7 @@ suite = do
         testPostChunks
         testPostWithForm
         testGetRedirects
+        testGetFormatsRequest
         testExcessiveRedirects
         testGeneralHandler
         testEstablishConnection
@@ -410,6 +411,12 @@ testGetRedirects =
             len <- getCount
             assertEqual "Incorrect number of bytes read" 29 len
 
+testGetFormatsRequest =
+    it "GET includes a properly formatted request path" $ do
+        let url = S.concat ["http://", localhost ]
+        x' <- get "http://localhost" concatHandler'
+
+        assertBool "Incorrect context path" (S.length x' > 0)
 
 testExcessiveRedirects =
     it "too many redirects result in an exception" $ do
