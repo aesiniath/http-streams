@@ -31,7 +31,7 @@ import qualified System.IO.Streams as Streams
 
 series :: ByteString -> IO ()
 series x' = do
-    forM_ (replicate 1000 True) (\_ -> actual x')
+    replicateM_ 1000 (actual x')
 
 
 actual :: ByteString -> IO ()
