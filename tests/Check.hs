@@ -125,12 +125,8 @@ fakeConnection :: IO Connection
 fakeConnection = do
     i <- Streams.nullInput
     o <- Streams.nullOutput
-    return $ Connection {
-        cHost  = "www.example.com",
-        cClose = return (),
-        cIn    = i,
-        cOut   = o
-    }
+    c <- makeConnection "www.example.com" (return ()) o i
+    return c
 
 
 testAcceptHeaderFormat =
