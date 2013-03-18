@@ -1,5 +1,5 @@
 --
--- Benchmark code: fake connection using http-streams only
+-- Benchmark using fake connection
 --
 -- Copyright © 2012-2013 Operational Dynamics Consulting, Pty Ltd
 --
@@ -13,12 +13,10 @@
 {-# OPTIONS -fno-warn-unused-do-bind #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
-module IsolatedTestBaseline where
+module CurrentPoint  (series, actual) where
 
-import "http-streams" Network.Http.Client
-import Network.Socket (SockAddr (..))
-import System.IO.Streams (InputStream)
-
+import Control.Monad
+import Network.Http.Client                      -- in tree
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -28,8 +26,12 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import qualified Data.ByteString.UTF8 as S
 import Debug.Trace
-import System.IO.Streams (OutputStream, stdout)
+import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
+
+series :: ByteString -> IO ()
+series x' = do
+    forM_ (replicate 1000 True) (\_ -> actual x')
 
 
 actual :: ByteString -> IO ()
@@ -44,6 +46,7 @@ actual x' = do
 
     receiveResponse c (\p i -> do
         n <- Streams.nullOutput
+        Streams.write (Just $ S.pack $ show p) n
         Streams.connect i n)
     return ()
 

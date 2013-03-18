@@ -27,7 +27,8 @@ import Debug.Trace
 import System.IO.Streams (OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 
-import IsolatedTestBaseline (baseline)
+import qualified BaselinePoint as Baseline (series)
+import qualified CurrentPoint  as Current (series)
 
 main :: IO ()
 main = do
@@ -36,7 +37,8 @@ main = do
     x' <- S.readFile "tests/example2.txt"
 
     defaultMain
-       [bench "baseline" (baseline x')]
+       [bench "baseline" (Baseline.series x'),
+        bench "experiment" (Current.series x')]
 
     putStrLn "Complete."
 

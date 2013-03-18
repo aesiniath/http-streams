@@ -60,7 +60,7 @@ build-core: dirs config $(BUILDDIR)/core/httpclient.bin httpclient
 
 $(BUILDDIR)/core/httpclient.bin: $(CORE_SOURCES)
 	@echo "GHC\t$@"
-	$(GHC) --make -O -threaded  \
+	$(GHC) --make -O2 -threaded  \
 		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/core \
 		-i"$(BUILDDIR):src" \
@@ -79,7 +79,7 @@ build-junk: dirs config $(BUILDDIR)/junk/snippet.bin snippet tags
 
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
-	$(GHC) --make -O -threaded  \
+	$(GHC) --make -O2 -threaded  \
 		-prof -fprof-auto-top \
 		-outputdir $(BUILDDIR)/junk \
 		-i"$(BUILDDIR):src:tests" \
@@ -108,7 +108,7 @@ build-tests: dirs config $(BUILDDIR)/tests/check.bin check tags
 
 $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
-	$(GHC) --make -O -threaded  \
+	$(GHC) --make -O2 -threaded  \
 		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/tests \
 		-i"$(BUILDDIR):src:tests" \
@@ -138,11 +138,11 @@ test: build-tests
 
 benchmark: build-benchmarks
 benchmarks: build-benchmarks
-build-benchmarks: dirs $(BUILDDIR)/bench/bench.bin bench tags
+build-benchmarks: dirs config $(BUILDDIR)/bench/bench.bin bench tags
 
 $(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
-	$(GHC) --make -O -threaded  \
+	$(GHC) --make -O2 -threaded  \
 		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/bench \
 		-i"$(BUILDDIR):src:tests" \
