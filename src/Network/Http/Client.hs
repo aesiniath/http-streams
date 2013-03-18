@@ -159,7 +159,10 @@ module Network.Http.Client (
     openConnectionSSL,
     baselineContextSSL,
     modifyContextSSL,
-    establishConnection
+    establishConnection,
+
+    -- * Testing support
+    makeConnection
 ) where
 
 import Network.Http.Connection

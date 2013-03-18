@@ -82,17 +82,36 @@ instance Show Connection where
 
 
 --
--- | Creates a raw Connection object from the given parts.
+-- | Create a raw Connection object from the given parts. This is
+-- primarily of use when teseting, for example:
+--
+-- > fakeConnection :: IO Connection
+-- > fakeConnection = do
+-- >     o  <- Streams.nullOutput
+-- >     i  <- Streams.nullInput
+-- >     c  <- makeConnection "www.example.com" (return()) o i
+-- >     return c
+--
+-- is an idiom we use frequently in testing and benchmarking, usually
+-- replacing the InputStream with something like:
+--
+-- >     x' <- S.readFile "properly-formatted-response.txt"
+-- >     i  <- Streams.fromByteString x'
+--
+-- If you're going to do that, keep in mind that you /must/ have CR-LF
+-- pairs after each header line and between the header and body to
+-- be compliant with the HTTP protocol; otherwise, parsers will
+-- reject your message.
 --
 makeConnection
     :: ByteString
-    -- ^ will be used as the Host: header in the HTTP request.
+    -- ^ will be used as the @Host:@ header in the HTTP request.
     -> IO ()
-    -- ^ called when the connection is terminated.
+    -- ^ an action to be called when the connection is terminated.
     -> OutputStream ByteString
-    -- ^ write end of the HTTP client connection.
+    -- ^ write end of the HTTP client-server connection.
     -> InputStream ByteString
-    -- ^ read end of the client connection.
+    -- ^ read end of the HTTP client-server connection.
     -> IO Connection
 makeConnection h c o i =
     return $! Connection h c o i
