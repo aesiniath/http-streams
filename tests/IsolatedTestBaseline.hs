@@ -9,12 +9,16 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports #-}
 {-# OPTIONS -fno-warn-unused-do-bind #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
-import Criterion.Main
-import GHC.Conc
-import Network.Http.Client
+module IsolatedTestBaseline where
+
+import "http-streams" Network.Http.Client
+import Network.Socket (SockAddr (..))
+import System.IO.Streams (InputStream)
+
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -27,16 +31,28 @@ import Debug.Trace
 import System.IO.Streams (OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 
-import IsolatedTestBaseline (baseline)
 
-main :: IO ()
-main = do
-    GHC.Conc.setNumCapabilities 4
+actual :: ByteString -> IO ()
+actual x' = do
+    c <- fakeConnection x'
 
-    x' <- S.readFile "tests/example2.txt"
+    q <- buildRequest $ do
+        http GET "/bucket42/object149"
+        setAccept "text/plain"
 
-    defaultMain
-       [bench "baseline" (baseline x')]
+    sendRequest c q emptyBody
 
-    putStrLn "Complete."
+    receiveResponse c (\p i -> do
+        n <- Streams.nullOutput
+        Streams.connect i n)
+    return ()
+
+
+fakeConnection :: ByteString -> IO Connection
+fakeConnection x' = do
+    o <- Streams.nullOutput
+    i <- Streams.fromByteString x'
+
+    c <- makeConnection "swift.example.com" (return ()) o i
+    return c
 
