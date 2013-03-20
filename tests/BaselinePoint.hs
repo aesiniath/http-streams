@@ -9,14 +9,15 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE PackageImports    #-}
 {-# OPTIONS -fno-warn-unused-do-bind #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
 module BaselinePoint (series, actual) where
 
 import Control.Monad
-import "http-streams" Network.Http.Client       -- as installed
+import "http-streams" Network.Http.Client
+            -- as installed
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.

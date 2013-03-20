@@ -9,14 +9,15 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE PackageImports    #-}
 {-# OPTIONS -fno-warn-unused-do-bind #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
 module CurrentPoint  (series, actual) where
 
 import Control.Monad
-import Network.Http.Client                      -- in tree
+import Network.Http.Client
+            -- in tree
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.

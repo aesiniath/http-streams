@@ -28,7 +28,7 @@ import System.IO.Streams (OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 
 import qualified BaselinePoint as Baseline (series)
-import qualified CurrentPoint  as Current (series)
+import qualified CurrentPoint as Current (series)
 
 main :: IO ()
 main = do
