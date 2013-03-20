@@ -5,7 +5,9 @@ check
 bench
 report.html
 *.prof
+*.mem
 tags
 TAGS
 config.h
 tests/Benchmark.hs
+tests/Snippet.hs
