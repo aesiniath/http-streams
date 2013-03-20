@@ -75,7 +75,11 @@ httpclient:
 	ln -s $(BUILDDIR)/core/client.bin $@
 
 junk: build-junk
-build-junk: dirs config $(BUILDDIR)/junk/snippet.bin snippet tags
+build-junk: dirs config tests/Snippet.hs $(BUILDDIR)/junk/snippet.bin snippet tags
+
+tests/Snippet.hs:
+	@echo "Make a symlink from Snippet.hs -> whichever code you wish to run"
+	@false
 
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
@@ -138,7 +142,11 @@ test: build-tests
 
 benchmark: build-benchmarks
 benchmarks: build-benchmarks
-build-benchmarks: dirs config $(BUILDDIR)/bench/bench.bin bench tags
+build-benchmarks: dirs config tests/Benchmark.hs $(BUILDDIR)/bench/bench.bin bench tags
+
+tests/Benchmark.hs:
+	@echo "Make a symlink from Benchmark.hs -> whichever code you wish to run"
+	@false
 
 $(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
