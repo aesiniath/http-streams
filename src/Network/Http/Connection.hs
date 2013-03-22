@@ -69,7 +69,7 @@ data Connection
             -- ^ will be used as the Host: header in the HTTP request.
         cClose :: IO (),
             -- ^ called when the connection should be closed.
-        cOut   :: OutputStream ByteString,
+        cOut   :: OutputStream Builder,
         cIn    :: InputStream ByteString
     }
 
@@ -113,8 +113,9 @@ makeConnection
     -> InputStream ByteString
     -- ^ read end of the HTTP client-server connection.
     -> IO Connection
-makeConnection h c o i =
-    return $! Connection h c o i
+makeConnection h c o1 i = do
+    o2 <- Streams.builderStream o1
+    return $! Connection h c o2 i
 
 
 --
@@ -175,11 +176,14 @@ openConnection h p = do
     s <- socket (addrFamily addr) Stream defaultProtocol
 
     connect s a
-    (i,o) <- Streams.socketToStreams s
+    (i,o1) <- Streams.socketToStreams s
+
+    o2 <- Streams.builderStream o1
+
     return Connection {
         cHost  = h',
         cClose = close s,
-        cOut   = o,
+        cOut   = o2,
         cIn    = i
     }
   where
@@ -231,11 +235,14 @@ openConnectionSSL ctx h p = do
     ssl <- SSL.connection ctx s
     SSL.connect ssl
 
-    (i,o) <- Streams.sslToStreams ssl
+    (i,o1) <- Streams.sslToStreams ssl
+
+    o2 <- Streams.builderStream o1
+
     return Connection {
         cHost  = h',
         cClose = closeSSL s ssl,
-        cOut   = o,
+        cOut   = o2,
         cIn    = i
     }
   where
@@ -272,8 +279,6 @@ closeSSL s ssl = do
 -}
 sendRequest :: Connection -> Request -> (OutputStream Builder -> IO α) -> IO α
 sendRequest c q handler = do
-    o2 <- Streams.builderStream o1
-
     -- write the headers
 
     Streams.write (Just msg) o2
@@ -325,7 +330,7 @@ sendRequest c q handler = do
     return x
 
   where
-    o1 = cOut c
+    o2 = cOut c
     e = qBody q
     t = qExpect q
     msg = composeRequestBytes q h'
