@@ -48,6 +48,7 @@ import qualified Data.ByteString.Char8 as S
 import Data.CaseInsensitive (CI, mk, original)
 import Data.HashMap.Strict (HashMap, delete, empty, foldrWithKey, insert,
                             lookup)
+import Data.List (foldl')
 import Data.Monoid (mconcat, mempty)
 import Data.String (IsString, fromString)
 
@@ -329,13 +330,13 @@ buildHeaders :: [(ByteString,ByteString)] -> Headers
 buildHeaders hs =
     Wrap result
   where
-    result = foldr addHeader empty hs
+    result = foldl' addHeader empty hs
 
 addHeader
-    :: (ByteString,ByteString)
+    :: HashMap (CI ByteString) ByteString
+    -> (ByteString,ByteString)
     -> HashMap (CI ByteString) ByteString
-    -> HashMap (CI ByteString) ByteString
-addHeader (k,v) m =
+addHeader m (k,v) =
     insert (mk k) v m
 
 lookupHeader :: Headers -> ByteString -> Maybe ByteString
