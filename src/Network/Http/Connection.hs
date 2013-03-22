@@ -69,7 +69,7 @@ data Connection
             -- ^ will be used as the Host: header in the HTTP request.
         cClose :: IO (),
             -- ^ called when the connection should be closed.
-        cOut   :: OutputStream ByteString,
+        cOut   :: OutputStream Builder,
         cIn    :: InputStream ByteString
     }
 
@@ -82,20 +82,40 @@ instance Show Connection where
 
 
 --
--- | Creates a raw Connection object from the given parts.
+-- | Create a raw Connection object from the given parts. This is
+-- primarily of use when teseting, for example:
+--
+-- > fakeConnection :: IO Connection
+-- > fakeConnection = do
+-- >     o  <- Streams.nullOutput
+-- >     i  <- Streams.nullInput
+-- >     c  <- makeConnection "www.example.com" (return()) o i
+-- >     return c
+--
+-- is an idiom we use frequently in testing and benchmarking, usually
+-- replacing the InputStream with something like:
+--
+-- >     x' <- S.readFile "properly-formatted-response.txt"
+-- >     i  <- Streams.fromByteString x'
+--
+-- If you're going to do that, keep in mind that you /must/ have CR-LF
+-- pairs after each header line and between the header and body to
+-- be compliant with the HTTP protocol; otherwise, parsers will
+-- reject your message.
 --
 makeConnection
     :: ByteString
-    -- ^ will be used as the Host: header in the HTTP request.
+    -- ^ will be used as the @Host:@ header in the HTTP request.
     -> IO ()
-    -- ^ called when the connection is terminated.
+    -- ^ an action to be called when the connection is terminated.
     -> OutputStream ByteString
-    -- ^ write end of the HTTP client connection.
+    -- ^ write end of the HTTP client-server connection.
     -> InputStream ByteString
-    -- ^ read end of the client connection.
+    -- ^ read end of the HTTP client-server connection.
     -> IO Connection
-makeConnection h c o i =
-    return $! Connection h c o i
+makeConnection h c o1 i = do
+    o2 <- Streams.builderStream o1
+    return $! Connection h c o2 i
 
 
 --
@@ -156,11 +176,14 @@ openConnection h p = do
     s <- socket (addrFamily addr) Stream defaultProtocol
 
     connect s a
-    (i,o) <- Streams.socketToStreams s
+    (i,o1) <- Streams.socketToStreams s
+
+    o2 <- Streams.builderStream o1
+
     return Connection {
         cHost  = h',
         cClose = close s,
-        cOut   = o,
+        cOut   = o2,
         cIn    = i
     }
   where
@@ -212,11 +235,14 @@ openConnectionSSL ctx h p = do
     ssl <- SSL.connection ctx s
     SSL.connect ssl
 
-    (i,o) <- Streams.sslToStreams ssl
+    (i,o1) <- Streams.sslToStreams ssl
+
+    o2 <- Streams.builderStream o1
+
     return Connection {
         cHost  = h',
         cClose = closeSSL s ssl,
-        cOut   = o,
+        cOut   = o2,
         cIn    = i
     }
   where
@@ -253,8 +279,6 @@ closeSSL s ssl = do
 -}
 sendRequest :: Connection -> Request -> (OutputStream Builder -> IO α) -> IO α
 sendRequest c q handler = do
-    o2 <- Streams.builderStream o1
-
     -- write the headers
 
     Streams.write (Just msg) o2
@@ -306,7 +330,7 @@ sendRequest c q handler = do
     return x
 
   where
-    o1 = cOut c
+    o2 = cOut c
     e = qBody q
     t = qExpect q
     msg = composeRequestBytes q h'
@@ -459,7 +483,7 @@ inputStreamBody i1 o = do
 --
 debugHandler :: Response -> InputStream ByteString -> IO ()
 debugHandler p i = do
-    putStr $ show p
+    S.putStr $ S.filter (/= '\r') $ Builder.toByteString $ composeResponseBytes p
     Streams.connect i stdout
 
 

@@ -10,6 +10,7 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 {-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Types (
@@ -48,6 +49,7 @@ import qualified Data.ByteString.Char8 as S
 import Data.CaseInsensitive (CI, mk, original)
 import Data.HashMap.Strict (HashMap, delete, empty, foldrWithKey, insert,
                             lookup)
+import Data.List (foldl')
 import Data.Monoid (mconcat, mempty)
 import Data.String (IsString, fromString)
 
@@ -151,7 +153,18 @@ composeRequestBytes q h' =
         " ",
         version,
         "\r\n"]
-    method = Builder.fromString $ show $ qMethod q
+    method = case qMethod q of
+        GET     -> "GET"
+        HEAD    -> "HEAD"
+        POST    -> "POST"
+        PUT     -> "PUT"
+        DELETE  -> "DELETE"
+        TRACE   -> "TRACE"
+        OPTIONS -> "OPTIONS"
+        CONNECT -> "CONNECT"
+        PATCH   -> "PATCH"
+        (Method x) -> Builder.fromByteString x
+
     uri = Builder.copyByteString $ qPath q
     version = "HTTP/1.1"
 
@@ -248,6 +261,7 @@ composeResponseBytes p =
 
 instance IsString Builder where
     fromString x = Builder.fromString x
+    {-# INLINE fromString #-}
 
 --
 -- | The map of headers in a 'Request' or 'Response'. Note that HTTP
@@ -296,15 +310,15 @@ updateHeader :: Headers -> ByteString -> ByteString -> Headers
 updateHeader x k v =
     Wrap result
   where
-    result = insert (mk k) v m
-    m = unWrap x
+    !result = insert (mk k) v m
+    !m = unWrap x
 
 removeHeader :: Headers -> ByteString -> Headers
 removeHeader x k =
     Wrap result
   where
-    result = delete (mk k) m
-    m = unWrap x
+    !result = delete (mk k) m
+    !m = unWrap x
 
 
 {-
@@ -317,18 +331,18 @@ buildHeaders :: [(ByteString,ByteString)] -> Headers
 buildHeaders hs =
     Wrap result
   where
-    result = foldr addHeader empty hs
+    result = foldl' addHeader empty hs
 
 addHeader
-    :: (ByteString,ByteString)
+    :: HashMap (CI ByteString) ByteString
+    -> (ByteString,ByteString)
     -> HashMap (CI ByteString) ByteString
-    -> HashMap (CI ByteString) ByteString
-addHeader (k,v) m =
+addHeader m (k,v) =
     insert (mk k) v m
 
 lookupHeader :: Headers -> ByteString -> Maybe ByteString
 lookupHeader x k =
     lookup (mk k) m
   where
-    m = unWrap x
+    !m = unWrap x
 
