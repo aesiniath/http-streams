@@ -151,7 +151,18 @@ composeRequestBytes q h' =
         " ",
         version,
         "\r\n"]
-    method = Builder.fromString $ show $ qMethod q
+    method = case qMethod q of
+        GET     -> "GET"
+        HEAD    -> "HEAD"
+        POST    -> "POST"
+        PUT     -> "PUT"
+        DELETE  -> "DELETE"
+        TRACE   -> "TRACE"
+        OPTIONS -> "OPTIONS"
+        CONNECT -> "CONNECT"
+        PATCH   -> "PATCH"
+        (Method x) -> Builder.fromByteString x
+
     uri = Builder.copyByteString $ qPath q
     version = "HTTP/1.1"
 
@@ -248,6 +259,7 @@ composeResponseBytes p =
 
 instance IsString Builder where
     fromString x = Builder.fromString x
+    {-# INLINE fromString #-}
 
 --
 -- | The map of headers in a 'Request' or 'Response'. Note that HTTP
