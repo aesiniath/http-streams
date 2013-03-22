@@ -478,7 +478,7 @@ inputStreamBody i1 o = do
 --
 debugHandler :: Response -> InputStream ByteString -> IO ()
 debugHandler p i = do
-    putStr $ show p
+    S.putStr $ S.filter (/= '\r') $ Builder.toByteString $ composeResponseBytes p
     Streams.connect i stdout
 
 
