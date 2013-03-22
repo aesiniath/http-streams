@@ -10,6 +10,7 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 {-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Types (
@@ -309,15 +310,15 @@ updateHeader :: Headers -> ByteString -> ByteString -> Headers
 updateHeader x k v =
     Wrap result
   where
-    result = insert (mk k) v m
-    m = unWrap x
+    !result = insert (mk k) v m
+    !m = unWrap x
 
 removeHeader :: Headers -> ByteString -> Headers
 removeHeader x k =
     Wrap result
   where
-    result = delete (mk k) m
-    m = unWrap x
+    !result = delete (mk k) m
+    !m = unWrap x
 
 
 {-
@@ -343,5 +344,5 @@ lookupHeader :: Headers -> ByteString -> Maybe ByteString
 lookupHeader x k =
     lookup (mk k) m
   where
-    m = unWrap x
+    !m = unWrap x
 
