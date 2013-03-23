@@ -110,12 +110,12 @@ instance Eq Method where
 --
 data Request
     = Request {
-        qMethod  :: Method,
-        qHost    :: Maybe ByteString,
-        qPath    :: ByteString,
-        qBody    :: EntityBody,
-        qExpect  :: ExpectMode,
-        qHeaders :: Headers
+        qMethod  :: !Method,
+        qHost    ::  Maybe ByteString,
+        qPath    :: !ByteString,
+        qBody    :: !EntityBody,
+        qExpect  :: !ExpectMode,
+        qHeaders :: !Headers
     }
 
 instance Show Request where
@@ -193,12 +193,12 @@ type StatusCode = Int
 --
 data Response
     = Response {
-        pStatusCode       :: StatusCode,
-        pStatusMsg        :: ByteString,
-        pTransferEncoding :: TransferEncoding,
-        pContentEncoding  :: ContentEncoding,
-        pContentLength    :: Int,
-        pHeaders          :: Headers
+        pStatusCode       :: !StatusCode,
+        pStatusMsg        :: !ByteString,
+        pTransferEncoding :: !TransferEncoding,
+        pContentEncoding  :: !ContentEncoding,
+        pContentLength    :: !Int,
+        pHeaders          :: !Headers
     }
 
 instance Show Response where
