@@ -62,15 +62,35 @@ parseResponse = do
 
     hs <- many parseHeader
 
-    let hp = buildHeaders hs
-
     _ <- crlf
+
+    let h  = buildHeaders hs
+    let te = case lookupHeader h "Transfer-Encoding" of
+            Just x' -> if mk x' == "chunked"
+                        then Chunked
+                        else None
+            Nothing -> None
+
+    let ce = case lookupHeader h "Content-Encoding" of
+            Just x' -> if mk x' == "gzip"
+                        then Gzip
+                        else Identity
+            Nothing -> Identity
+
+    let n  = case lookupHeader h "Content-Length" of
+            Just x' -> readDecimal x' :: Int
+            Nothing -> 0
 
     return Response {
         pStatusCode = sc,
         pStatusMsg = sm,
-        pHeaders = hp
+        pTransferEncoding = te,
+        pContentEncoding = ce,
+        pContentLength = n,
+        pHeaders = h
     }
+  where
+
 
 
 parseStatusLine :: Parser (Int,ByteString)
@@ -113,36 +133,20 @@ crlf = string "\r\n"
 readResponseBody :: Response -> InputStream ByteString -> IO (InputStream ByteString)
 readResponseBody p i1 = do
 
-    i2 <- case encoding of
+    i2 <- case t of
         None        -> readFixedLengthBody i1 n
         Chunked     -> readChunkedBody i1
 
-    i3 <- case compression of
+    i3 <- case c of
         Identity    -> return i2
         Gzip        -> readCompressedBody i2
-        Deflate     -> throwIO (UnexpectedCompression $ show compression)
+        Deflate     -> throwIO (UnexpectedCompression $ show c)
 
     return i3
   where
-
-    encoding = case header "Transfer-Encoding" of
-        Just x'-> if mk x' == "chunked"
-                    then Chunked
-                    else None
-        Nothing -> None
-
-    compression = case header "Content-Encoding" of
-        Just x'-> if mk x' == "gzip"
-                    then Gzip
-                    else Identity
-        Nothing -> Identity
-
-    header = getHeader p
-
-    n = case header "Content-Length" of
-        Just x' -> readDecimal x' :: Int
-        Nothing -> 0
-
+    t = pTransferEncoding p
+    c = pContentEncoding p
+    n = pContentLength p
 
 readDecimal :: (Enum a, Num a, Bits a) => ByteString -> a
 readDecimal = S.foldl' f 0
@@ -154,12 +158,6 @@ readDecimal = S.foldl' f 0
     digitToInt c | c >= '0' && c <= '9' = toEnum $! ord c - ord '0'
                  | otherwise = error $ "'" ++ [c] ++ "' is not an ascii digit"
 {-# INLINE readDecimal #-}
-
-
-data TransferEncoding = None | Chunked
-
-data ContentEncoding = Identity | Gzip | Deflate
-    deriving (Show)
 
 data UnexpectedCompression = UnexpectedCompression String
         deriving (Typeable, Show)

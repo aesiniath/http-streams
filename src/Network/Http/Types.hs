@@ -9,8 +9,8 @@
 -- the BSD licence.
 --
 
+{-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BangPatterns #-}
 {-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Types (
@@ -19,6 +19,8 @@ module Network.Http.Types (
     ExpectMode(..),
     Response(..),
     StatusCode,
+    TransferEncoding(..),
+    ContentEncoding(..),
     getStatusCode,
     getStatusMessage,
     getHeader,
@@ -108,12 +110,12 @@ instance Eq Method where
 --
 data Request
     = Request {
-        qMethod  :: Method,
-        qHost    :: Maybe ByteString,
-        qPath    :: ByteString,
-        qBody    :: EntityBody,
-        qExpect  :: ExpectMode,
-        qHeaders :: Headers
+        qMethod  :: !Method,
+        qHost    ::  Maybe ByteString,
+        qPath    :: !ByteString,
+        qBody    :: !EntityBody,
+        qExpect  :: !ExpectMode,
+        qHeaders :: !Headers
     }
 
 instance Show Request where
@@ -191,14 +193,24 @@ type StatusCode = Int
 --
 data Response
     = Response {
-        pStatusCode :: StatusCode,
-        pStatusMsg  :: ByteString,
-        pHeaders    :: Headers
+        pStatusCode       :: !StatusCode,
+        pStatusMsg        :: !ByteString,
+        pTransferEncoding :: !TransferEncoding,
+        pContentEncoding  :: !ContentEncoding,
+        pContentLength    :: !Int,
+        pHeaders          :: !Headers
     }
 
 instance Show Response where
     show p =     {-# SCC "Response.show" #-}
         S.unpack $ S.filter (/= '\r') $ Builder.toByteString $ composeResponseBytes p
+
+
+data TransferEncoding = None | Chunked
+
+data ContentEncoding = Identity | Gzip | Deflate
+    deriving (Show)
+
 
 --
 -- | Get the HTTP response status code.
