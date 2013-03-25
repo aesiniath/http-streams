@@ -151,7 +151,6 @@ tests/Benchmark.hs:
 $(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@echo "GHC\t$@"
 	$(GHC) --make -O2 -threaded  \
-		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/bench \
 		-i"$(BUILDDIR):src:tests" \
 		-I"." \

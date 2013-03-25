@@ -77,14 +77,15 @@ test-suite           check
                      attoparsec,
                      base,
                      blaze-builder,
+                     base64-bytestring,
                      bytestring,
                      case-insensitive,
                      hspec,
+                     hspec-expectations,
                      io-streams,
                      mtl,
                      network,
                      openssl-streams >= 1.0 && <1.1,
-                     snap            >= 0.9    && < 1.0,
                      snap-core       >= 0.9    && < 1.0,
                      snap-server     >= 0.9    && < 1.0,
                      system-fileio   >= 0.3.10 && < 0.4,
@@ -104,6 +105,9 @@ test-suite           check
                      -fno-warn-missing-signatures
                      -fno-warn-unused-binds
                      -fno-warn-unused-do-bind
+
+  include-dirs:      .
+
 
 source-repository    head
   type:              git
