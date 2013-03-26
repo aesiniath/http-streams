@@ -76,7 +76,8 @@ routeRequests =
              ("bounce", serveRedirect),
              ("loop", serveRedirectEndlessly),
              ("postbox", method POST handlePostMethod),
-             ("size", handleSizeRequest)]
+             ("size", handleSizeRequest),
+             ("multilineheaders", serveMultilineResponseHeaders)]
     <|> serveNotFound
 
 
@@ -157,6 +158,11 @@ serveRedirectEndlessly = do
   where
     r' = S.concat ["http://", localHost, ":", S.pack $ show $ localPort, "/loop"]
 
+
+serveMultilineResponseHeaders :: Snap ()
+serveMultilineResponseHeaders = do
+    modifyResponse $ addHeader "Set-Cookie" "line1"
+    modifyResponse $ addHeader "Set-Cookie" "line2"
 
 handlePostMethod :: Snap ()
 handlePostMethod = do
