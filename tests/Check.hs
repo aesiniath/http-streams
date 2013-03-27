@@ -75,6 +75,7 @@ suite = do
         testChunkedEncoding
         testContentLength
         testCompressedResponse
+        testMultilineResponseHeaders
 
     describe "Expectation handling" $ do
         testExpectationContinue
@@ -424,6 +425,15 @@ testExcessiveRedirects =
         handler _ _ = do
             assertBool "Should have thrown exception before getting here" False
 
+testMultilineResponseHeaders =
+    it "multiline response headers are properly parsed" $ do
+        let url = S.concat ["http://", localhost, "/multilineheaders"]
+
+        get url handler
+      where
+        handler :: Response -> InputStream ByteString -> IO ()
+        handler r _ = do
+            assertEqual "Invalid response headers" (Just "line1\nline2") (getHeader r "Set-Cookie")
 
 {-
     From http://stackoverflow.com/questions/6147435/is-there-an-assertexception-in-any-of-the-haskell-test-frameworks
