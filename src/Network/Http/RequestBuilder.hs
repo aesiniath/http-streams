@@ -9,6 +9,7 @@
 -- the BSD licence.
 --
 
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
@@ -42,6 +43,8 @@ import Data.Monoid (mconcat)
 
 import Network.Http.Connection
 import Network.Http.Types
+
+#include "config.h"
 
 --
 -- | The RequestBuilder monad allows you to abuse do-notation to
@@ -91,7 +94,7 @@ http :: Method -> ByteString -> RequestBuilder ()
 http m p' = do
     q <- get
     let h0 = qHeaders q
-    let h1 = updateHeader h0 "User-Agent" "http-streams/0.4.0.0"
+    let h1 = updateHeader h0 "User-Agent" VERSION
     let h2 = updateHeader h1 "Accept-Encoding" "gzip"
 
     let e  = case m of
@@ -190,7 +193,7 @@ setAccept v' = do
 -- >                     ("*/*", 0)]
 --
 -- will result in an @Accept:@ header value of
--- @text\/html; q=1.0, application\/xml; q=0.8, *\/*; q=0.0@ as you
+-- @text\/html; q=1.0, application\/xml; q=0.8, \*\/\*; q=0.0@ as you
 -- would expect.
 --
 setAccept' :: [(ByteString,Float)] -> RequestBuilder ()

@@ -10,12 +10,13 @@
 --
 
 import Data.Char (toUpper)
-import Distribution.PackageDescription (PackageDescription)
+import Distribution.Text (display)
+import Distribution.PackageDescription (PackageDescription(..))
 import Distribution.Simple
 import Distribution.Simple.LocalBuildInfo (LocalBuildInfo)
 import Distribution.Simple.Setup (ConfigFlags)
 import Distribution.System (OS (..), buildOS)
-import System.IO (IOMode (..), hPutStrLn, withFile)
+import System.IO (IOMode (..), Handle, hPutStrLn, withFile)
 
 main :: IO ()
 main = defaultMainWithHooks $ simpleUserHooks {
@@ -29,12 +30,17 @@ main = defaultMainWithHooks $ simpleUserHooks {
 -}
 
 configure :: Args -> ConfigFlags -> PackageDescription -> LocalBuildInfo -> IO ()
-configure _ _ _ _  = do
+configure _ _ p _  = do
 
     withFile "config.h" WriteMode (\h -> do
-        hPutStrLn h ("#define " ++ s))
+        discoverOperatingSystem h
+        discoverLibraryVersion h p)
 
     return ()
+
+discoverOperatingSystem :: Handle -> IO ()
+discoverOperatingSystem h = do
+        hPutStrLn h ("#define " ++ s)
 
   where
     o = buildOS
@@ -46,3 +52,13 @@ configure _ _ _ _  = do
             _       -> "__" ++ up o ++ "__"
 
     up x = map toUpper (show x)
+
+discoverLibraryVersion :: Handle -> PackageDescription -> IO ()
+discoverLibraryVersion h p = do
+        hPutStrLn h ("#define VERSION \"http-streams/" ++ s ++ "\"")
+
+  where
+    i = package p
+    v = pkgVersion i
+    s = display v
+
