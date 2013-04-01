@@ -47,7 +47,7 @@ $(BUILDDIR)/.dir:
 
 
 config: config.h
-config.h: Setup.hs
+config.h: Setup.hs http-streams.cabal
 	@echo "CABAL\tconfigure"
 	cabal configure
 
