@@ -178,10 +178,10 @@ readChunkedBody i1 = do
 
 
 {-
-    Treat chunks larger than 256kB as a denial-of-service attack.
+    Treat chunks larger than 256 MiB as a denial-of-service attack.
 -}
 mAX_CHUNK_SIZE :: Int
-mAX_CHUNK_SIZE = (2::Int)^(18::Int)
+mAX_CHUNK_SIZE = (256::Int) * (1024::Int)^(2::Int)
 
 parseTransferChunk :: Parser (Maybe ByteString)
 parseTransferChunk = do
