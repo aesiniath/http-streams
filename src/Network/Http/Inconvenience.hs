@@ -18,7 +18,6 @@
 
 module Network.Http.Inconvenience (
     URL,
-    modifyContextSSL,
     establishConnection,
     get,
     post,
@@ -33,35 +32,36 @@ module Network.Http.Inconvenience (
     HttpClientError(..)
 ) where
 
-import Blaze.ByteString.Builder (Builder)
+import           Data.Maybe
+
+import           Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       fromWord8, toByteString)
-import Control.Exception (Exception, bracket, throw)
-import Data.Bits (Bits (..))
-import Data.ByteString.Char8 (ByteString)
+import           Control.Exception (Exception, bracket, throw)
+import           Data.Bits (Bits (..))
+import           Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S
-import Data.ByteString.Internal (c2w, w2c)
-import Data.Char (intToDigit, isAlphaNum)
-import Data.HashSet (HashSet)
+import           Data.ByteString.Internal (c2w, w2c)
+import           Data.Char (intToDigit, isAlphaNum)
+import           Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
-import Data.IORef (IORef, newIORef, readIORef, writeIORef)
-import Data.List (intersperse)
-import Data.Monoid (Monoid (..), mappend)
+import           Data.List (intersperse)
+import           Data.Monoid (Monoid (..), mappend)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import Data.Typeable (Typeable)
-import GHC.Exts
-import GHC.Word (Word8 (..))
-import Network.URI (URI (..), URIAuth (..), parseURI)
-import OpenSSL.Session (SSLContext)
+import           Data.Typeable (Typeable)
+import           GHC.Exts
+import           GHC.Word (Word8 (..))
+import           Network.URI (URI (..), URIAuth (..), parseURI)
+import           OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
-import System.IO.Streams (InputStream, OutputStream)
+import           OpenSSL (withOpenSSL)
+import           System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
-import System.IO.Unsafe (unsafePerformIO)
 
-import Network.Http.Connection
-import Network.Http.RequestBuilder
-import Network.Http.Types
+import           Network.Http.Connection
+import           Network.Http.RequestBuilder
+import           Network.Http.Types
 
 #include "config.h"
 
@@ -87,7 +87,7 @@ urlEncodeBuilder = go mempty
   where
     go !b !s = maybe b' esc (S.uncons y)
       where
-        (x,y)     = S.span (flip HashSet.member urlEncodeTable) s
+        (x,y)     = S.span (`HashSet.member` urlEncodeTable) s
         b'        = b `mappend` Builder.fromByteString x
         esc (c,r) = let b'' = if c == ' '
                                 then b' `mappend` Builder.fromWord8 (c2w '+')
@@ -115,33 +115,6 @@ urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
 
 ------------------------------------------------------------------------------
 
-{-
-    The default SSLContext used by the convenience APIs in the http-streams
-    library. This is a kludge, unsafe bad yada yada. The technique, however,
-    was described on a Haskell Wiki page, so that makes it an officially
-    supported kludge. The justification for doing this is a) the functions
-    accessing this IORef are themselves all in the IO monad, and b) these
-    contortions are necessary to allow the library to be used for http:// URLs
-    *without* requiring the developer to do 'withOpenSSL'.
--}
-global :: IORef SSLContext
-global = unsafePerformIO $ do
-    ctx <- baselineContextSSL
-    newIORef ctx
-{-# NOINLINE global #-}
-
---
--- | Modify the context being used to configure the SSL tunnel used by
--- the convenience API functions to make @https://@ connections. The
--- default is that setup by 'baselineContextSSL'.
---
-modifyContextSSL :: (SSLContext -> IO SSLContext) -> IO ()
-modifyContextSSL f = do
-    ctx <- readIORef global
-    ctx' <- f ctx
-    writeIORef global ctx'
-
---
 -- | Given a URL, work out whether it is normal or secure, and then
 -- open the connection to the webserver including setting the
 -- appropriate default port if one was not specified in the URL. This
@@ -159,28 +132,24 @@ modifyContextSSL f = do
 -- >         http GET url
 -- >     ...
 --
-establishConnection :: URL -> IO (Connection)
-establishConnection r' = do
-    establish u
+establishConnection :: URL -> IO Connection
+establishConnection r' = establish u
   where
     u = parseURL r'
 {-# INLINE establishConnection #-}
 
-establish :: URI -> IO (Connection)
+establish :: URI -> IO Connection
 establish u =
     case scheme of
-        "http:"  -> do
-                        openConnection host port
-        "https:" -> do
-                        ctx <- readIORef global
-                        openConnectionSSL ctx host ports
+        "http:"  -> openConnection host port
+        "https:" -> withOpenSSL $ do
+                        c <- ctx
+                        openConnectionSSL c host ports
         _        -> error ("Unknown URI scheme " ++ scheme)
   where
     scheme = uriScheme u
 
-    auth = case uriAuthority u of
-        Just x  -> x
-        Nothing -> URIAuth "" "localhost" ""
+    auth = fromMaybe (URIAuth "" "localhost" "") (uriAuthority u)
 
     host = uriRegName auth
     port = case uriPort auth of
@@ -189,6 +158,8 @@ establish u =
     ports = case uriPort auth of
         ""  -> 443
         _   -> read $ tail $ uriPort auth :: Int
+    
+    ctx = baselineContextSSL
 
 
 --
@@ -214,7 +185,14 @@ establish u =
 baselineContextSSL :: IO SSLContext
 baselineContextSSL = do
     ctx <- SSL.context
-    SSL.contextSetDefaultCiphers ctx
+    -- give it "ALL", openssl docs have this to say:
+    
+    {- ALL: all cipher suites except the eNULL ciphers which must be
+       explicitly enabled; as of OpenSSL, the ALL cipher suites are
+       reasonably ordered by default
+    -}
+    
+    SSL.contextSetCiphers ctx "DEFAULT"
 #if defined __MACOSX__
     SSL.contextSetVerificationMode ctx SSL.VerifyNone
 #elif defined __WIN32__
@@ -229,9 +207,7 @@ baselineContextSSL = do
 
 parseURL :: URL -> URI
 parseURL r' =
-    case parseURI r of
-        Just u  -> u
-        Nothing -> error ("Can't parse URI " ++ r)
+    fromMaybe (error ("Can't parse URI " ++ r)) (parseURI r)
   where
     r = T.unpack $ T.decodeUtf8 r'
 
@@ -277,13 +253,12 @@ get :: URL
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-get r' handler = getN 0 r' handler
+get = getN 0
 
-getN n r' handler = do
-    bracket
-        (establish u)
-        (teardown)
-        (process)
+getN n r' handler = bracket
+    (establish u)
+    teardown
+    process
 
   where
     teardown = closeConnection
@@ -314,8 +289,8 @@ wrapRedirect
     -> Response
     -> InputStream ByteString
     -> IO β
-wrapRedirect n handler p i = do
-    if (s == 301 || s == 302 || s == 303 || s == 307)
+wrapRedirect n handler p i =
+    if s `elem` [301,302,303,307]
         then case lm of
                 Just l  -> getN n' l handler
                 Nothing -> handler p i
@@ -346,11 +321,10 @@ post :: URL
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-post r' t body handler = do
-    bracket
-        (establish u)
-        (teardown)
-        (process)
+post r' t body handler = bracket
+    (establish u)
+    teardown
+    process
   where
     teardown = closeConnection
 
@@ -364,9 +338,7 @@ post r' t body handler = do
 
         _ <- sendRequest c q body
 
-        x <- receiveResponse c handler
-        return x
-
+        receiveResponse c handler
 
 --
 -- | Send form data to a server via an HTTP POST request. This is the
@@ -383,11 +355,10 @@ postForm
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-postForm r' nvs handler = do
-    bracket
-        (establish u)
-        (teardown)
-        (process)
+postForm r' nvs handler = bracket
+    (establish u)
+    teardown
+    process
   where
     teardown = closeConnection
 
@@ -401,9 +372,7 @@ postForm r' nvs handler = do
 
         _ <- sendRequest c q (encodedFormBody nvs)
 
-        x <- receiveResponse c handler
-        return x
-
+        receiveResponse c handler
 
 --
 -- | Specify name/value pairs to be sent to the server in the manner
@@ -425,8 +394,7 @@ postForm r' nvs handler = do
 -- @encodedFormBody@ function) takes care of this for you, obviously.
 --
 encodedFormBody :: [(ByteString,ByteString)] -> OutputStream Builder -> IO ()
-encodedFormBody nvs o = do
-    Streams.write (Just b) o
+encodedFormBody nvs = Streams.write (Just b)
   where
     b = mconcat $ intersperse "&" $ map combine nvs
 
@@ -453,11 +421,10 @@ put :: URL
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-put r' t body handler = do
-    bracket
-        (establish u)
-        (teardown)
-        (process)
+put r' t body handler = bracket
+    (establish u)
+    teardown
+    process
   where
     teardown = closeConnection
 
@@ -471,9 +438,7 @@ put r' t body handler = do
 
         _ <- sendRequest c q body
 
-        x <- receiveResponse c handler
-        return x
-
+        receiveResponse c handler
 
 --
 -- | A special case of 'concatHandler', this function will return the
