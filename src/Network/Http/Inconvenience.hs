@@ -18,7 +18,7 @@
 
 module Network.Http.Inconvenience (
     URL,
-    modifyContextSSL,
+--    modifyContextSSL,
     establishConnection,
     get,
     post,
@@ -44,7 +44,7 @@ import Data.ByteString.Internal (c2w, w2c)
 import Data.Char (intToDigit, isAlphaNum)
 import Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
-import Data.IORef (IORef, newIORef, readIORef, writeIORef)
+--import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Data.List (intersperse)
 import Data.Monoid (Monoid (..), mappend)
 import qualified Data.Text as T
@@ -54,10 +54,11 @@ import GHC.Exts
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), parseURI)
 import OpenSSL.Session (SSLContext)
+import OpenSSL
 import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
-import System.IO.Unsafe (unsafePerformIO)
+--import System.IO.Unsafe (unsafePerformIO)
 
 import Network.Http.Connection
 import Network.Http.RequestBuilder
@@ -124,22 +125,33 @@ urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
     contortions are necessary to allow the library to be used for http:// URLs
     *without* requiring the developer to do 'withOpenSSL'.
 -}
-global :: IORef SSLContext
-global = unsafePerformIO $ do
-    ctx <- baselineContextSSL
-    newIORef ctx
-{-# NOINLINE global #-}
+--
+-- | Commented out because this changeset is an attempt to move away from
+-- unsafePerformIO.
+-- 
+-- global :: IORef SSLContext
+-- global = unsafePerformIO $ do
+--     ctx <- baselineContextSSL
+--     newIORef ctx
+-- {-# NOINLINE global #-}
 
 --
 -- | Modify the context being used to configure the SSL tunnel used by
 -- the convenience API functions to make @https://@ connections. The
 -- default is that setup by 'baselineContextSSL'.
 --
-modifyContextSSL :: (SSLContext -> IO SSLContext) -> IO ()
-modifyContextSSL f = do
-    ctx <- readIORef global
-    ctx' <- f ctx
-    writeIORef global ctx'
+-- Commented out because this changeset is an attempt to move away from
+-- unsafePerformIO.
+-- 
+-- I'm sure there's a more elegant way to pass an initial SSL context
+-- rather than modifying a baseline one; I'll sit on it and try to come
+-- up with some ideas.
+-- 
+-- modifyContextSSL :: (SSLCo-- ntext -> IO SSLContext) -> IO ()
+-- modifyContextSSL f = do
+--     ctx <- readIORef global
+--     ctx' <- f ctx
+--     writeIORef global ctx'
 
 --
 -- | Given a URL, work out whether it is normal or secure, and then
@@ -171,8 +183,12 @@ establish u =
     case scheme of
         "http:"  -> do
                         openConnection host port
-        "https:" -> do
-                        ctx <- readIORef global
+        "https:" -> withOpenSSL $ do
+                        -- I know this only sets up the context with a
+                        -- baseline, but it does get rid of the
+                        -- unsafePerformIO usecase
+                        
+                        ctx <- baselineContextSSL
                         openConnectionSSL ctx host ports
         _        -> error ("Unknown URI scheme " ++ scheme)
   where

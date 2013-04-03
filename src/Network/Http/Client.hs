@@ -158,7 +158,7 @@ module Network.Http.Client (
     -- * Secure connections
     openConnectionSSL,
     baselineContextSSL,
-    modifyContextSSL,
+    -- modifyContextSSL,
     establishConnection,
 
     -- * Testing support
