@@ -42,7 +42,7 @@ import Data.CaseInsensitive (mk)
 import Data.Char (ord)
 import Data.Int (Int64)
 import Data.Typeable (Typeable)
-import System.IO.Streams (InputStream, Generator)
+import System.IO.Streams (Generator, InputStream)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
 
@@ -189,7 +189,7 @@ readChunkedBody i1 = do
 
 consumeBytes :: InputStream ByteString -> Generator ByteString ()
 consumeBytes i1 = do
-    n <- parseSize
+    !n <- parseSize
 
     if n <= 0
         then do
@@ -198,11 +198,11 @@ consumeBytes i1 = do
             go n
             skipCRLF
             consumeBytes i1
-    
+
   where
     go 0 = return ()
-    go n = do
-        (x',r) <- liftIO $ readN n i1
+    go !n = do
+        (!x',!r) <- liftIO $ readN n i1
         Streams.yield x'
         go r
 
@@ -215,20 +215,20 @@ consumeBytes i1 = do
 
     skipCRLF = do
         liftIO $ Streams.parseFromStream (void crlf) i1
-    
+
 
 readN :: Int -> InputStream ByteString -> IO (ByteString, Int)
 readN n i1 = do
     !x' <- Streams.readExactly p i1
     return (x', r)
   where
-    d = n - size
+    !d = n - size
 
-    p = if d > 0
+    !p = if d > 0
         then size
         else n
 
-    r = if d > 0
+    !r = if d > 0
         then d
         else 0
 
