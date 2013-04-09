@@ -31,8 +31,9 @@ module Network.Http.ResponseParser (
 import Prelude hiding (take, takeWhile)
 
 import Control.Applicative
-import Control.Exception (Exception, throw, throwIO)
+import Control.Exception (Exception, throwIO)
 import Control.Monad (void)
+import Control.Monad.IO.Class (liftIO)
 import Data.Attoparsec.ByteString.Char8
 import Data.Bits (Bits (..))
 import Data.ByteString (ByteString)
@@ -41,11 +42,22 @@ import Data.CaseInsensitive (mk)
 import Data.Char (ord)
 import Data.Int (Int64)
 import Data.Typeable (Typeable)
-import System.IO.Streams (InputStream)
+import System.IO.Streams (InputStream, Generator)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
 
 import Network.Http.Types
+
+{-
+    The chunk size coming down from the server is somewhat arbitrary;
+    it's really just an indication of how many bytes need to be read
+    before the next size marker or end marker - neither of which has
+    anything to do with streaming on our side. Instead, we'll feed
+    bytes into our InputStream at an appropriate intermediate size.
+-}
+__BITE_SIZE__ :: Int
+__BITE_SIZE__ = (32::Int) * (1024::Int)
+
 
 {-
     Process the reply from the server up to the end of the headers as
@@ -89,8 +101,6 @@ parseResponse = do
         pContentLength = n,
         pHeaders = h
     }
-  where
-
 
 
 parseStatusLine :: Parser (Int,ByteString)
@@ -173,35 +183,73 @@ instance Exception UnexpectedCompression
 -}
 readChunkedBody :: InputStream ByteString -> IO (InputStream ByteString)
 readChunkedBody i1 = do
-    i2 <- Streams.parserToInputStream parseTransferChunk i1
+    i2 <- Streams.fromGenerator (consumeBytes i1)
     return i2
 
 
-{-
-    Treat chunks larger than 256 MiB as a denial-of-service attack.
--}
-mAX_CHUNK_SIZE :: Int
-mAX_CHUNK_SIZE = (256::Int) * (1024::Int)^(2::Int)
+consumeBytes :: InputStream ByteString -> Generator ByteString ()
+consumeBytes i1 = do
+    n <- parseSize
 
-parseTransferChunk :: Parser (Maybe ByteString)
-parseTransferChunk = do
+    if n <= 0
+        then do
+            skipEnd
+        else do
+            go n
+            skipCRLF
+            consumeBytes i1
+    
+  where
+    go 0 = return ()
+    go n = do
+        (x',r) <- liftIO $ readN n i1
+        Streams.yield x'
+        go r
+
+    parseSize = do
+        n <- liftIO $ Streams.parseFromStream transferChunkSize i1
+        return n
+
+    skipEnd = do
+        liftIO $ Streams.parseFromStream transferChunkEnd i1
+
+    skipCRLF = do
+        liftIO $ Streams.parseFromStream (void crlf) i1
+    
+
+readN :: Int -> InputStream ByteString -> IO (ByteString, Int)
+readN n i1 = do
+    !x' <- Streams.readExactly p i1
+    return (x', r)
+  where
+    d = n - size
+
+    p = if d > 0
+        then size
+        else n
+
+    r = if d > 0
+        then d
+        else 0
+
+    size = __BITE_SIZE__
+
+
+transferChunkSize :: Parser (Int)
+transferChunkSize = do
     !n <- hexadecimal
     void (takeTill (== '\r'))
     void crlf
-    if n >= mAX_CHUNK_SIZE
-      then return $! throw $! HttpParseException $!
-           "parseTransferChunk: chunk of size " ++ show n ++ " too long."
-      else if n <= 0
-        then do
-            -- skip trailers and consume final CRLF
-            _ <- many parseHeader
-            void crlf
-            return Nothing
-        else do
-            -- now safe to take this many bytes.
-            !x' <- take n
-            void crlf
-            return $! Just x'
+    return n
+
+
+transferChunkEnd :: Parser ()
+transferChunkEnd = do
+    -- skip "trailers" and consume final CRLF
+    _ <- many parseHeader
+    void crlf
+    return ()
+
 
 data HttpParseException = HttpParseException String
         deriving (Typeable, Show)
