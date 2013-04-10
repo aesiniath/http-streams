@@ -183,21 +183,27 @@ instance Exception UnexpectedCompression
 -}
 readChunkedBody :: InputStream ByteString -> IO (InputStream ByteString)
 readChunkedBody i1 = do
-    i2 <- Streams.fromGenerator (consumeBytes i1)
+    i2 <- Streams.fromGenerator (consumeChunks i1)
     return i2
 
 
-consumeBytes :: InputStream ByteString -> Generator ByteString ()
-consumeBytes i1 = do
+{-
+    For a response body in chunked transfer encoding, iterate over
+    the individual chunks, reading the size parameter, then
+    looping over that chunk in bites of at most __BYTE_SIZE__,
+    yielding them to the receiveResponse InputStream accordingly.
+-}
+consumeChunks :: InputStream ByteString -> Generator ByteString ()
+consumeChunks i1 = do
     !n <- parseSize
 
-    if n <= 0
+    if n > 0
         then do
-            skipEnd
-        else do
             go n
             skipCRLF
-            consumeBytes i1
+            consumeChunks i1
+        else do
+            skipEnd
 
   where
     go 0 = return ()
@@ -216,6 +222,10 @@ consumeBytes i1 = do
     skipCRLF = do
         liftIO $ Streams.parseFromStream (void crlf) i1
 
+{-
+    Read the specified number of bytes up to a maximum of __BITE_SIZE__,
+    returning a resultant ByteString and the number of bytes remaining.
+-}
 
 readN :: Int -> InputStream ByteString -> IO (ByteString, Int)
 readN n i1 = do
