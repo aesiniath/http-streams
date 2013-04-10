@@ -50,6 +50,7 @@ import Data.Monoid (Monoid (..), mappend)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Data.Typeable (Typeable)
+import Data.Word (Word16)
 import GHC.Exts
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), parseURI)
@@ -182,13 +183,13 @@ establish u =
         Just x  -> x
         Nothing -> URIAuth "" "localhost" ""
 
-    host = uriRegName auth
+    host = S.pack (uriRegName auth)
     port = case uriPort auth of
         ""  -> 80
-        _   -> read $ tail $ uriPort auth :: Int
+        _   -> read $ tail $ uriPort auth :: Word16
     ports = case uriPort auth of
         ""  -> 443
-        _   -> read $ tail $ uriPort auth :: Int
+        _   -> read $ tail $ uriPort auth :: Word16
 
 
 --

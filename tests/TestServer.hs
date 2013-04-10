@@ -23,6 +23,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import qualified Data.ByteString.Lazy.Char8 as L
 import Data.Maybe (fromMaybe)
+import Data.Word (Word16)
 import Filesystem (getSize)
 import Filesystem.Path.CurrentOS (decodeString)
 import Snap.Core
@@ -31,7 +32,7 @@ import Snap.Util.FileServe
 import System.IO (hFlush, hPutStrLn, stderr)
 
 localHost = "localhost" :: ByteString
-localPort = 56981
+localPort = 56981 :: Word16
 
 main :: IO ()
 main = go
@@ -48,7 +49,7 @@ go = httpServe c site
         setErrorLog ConfigNoLog $
         setHostname localHost $
         setBind "127.0.0.1" $
-        setPort localPort $
+        setPort (fromIntegral localPort) $
         setVerbose False emptyConfig
 
 

@@ -31,8 +31,7 @@ module Network.Http.RequestBuilder (
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       toByteString)
-import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow,
-                                                            fromString)
+import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow)
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Base64 as BS64
@@ -121,7 +120,7 @@ http m p' = do
 -- you connected to when calling 'Network.Http.Connection.openConnection'.
 --
 setHostname :: Hostname -> Port -> RequestBuilder ()
-setHostname h p = do
+setHostname h' p = do
     q <- get
     put q {
         qHost = Just v'
@@ -129,9 +128,9 @@ setHostname h p = do
   where
     v' :: ByteString
     v' = if p == 80
-        then S.pack h
+        then h'
         else Builder.toByteString $ mconcat
-           [Builder.fromString h,
+           [Builder.fromByteString h',
             ":",
             Builder.fromShow p]
 
