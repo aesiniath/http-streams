@@ -46,7 +46,7 @@ import Network.Http.Client
 import Network.Http.Connection (Connection (..))
 import Network.Http.Inconvenience (HttpClientError (..),
                                    TooManyRedirects (..))
-import Network.Http.ResponseParser (parseResponse, readDecimal)
+import Network.Http.ResponseParser (readDecimal, readResponseHeader)
 import Network.Http.Types (Request (..), composeRequestBytes, lookupHeader)
 import TestServer (localPort, runTestServer)
 
@@ -196,22 +196,14 @@ testEnsureHostField =
 
 testResponseParser1 =
     it "parses a simple 200 response" $ do
-        b' <- S.readFile "tests/example1.txt"
-        let re = parseOnly parseResponse b'
-        let p = case re of
-                    Left str    -> error str
-                    Right x     -> x
+        p <- Streams.withFileAsInput "tests/example1.txt" (\i -> readResponseHeader i)
 
         assertEqual "Incorrect parse of response" 200 (getStatusCode p)
         return ()
 
 testResponseParserMismatch =
     it "parses response when HTTP version doesn't match" $ do
-        b' <- S.readFile "tests/example3.txt"
-        let re = parseOnly parseResponse b'
-        let p = case re of
-                    Left str    -> error str
-                    Right x     -> x
+        p <- Streams.withFileAsInput "tests/example3.txt" (\i -> readResponseHeader i)
 
         assertEqual "Incorrect parse of response" 200 (getStatusCode p)
         return ()
