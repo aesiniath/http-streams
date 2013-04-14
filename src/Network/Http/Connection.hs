@@ -41,6 +41,7 @@ import Control.Exception (bracket)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.Monoid (mappend, mempty)
+import Data.Word (Word16)
 import Network.Socket
 import OpenSSL.Session (SSL, SSLContext)
 import qualified OpenSSL.Session as SSL
@@ -57,9 +58,9 @@ import Network.Http.Types
     the conclusion that URLs are composed of characters, not octets.
 -}
 
-type Hostname = String
+type Hostname = ByteString
 
-type Port = Int
+type Port = Word16
 
 -- | A connection to a web server.
 --
@@ -169,8 +170,8 @@ withConnection mkC =
 -- connection for subsequent requests.
 --
 openConnection :: Hostname -> Port -> IO Connection
-openConnection h p = do
-    is <- getAddrInfo (Just hints) (Just h) (Just $ show p)
+openConnection h1' p = do
+    is <- getAddrInfo (Just hints) (Just h1) (Just $ show p)
     let addr = head is
     let a = addrAddress addr
     s <- socket (addrFamily addr) Stream defaultProtocol
@@ -181,17 +182,17 @@ openConnection h p = do
     o2 <- Streams.builderStream o1
 
     return Connection {
-        cHost  = h',
+        cHost  = h2',
         cClose = close s,
         cOut   = o2,
         cIn    = i
     }
   where
     hints = defaultHints {addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]}
-    h' :: ByteString
-    h' = if p == 80
-        then S.pack h
-        else S.concat [ S.pack h, ":", S.pack $ show p ]
+    h2' = if p == 80
+        then h1'
+        else S.concat [ h1', ":", S.pack $ show p ]
+    h1  = S.unpack h1'
 
 --
 -- | Open a secure connection to a web server.
@@ -224,10 +225,10 @@ openConnection h p = do
 -- by the @HsOpenSSL@ package and @openssl-streams@.
 --
 openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
-openConnectionSSL ctx h p = do
+openConnectionSSL ctx h1' p = do
     s <- socket AF_INET Stream defaultProtocol
 
-    is <- getAddrInfo Nothing (Just h) (Just $ show p)
+    is <- getAddrInfo Nothing (Just h1) (Just $ show p)
 
     let a = addrAddress $ head is
     connect s a
@@ -240,16 +241,17 @@ openConnectionSSL ctx h p = do
     o2 <- Streams.builderStream o1
 
     return Connection {
-        cHost  = h',
+        cHost  = h2',
         cClose = closeSSL s ssl,
         cOut   = o2,
         cIn    = i
     }
   where
-    h' :: ByteString
-    h' = if p == 443
-        then S.pack h
-        else S.concat [ S.pack h, ":", S.pack $ show p ]
+    h2' :: ByteString
+    h2' = if p == 443
+        then h1'
+        else S.concat [ h1', ":", S.pack $ show p ]
+    h1  = S.unpack h1'
 
 closeSSL :: Socket -> SSL -> IO ()
 closeSSL s ssl = do

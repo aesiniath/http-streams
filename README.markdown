@@ -64,6 +64,10 @@ Change Log
 
 Recent API changes:
 
+* _v0.5.0_  
+	Definition of Hostname and Port have been changed to ByteString
+	and Word16, respectively.
+
 * _v0.4.0_  
 	Type signature of `buildRequest` changed, removing the Connection
 	parameter. This allows you to construct Request objects before

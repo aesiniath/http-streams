@@ -9,6 +9,7 @@
 -- the BSD licence.
 --
 
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
@@ -30,8 +31,7 @@ module Network.Http.RequestBuilder (
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       toByteString)
-import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow,
-                                                            fromString)
+import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow)
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Base64 as BS64
@@ -42,6 +42,8 @@ import Data.Monoid (mconcat)
 
 import Network.Http.Connection
 import Network.Http.Types
+
+#include "config.h"
 
 --
 -- | The RequestBuilder monad allows you to abuse do-notation to
@@ -91,7 +93,7 @@ http :: Method -> ByteString -> RequestBuilder ()
 http m p' = do
     q <- get
     let h0 = qHeaders q
-    let h1 = updateHeader h0 "User-Agent" "http-streams/0.4.0.0"
+    let h1 = updateHeader h0 "User-Agent" VERSION
     let h2 = updateHeader h1 "Accept-Encoding" "gzip"
 
     let e  = case m of
@@ -118,7 +120,7 @@ http m p' = do
 -- you connected to when calling 'Network.Http.Connection.openConnection'.
 --
 setHostname :: Hostname -> Port -> RequestBuilder ()
-setHostname h p = do
+setHostname h' p = do
     q <- get
     put q {
         qHost = Just v'
@@ -126,9 +128,9 @@ setHostname h p = do
   where
     v' :: ByteString
     v' = if p == 80
-        then S.pack h
+        then h'
         else Builder.toByteString $ mconcat
-           [Builder.fromString h,
+           [Builder.fromByteString h',
             ":",
             Builder.fromShow p]
 
@@ -190,7 +192,7 @@ setAccept v' = do
 -- >                     ("*/*", 0)]
 --
 -- will result in an @Accept:@ header value of
--- @text\/html; q=1.0, application\/xml; q=0.8, *\/*; q=0.0@ as you
+-- @text\/html; q=1.0, application\/xml; q=0.8, \*\/\*; q=0.0@ as you
 -- would expect.
 --
 setAccept' :: [(ByteString,Float)] -> RequestBuilder ()

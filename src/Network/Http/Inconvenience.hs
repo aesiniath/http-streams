@@ -46,10 +46,11 @@ import Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Data.List (intersperse)
-import Data.Monoid (Monoid (..), (<>))
+import Data.Monoid (Monoid (..), mappend)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Data.Typeable (Typeable)
+import Data.Word (Word16)
 import GHC.Exts
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), parseURI)
@@ -88,16 +89,16 @@ urlEncodeBuilder = go mempty
     go !b !s = maybe b' esc (S.uncons y)
       where
         (x,y)     = S.span (flip HashSet.member urlEncodeTable) s
-        b'        = b <> Builder.fromByteString x
+        b'        = b `mappend` Builder.fromByteString x
         esc (c,r) = let b'' = if c == ' '
-                                then b' <> Builder.fromWord8 (c2w '+')
-                                else b' <> hexd c
+                                then b' `mappend` Builder.fromWord8 (c2w '+')
+                                else b' `mappend` hexd c
                     in go b'' r
 
 
 hexd :: Char -> Builder
-hexd c0 = Builder.fromWord8 (c2w '%') <> Builder.fromWord8 hi
-                                      <> Builder.fromWord8 low
+hexd c0 = Builder.fromWord8 (c2w '%') `mappend` Builder.fromWord8 hi
+                                      `mappend` Builder.fromWord8 low
   where
     !c        = c2w c0
     toDigit   = c2w . intToDigit
@@ -182,13 +183,13 @@ establish u =
         Just x  -> x
         Nothing -> URIAuth "" "localhost" ""
 
-    host = uriRegName auth
+    host = S.pack (uriRegName auth)
     port = case uriPort auth of
         ""  -> 80
-        _   -> read $ tail $ uriPort auth :: Int
+        _   -> read $ tail $ uriPort auth :: Word16
     ports = case uriPort auth of
         ""  -> 443
-        _   -> read $ tail $ uriPort auth :: Int
+        _   -> read $ tail $ uriPort auth :: Word16
 
 
 --
