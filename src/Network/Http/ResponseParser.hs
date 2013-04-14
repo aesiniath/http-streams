@@ -24,7 +24,6 @@ module Network.Http.ResponseParser (
     readResponseBody,
 
         -- for testing
-    parseResponse,
     readDecimal
 ) where
 
@@ -47,6 +46,7 @@ import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
 
 import Network.Http.Types
+import Network.Http.Utilities
 
 {-
     The chunk size coming down from the server is somewhat arbitrary;
@@ -65,16 +65,9 @@ __BITE_SIZE__ = (32::Int) * (1024::Int)
 -}
 readResponseHeader :: InputStream ByteString -> IO Response
 readResponseHeader i = do
-    p <- Streams.parseFromStream parseResponse i
-    return p
+    (sc,sm) <- Streams.parseFromStream parseStatusLine i
 
-parseResponse :: Parser Response
-parseResponse = do
-    (sc,sm) <- parseStatusLine
-
-    hs <- many parseHeader
-
-    _ <- crlf
+    hs <- readHeaderFields i
 
     let h  = buildHeaders hs
     let te = case lookupHeader h "Transfer-Encoding" of
@@ -260,11 +253,6 @@ transferChunkEnd = do
     void crlf
     return ()
 
-
-data HttpParseException = HttpParseException String
-        deriving (Typeable, Show)
-
-instance Exception HttpParseException
 
 ---------------------------------------------------------------------
 

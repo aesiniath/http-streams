@@ -9,8 +9,9 @@
 -- the BSD licence.
 --
 
-{-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Types (
@@ -31,6 +32,7 @@ module Network.Http.Types (
     removeHeader,
     buildHeaders,
     lookupHeader,
+    HttpParseException(..),
 
     -- for testing
     composeRequestBytes,
@@ -46,6 +48,7 @@ import qualified Blaze.ByteString.Builder as Builder (copyByteString,
                                                       fromByteString,
                                                       toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder
+import Control.Exception (Exception)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.CaseInsensitive (CI, mk, original)
@@ -54,6 +57,7 @@ import Data.HashMap.Strict (HashMap, delete, empty, foldrWithKey, insert,
 import Data.List (foldl')
 import Data.Monoid (mconcat, mempty)
 import Data.String (IsString, fromString)
+import Data.Typeable (Typeable)
 
 -- | HTTP Methods, as per RFC 2616
 data Method
@@ -358,3 +362,8 @@ lookupHeader x k =
   where
     !m = unWrap x
 
+
+data HttpParseException = HttpParseException String
+        deriving (Typeable, Show)
+
+instance Exception HttpParseException
