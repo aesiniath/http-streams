@@ -104,24 +104,6 @@ parseStatusLine = do
   where
     version c = c == '1' || c == '0'
 
-{-
-    Needs to be expanded to accept multi-line headers.
--}
-parseHeader :: Parser (ByteString,ByteString)
-parseHeader = do
-    k <- key <* char ':' <* skipSpace
-    v <- takeTill (== '\r') <* crlf
-    return (k,v)
-
-{-
-    This is actually 'token' in the spec, but seriously?
--}
-key :: Parser ByteString
-key = do
-    takeWhile token
-  where
-    token c = isAlpha_ascii c || isDigit c || (c == '_') || (c == '-')
-
 
 crlf :: Parser ByteString
 crlf = string "\r\n"
@@ -192,10 +174,12 @@ consumeChunks i1 = do
 
     if n > 0
         then do
+            -- read one or more bites, then loop to next chunk
             go n
             skipCRLF
             consumeChunks i1
         else do
+            -- skip "trailers" and consume final CRLF
             skipEnd
 
   where
@@ -210,10 +194,14 @@ consumeChunks i1 = do
         return n
 
     skipEnd = do
-        liftIO $ Streams.parseFromStream transferChunkEnd i1
+        liftIO $ do
+            _ <- readHeaderFields i1
+            return ()
 
     skipCRLF = do
-        liftIO $ Streams.parseFromStream (void crlf) i1
+        liftIO $ do
+            _ <- Streams.parseFromStream crlf i1
+            return ()
 
 {-
     Read the specified number of bytes up to a maximum of __BITE_SIZE__,
@@ -244,14 +232,6 @@ transferChunkSize = do
     void (takeTill (== '\r'))
     void crlf
     return n
-
-
-transferChunkEnd :: Parser ()
-transferChunkEnd = do
-    -- skip "trailers" and consume final CRLF
-    _ <- many parseHeader
-    void crlf
-    return ()
 
 
 ---------------------------------------------------------------------

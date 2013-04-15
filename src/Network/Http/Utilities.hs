@@ -13,7 +13,7 @@
 -- snap-core's src/Snap/Internal/Parsing.hs and snap-server's
 -- src/Snap/Internal/Http/Parser.hs, copied here to specialize
 -- it to Response parsing. This code replaces the attoparsec
--- based implementation formerly in ResponseParser, but is 
+-- based implementation formerly in ResponseParser, but is
 -- kept separate to aid syncing changes from snap-core as they
 -- become available.
 --
@@ -46,7 +46,7 @@ import System.IO.Streams (InputStream)
 import qualified System.IO.Streams as Streams
 ----------------------------------------------------------------------------
 
-import Network.Http.Types 
+import Network.Http.Types
 
 ------------------------------------------------------------------------------
 
