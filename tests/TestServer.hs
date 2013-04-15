@@ -78,7 +78,7 @@ routeRequests =
              ("loop", serveRedirectEndlessly),
              ("postbox", method POST handlePostMethod),
              ("size", handleSizeRequest),
-             ("repeatedheaders", serveRepeatedResponseHeaders)]
+             ("cookies", serveRepeatedResponseHeaders)]
     <|> serveNotFound
 
 
@@ -162,8 +162,8 @@ serveRedirectEndlessly = do
 
 serveRepeatedResponseHeaders :: Snap ()
 serveRepeatedResponseHeaders = do
-    modifyResponse $ addHeader "Set-Cookie" "line1"
-    modifyResponse $ addHeader "Set-Cookie" "line2"
+    modifyResponse $ addHeader "Set-Cookie" "stone=diamond"
+    modifyResponse $ addHeader "Set-Cookie" "metal=tungsten"
 
 handlePostMethod :: Snap ()
 handlePostMethod = do

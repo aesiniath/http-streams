@@ -419,13 +419,13 @@ testExcessiveRedirects =
 
 testRepeatedResponseHeaders =
     it "repeated response headers are properly concatonated" $ do
-        let url = S.concat ["http://", localhost, "/repeatedheader"]
+        let url = S.concat ["http://", localhost, "/cookies"]
 
         get url handler
       where
         handler :: Response -> InputStream ByteString -> IO ()
         handler r _ = do
-            assertEqual "Invalid response headers" (Just "line1; line2") (getHeader r "Set-Cookie")
+            assertEqual "Invalid response headers" (Just "stone=diamond,metal=tungsten") (getHeader r "Set-Cookie")
 
 {-
     From http://stackoverflow.com/questions/6147435/is-there-an-assertexception-in-any-of-the-haskell-test-frameworks
