@@ -9,8 +9,9 @@
 -- the BSD licence.
 --
 
-{-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Types (
@@ -31,6 +32,7 @@ module Network.Http.Types (
     removeHeader,
     buildHeaders,
     lookupHeader,
+    HttpParseException(..),
 
     -- for testing
     composeRequestBytes,
@@ -46,14 +48,16 @@ import qualified Blaze.ByteString.Builder as Builder (copyByteString,
                                                       fromByteString,
                                                       toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder
+import Control.Exception (Exception)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.CaseInsensitive (CI, mk, original)
 import Data.HashMap.Strict (HashMap, delete, empty, foldrWithKey, insert,
-                            lookup)
+                            insertWith, lookup)
 import Data.List (foldl')
 import Data.Monoid (mconcat, mempty)
 import Data.String (IsString, fromString)
+import Data.Typeable (Typeable)
 
 -- | HTTP Methods, as per RFC 2616
 data Method
@@ -345,12 +349,19 @@ buildHeaders hs =
   where
     result = foldl' addHeader empty hs
 
+{-
+    insertWith is used here for the case where a header is repeated
+    (for example, Set-Cookie) and the values need to be intercalated
+    with ',' as per RFC 2616 §4.2.
+-}
 addHeader
     :: HashMap (CI ByteString) ByteString
     -> (ByteString,ByteString)
     -> HashMap (CI ByteString) ByteString
 addHeader m (k,v) =
-    insert (mk k) v m
+    insertWith f (mk k) v m
+  where
+    f new old = S.concat [old, ",", new]
 
 lookupHeader :: Headers -> ByteString -> Maybe ByteString
 lookupHeader x k =
@@ -358,3 +369,8 @@ lookupHeader x k =
   where
     !m = unWrap x
 
+
+data HttpParseException = HttpParseException String
+        deriving (Typeable, Show)
+
+instance Exception HttpParseException

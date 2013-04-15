@@ -24,7 +24,6 @@ module Network.Http.ResponseParser (
     readResponseBody,
 
         -- for testing
-    parseResponse,
     readDecimal
 ) where
 
@@ -47,6 +46,7 @@ import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
 
 import Network.Http.Types
+import Network.Http.Utilities
 
 {-
     The chunk size coming down from the server is somewhat arbitrary;
@@ -65,16 +65,9 @@ __BITE_SIZE__ = (32::Int) * (1024::Int)
 -}
 readResponseHeader :: InputStream ByteString -> IO Response
 readResponseHeader i = do
-    p <- Streams.parseFromStream parseResponse i
-    return p
+    (sc,sm) <- Streams.parseFromStream parseStatusLine i
 
-parseResponse :: Parser Response
-parseResponse = do
-    (sc,sm) <- parseStatusLine
-
-    hs <- many parseHeader
-
-    _ <- crlf
+    hs <- readHeaderFields i
 
     let h  = buildHeaders hs
     let te = case lookupHeader h "Transfer-Encoding" of
@@ -110,24 +103,6 @@ parseStatusLine = do
     return (sc,sm)
   where
     version c = c == '1' || c == '0'
-
-{-
-    Needs to be expanded to accept multi-line headers.
--}
-parseHeader :: Parser (ByteString,ByteString)
-parseHeader = do
-    k <- key <* char ':' <* skipSpace
-    v <- takeTill (== '\r') <* crlf
-    return (k,v)
-
-{-
-    This is actually 'token' in the spec, but seriously?
--}
-key :: Parser ByteString
-key = do
-    takeWhile token
-  where
-    token c = isAlpha_ascii c || isDigit c || (c == '_') || (c == '-')
 
 
 crlf :: Parser ByteString
@@ -199,10 +174,12 @@ consumeChunks i1 = do
 
     if n > 0
         then do
+            -- read one or more bites, then loop to next chunk
             go n
             skipCRLF
             consumeChunks i1
         else do
+            -- skip "trailers" and consume final CRLF
             skipEnd
 
   where
@@ -217,10 +194,14 @@ consumeChunks i1 = do
         return n
 
     skipEnd = do
-        liftIO $ Streams.parseFromStream transferChunkEnd i1
+        liftIO $ do
+            _ <- readHeaderFields i1
+            return ()
 
     skipCRLF = do
-        liftIO $ Streams.parseFromStream (void crlf) i1
+        liftIO $ do
+            _ <- Streams.parseFromStream crlf i1
+            return ()
 
 {-
     Read the specified number of bytes up to a maximum of __BITE_SIZE__,
@@ -252,19 +233,6 @@ transferChunkSize = do
     void crlf
     return n
 
-
-transferChunkEnd :: Parser ()
-transferChunkEnd = do
-    -- skip "trailers" and consume final CRLF
-    _ <- many parseHeader
-    void crlf
-    return ()
-
-
-data HttpParseException = HttpParseException String
-        deriving (Typeable, Show)
-
-instance Exception HttpParseException
 
 ---------------------------------------------------------------------
 

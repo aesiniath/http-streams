@@ -140,7 +140,6 @@ test: build-tests
 # Benchmarking code
 #
 
-benchmark: build-benchmarks
 benchmarks: build-benchmarks
 build-benchmarks: dirs config tests/Benchmark.hs $(BUILDDIR)/bench/bench.bin bench tags
 
@@ -162,6 +161,14 @@ $(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 bench:
 	@echo "LN -s\t$@"
 	ln -s $(BUILDDIR)/bench/bench.bin $@
+
+benchmark: build-benchmarks
+	@echo "EXEC\tbench"
+	$(BUILDDIR)/bench/bench.bin -g -o report.html -s 1000
+
+#
+# Cleanup, etc
+#
 
 clean: 
 	@echo "RM\tbuild artifacts"

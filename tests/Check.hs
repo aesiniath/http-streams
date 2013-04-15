@@ -46,7 +46,7 @@ import Network.Http.Client
 import Network.Http.Connection (Connection (..))
 import Network.Http.Inconvenience (HttpClientError (..),
                                    TooManyRedirects (..))
-import Network.Http.ResponseParser (parseResponse, readDecimal)
+import Network.Http.ResponseParser (readDecimal, readResponseHeader)
 import Network.Http.Types (Request (..), composeRequestBytes, lookupHeader)
 import TestServer (localPort, runTestServer)
 
@@ -75,6 +75,7 @@ suite = do
         testChunkedEncoding
         testContentLength
         testCompressedResponse
+        testRepeatedResponseHeaders
 
     describe "Expectation handling" $ do
         testExpectationContinue
@@ -195,22 +196,14 @@ testEnsureHostField =
 
 testResponseParser1 =
     it "parses a simple 200 response" $ do
-        b' <- S.readFile "tests/example1.txt"
-        let re = parseOnly parseResponse b'
-        let p = case re of
-                    Left str    -> error str
-                    Right x     -> x
+        p <- Streams.withFileAsInput "tests/example1.txt" (\i -> readResponseHeader i)
 
         assertEqual "Incorrect parse of response" 200 (getStatusCode p)
         return ()
 
 testResponseParserMismatch =
     it "parses response when HTTP version doesn't match" $ do
-        b' <- S.readFile "tests/example3.txt"
-        let re = parseOnly parseResponse b'
-        let p = case re of
-                    Left str    -> error str
-                    Right x     -> x
+        p <- Streams.withFileAsInput "tests/example3.txt" (\i -> readResponseHeader i)
 
         assertEqual "Incorrect parse of response" 200 (getStatusCode p)
         return ()
@@ -424,6 +417,15 @@ testExcessiveRedirects =
         handler _ _ = do
             assertBool "Should have thrown exception before getting here" False
 
+testRepeatedResponseHeaders =
+    it "repeated response headers are properly concatonated" $ do
+        let url = S.concat ["http://", localhost, "/cookies"]
+
+        get url handler
+      where
+        handler :: Response -> InputStream ByteString -> IO ()
+        handler r _ = do
+            assertEqual "Invalid response headers" (Just "stone=diamond,metal=tungsten") (getHeader r "Set-Cookie")
 
 {-
     From http://stackoverflow.com/questions/6147435/is-there-an-assertexception-in-any-of-the-haskell-test-frameworks
