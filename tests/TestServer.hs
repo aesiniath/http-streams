@@ -12,8 +12,6 @@
 
 module TestServer (runTestServer, localPort) where
 
-import Prelude hiding (catch)
-
 import Control.Applicative
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Exception (SomeException)
