@@ -39,6 +39,7 @@ library
                      HsOpenSSL,
                      openssl-streams >= 1.0 && <1.1,
                      mtl,
+                     transformers,
                      network,
                      text,
                      unordered-containers
