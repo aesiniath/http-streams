@@ -33,22 +33,22 @@ TEST_SOURCES=$(shell find tests -name '*.hs' -type f)
 dirs: $(BUILDDIR)/.dir
 
 $(BUILDDIR)/.dir:
-	@echo -e "MKDIR\t$(BUILDDIR)"
+	@/bin/echo -e "MKDIR\t$(BUILDDIR)"
 	mkdir -p $(BUILDDIR)
-	@echo -e "MKDIR\t$(BUILDDIR)/core"
+	@/bin/echo -e "MKDIR\t$(BUILDDIR)/core"
 	mkdir $(BUILDDIR)/core
-	@echo -e "MKDIR\t$(BUILDDIR)/tests"
+	@/bin/echo -e "MKDIR\t$(BUILDDIR)/tests"
 	mkdir $(BUILDDIR)/tests
-	@echo -e "MKDIR\t$(BUILDDIR)/junk"
+	@/bin/echo -e "MKDIR\t$(BUILDDIR)/junk"
 	mkdir $(BUILDDIR)/junk
-	@echo -e "MKDIR\t$(BUILDDIR)/bench"
+	@/bin/echo -e "MKDIR\t$(BUILDDIR)/bench"
 	mkdir $(BUILDDIR)/bench
 	touch $(BUILDDIR)/.dir
 
 
 config: config.h
 config.h: Setup.hs http-streams.cabal
-	@echo -e "CABAL\tconfigure"
+	@/bin/echo -e "CABAL\tconfigure"
 	cabal configure --enable-tests
 
 
@@ -59,7 +59,7 @@ config.h: Setup.hs http-streams.cabal
 build-core: dirs config $(BUILDDIR)/core/httpclient.bin httpclient
 
 $(BUILDDIR)/core/httpclient.bin: $(CORE_SOURCES)
-	@echo -e "GHC\t$@"
+	@/bin/echo -e "GHC\t$@"
 	$(GHC) --make -O2 -threaded  \
 		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/core \
@@ -67,22 +67,22 @@ $(BUILDDIR)/core/httpclient.bin: $(CORE_SOURCES)
 		-I"." \
 		-o $@ \
 		src/HttpClient.hs
-	@echo -e "STRIP\t$@"
+	@/bin/echo -e "STRIP\t$@"
 	strip $@
 
 httpclient:
-	@echo -e "LN -s\t$@"
+	@/bin/echo -e "LN -s\t$@"
 	ln -s $(BUILDDIR)/core/client.bin $@
 
 junk: build-junk
 build-junk: dirs config tests/Snippet.hs $(BUILDDIR)/junk/snippet.bin snippet tags
 
 tests/Snippet.hs:
-	@echo -e "Make a symlink from Snippet.hs -> whichever code you wish to run"
+	@/bin/echo -e "Make a symlink from Snippet.hs -> whichever code you wish to run"
 	@false
 
 $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
-	@echo -e "GHC\t$@"
+	@/bin/echo -e "GHC\t$@"
 	$(GHC) --make -O2 -threaded  \
 		-prof -fprof-auto-top \
 		-outputdir $(BUILDDIR)/junk \
@@ -92,15 +92,15 @@ $(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 		-Wwarn \
 		-main-is Snippet.main \
 		tests/Snippet.hs
-	@echo -e "STRIP\t$@"
+	@/bin/echo -e "STRIP\t$@"
 	strip $@
 
 snippet:
-	@echo -e "LN -s\t$@"
+	@/bin/echo -e "LN -s\t$@"
 	ln -s $(BUILDDIR)/junk/snippet.bin $@
 
 tags: $(CORE_SOURCES) $(TEST_SOURCES)
-	@echo -e "CTAGS\ttags"
+	@/bin/echo -e "CTAGS\ttags"
 	hothasktags $^ > tags
 
 #
@@ -111,7 +111,7 @@ tests: build-tests
 build-tests: dirs config $(BUILDDIR)/tests/check.bin check tags
 
 $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
-	@echo -e "GHC\t$@"
+	@/bin/echo -e "GHC\t$@"
 	$(GHC) --make -O2 -threaded  \
 		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/tests \
@@ -120,11 +120,11 @@ $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 		-o $@ \
 		-main-is Check.main \
 		tests/Check.hs
-	@echo -e "STRIP\t$@"
+	@/bin/echo -e "STRIP\t$@"
 	strip $@
 
 check:
-	@echo -e "LN -s\t$@"
+	@/bin/echo -e "LN -s\t$@"
 	ln -s $(BUILDDIR)/tests/check.bin $@
 
 #
@@ -134,7 +134,7 @@ check:
 #
 
 test: build-tests
-	@echo -e "EXEC\tcheck"
+	@/bin/echo -e "EXEC\tcheck"
 	$(BUILDDIR)/tests/check.bin
 
 #
@@ -145,26 +145,26 @@ benchmarks: build-benchmarks
 build-benchmarks: dirs config tests/Benchmark.hs $(BUILDDIR)/bench/bench.bin bench tags
 
 tests/Benchmark.hs:
-	@echo -e "Make a symlink from Benchmark.hs -> whichever code you wish to run"
+	@/bin/echo -e "Make a symlink from Benchmark.hs -> whichever code you wish to run"
 	@false
 
 $(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
-	@echo -e "GHC\t$@"
+	@/bin/echo -e "GHC\t$@"
 	$(GHC) --make -O2 -threaded  \
 		-outputdir $(BUILDDIR)/bench \
 		-i"$(BUILDDIR):src:tests" \
 		-I"." \
 		-o $@ \
 		tests/Benchmark.hs
-	@echo -e "STRIP\t$@"
+	@/bin/echo -e "STRIP\t$@"
 	strip $@
 
 bench:
-	@echo -e "LN -s\t$@"
+	@/bin/echo -e "LN -s\t$@"
 	ln -s $(BUILDDIR)/bench/bench.bin $@
 
 benchmark: build-benchmarks
-	@echo -e "EXEC\tbench"
+	@/bin/echo -e "EXEC\tbench"
 	$(BUILDDIR)/bench/bench.bin -g -o report.html -s 1000
 
 #
@@ -172,16 +172,16 @@ benchmark: build-benchmarks
 #
 
 clean: 
-	@echo -e "RM\tbuild artifacts"
+	@/bin/echo -e "RM\tbuild artifacts"
 	-rm -f *.hi *.o snippet check benchmark
 	-rm -f *.prof
 	-rm -rf $(BUILDDIR)
 	-rm -rf dist/
-	@if [ -f tags ] ; then echo -e "RM\ttags" ; rm tags ; fi
-	@if [ -f config.h ] ; then echo -e "RM\tconfig.h" ; rm config.h ; fi
+	@if [ -f tags ] ; then /bin/echo -e "RM\ttags" ; rm tags ; fi
+	@if [ -f config.h ] ; then /bin/echo -e "RM\tconfig.h" ; rm config.h ; fi
 
 doc: dist/setup-config tags
-	@echo -e "CABAL\thaddock"
+	@/bin/echo -e "CABAL\thaddock"
 	cabal haddock
 
 format: $(CORE_SOURCES) $(TEST_SOURCES)
