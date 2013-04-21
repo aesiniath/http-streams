@@ -75,6 +75,7 @@ routeRequests =
             [("resource/:id", serveResource),
              ("static/:id", method GET serveStatic),
              ("time", serveTime),
+             ("", ifTop handleAsText),
              ("bounce", serveRedirect),
              ("loop", serveRedirectEndlessly),
              ("postbox", method POST handlePostMethod),

@@ -399,7 +399,7 @@ testGetRedirects =
 testGetFormatsRequest =
     it "GET includes a properly formatted request path" $ do
         let url = S.concat ["http://", localhost ]
-        x' <- get "http://localhost" concatHandler'
+        x' <- get url concatHandler'
 
         assertBool "Incorrect context path" (S.length x' > 0)
 
