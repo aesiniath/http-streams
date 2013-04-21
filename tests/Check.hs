@@ -11,6 +11,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
+module Check where
+
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar)
@@ -93,7 +95,7 @@ suite = do
 
 testRequestTermination =
     it "terminates with a blank line" $ do
-        c <- openConnection "127.0.0.1" localPort
+        c <- openConnection "::1" localPort
         q <- buildRequest $ do
             http GET "/time"
             setAccept "text/plain"
@@ -148,12 +150,6 @@ testBasicAuthorizatonHeader =
         let (Just a) = lookupHeader h "Authorization"
         assertEqual "Failed to format header" "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" a
 
-{-
-    FIXME this should indeed be a hostname and not an address; that's the
-    point of the test (to make sure the address lookup doesn't leak into the
-    Host: field). Works on an Ubuntu Quantal system with IPv6 enabled; is IPv6
-    still causing problems for you?
--}
 
 testConnectionHost = do
     it "properly caches hostname and port" $ do
@@ -212,7 +208,7 @@ testResponseParserMismatch =
 
 testChunkedEncoding =
     it "recognizes chunked transfer encoding and decodes" $ do
-        c <- openConnection "127.0.0.1" localPort
+        c <- openConnection "localhost" localPort
 
         q <- buildRequest $ do
             http GET "/time"
@@ -231,7 +227,7 @@ testChunkedEncoding =
 
 testContentLength =
     it "recognzies fixed length message" $ do
-        c <- openConnection "127.0.0.1" localPort
+        c <- openConnection "localhost" localPort
 
         q <- buildRequest $ do
             http GET "/static/statler.jpg"
@@ -262,7 +258,7 @@ testContentLength =
 -}
 testCompressedResponse =
     it "recognizes gzip content encoding and decompresses" $ do
-        c <- openConnection "127.0.0.1" localPort
+        c <- openConnection "localhost" localPort
 
         q <- buildRequest $ do
             http GET "/static/hello.html"
@@ -294,7 +290,7 @@ testCompressedResponse =
 
 testExpectationContinue =
     it "sends expectation and handles 100 response" $ do
-        c <- openConnection "127.0.0.1" localPort
+        c <- openConnection "localhost" localPort
 
         q <- buildRequest $ do
             http PUT "/resource/x149"

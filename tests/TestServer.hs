@@ -12,6 +12,8 @@
 
 module TestServer (runTestServer, localPort) where
 
+import Prelude hiding (catch)
+
 import Control.Applicative
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Exception (SomeException)
@@ -21,7 +23,6 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import qualified Data.ByteString.Lazy.Char8 as L
 import Data.Maybe (fromMaybe)
-import Data.Word (Word16)
 import Filesystem (getSize)
 import Filesystem.Path.CurrentOS (decodeString)
 import Snap.Core
@@ -29,8 +30,10 @@ import Snap.Http.Server
 import Snap.Util.FileServe
 import System.IO (hFlush, hPutStrLn, stderr)
 
-localHost = "localhost" :: ByteString
-localPort = 56981 :: Word16
+import Network.Http.Client (Hostname, Port)
+
+localHost = "localhost" :: Hostname
+localPort = 56981 :: Port
 
 main :: IO ()
 main = go
@@ -46,7 +49,7 @@ go = httpServe c site
     c = setAccessLog ConfigNoLog $
         setErrorLog ConfigNoLog $
         setHostname localHost $
-        setBind "127.0.0.1" $
+        setBind "::1" $
         setPort (fromIntegral localPort) $
         setVerbose False emptyConfig
 
