@@ -113,7 +113,6 @@ build-tests: dirs config $(BUILDDIR)/tests/check.bin check tags
 $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 	@/bin/echo -e "GHC\t$@"
 	$(GHC) --make -O2 -threaded  \
-		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/tests \
 		-i"$(BUILDDIR):src:tests" \
 		-I"." \
