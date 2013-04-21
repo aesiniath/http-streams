@@ -9,9 +9,14 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS -fno-warn-dodgy-imports #-}
 
 module TestServer (runTestServer, localPort) where
 
+{-
+    Per http://hackage.haskell.org/trac/ghc/ticket/7167, we suppress
+    the warning resulting from this line, necessary on <7.6
+-}
 import Prelude hiding (catch)
 
 import Control.Applicative
@@ -49,7 +54,7 @@ go = httpServe c site
     c = setAccessLog ConfigNoLog $
         setErrorLog ConfigNoLog $
         setHostname localHost $
-        setBind "::1" $
+        setBind "localhost" $
         setPort (fromIntegral localPort) $
         setVerbose False emptyConfig
 

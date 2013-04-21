@@ -95,7 +95,7 @@ suite = do
 
 testRequestTermination =
     it "terminates with a blank line" $ do
-        c <- openConnection "::1" localPort
+        c <- openConnection "localhost" localPort
         q <- buildRequest $ do
             http GET "/time"
             setAccept "text/plain"
