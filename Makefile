@@ -117,7 +117,6 @@ $(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
 		-i"$(BUILDDIR):src:tests" \
 		-I"." \
 		-o $@ \
-		-main-is Check.main \
 		tests/Check.hs
 	@/bin/echo -e "STRIP\t$@"
 	strip $@
