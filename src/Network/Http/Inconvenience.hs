@@ -36,6 +36,7 @@ module Network.Http.Inconvenience (
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       fromWord8, toByteString)
+import qualified Blaze.ByteString.Builder.Char8 as Builder (fromString)
 import Control.Exception (Exception, bracket, throw)
 import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
@@ -429,10 +430,10 @@ encodedFormBody :: [(ByteString,ByteString)] -> OutputStream Builder -> IO ()
 encodedFormBody nvs o = do
     Streams.write (Just b) o
   where
-    b = mconcat $ intersperse "&" $ map combine nvs
+    b = mconcat $ intersperse (Builder.fromString "&") $ map combine nvs
 
     combine :: (ByteString,ByteString) -> Builder
-    combine (n',v') = mconcat [urlEncodeBuilder n', "=", urlEncodeBuilder v']
+    combine (n',v') = mconcat [urlEncodeBuilder n', Builder.fromString "=", urlEncodeBuilder v']
 
 
 --

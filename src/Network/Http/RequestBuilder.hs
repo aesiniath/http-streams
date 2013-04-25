@@ -31,7 +31,8 @@ module Network.Http.RequestBuilder (
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       toByteString)
-import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow)
+import qualified Blaze.ByteString.Builder.Char8 as Builder (fromShow,
+                                                            fromString)
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Base64 as BS64
@@ -131,7 +132,7 @@ setHostname h' p = do
         then h'
         else Builder.toByteString $ mconcat
            [Builder.fromByteString h',
-            ":",
+            Builder.fromString ":",
             Builder.fromShow p]
 
 --
@@ -200,13 +201,13 @@ setAccept' tqs = do
     setHeader "Accept" v'
   where
     v' = Builder.toByteString v
-    v  = mconcat $ intersperse ", " $ map format tqs
+    v  = mconcat $ intersperse (Builder.fromString ", ") $ map format tqs
 
     format :: (ByteString,Float) -> Builder
     format (t',q) =
         mconcat
            [Builder.fromByteString t',
-            "; q=",
+            Builder.fromString "; q=",
             Builder.fromShow q]
 
 

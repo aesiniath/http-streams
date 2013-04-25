@@ -15,7 +15,8 @@ module TestSuite where
 
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (toByteString)
-import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar)
+import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar,
+                                                            fromString)
 import Control.Exception (Exception, bracket, handleJust)
 import Control.Monad (guard)
 import Data.Bits
@@ -292,7 +293,7 @@ testExpectationContinue =
             setExpectContinue
 
         sendRequest c q (\o -> do
-            Streams.write (Just "Hello world\n") o)
+            Streams.write (Just (Builder.fromString "Hello world\n")) o)
 
         receiveResponse c (\p i -> do
             assertEqual "Incorrect status code" 201 (getStatusCode p)
