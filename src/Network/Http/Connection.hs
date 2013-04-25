@@ -272,7 +272,7 @@ closeSSL s ssl = do
 -- the @io-streams@ API directly:
 --
 -- >     sendRequest c q (\o ->
--- >         Streams.write (Just "Hello World\n") o)
+-- >         Streams.write (Just (Builder.fromString "Hello World\n")) o)
 --
 {-
     I would like to enforce the constraints on the Empty and Static

@@ -12,7 +12,6 @@
 {-# LANGUAGE BangPatterns       #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
-{-# OPTIONS -fno-warn-orphans #-}
 
 module Network.Http.Types (
     Request(..),
@@ -47,7 +46,9 @@ import qualified Blaze.ByteString.Builder as Builder (copyByteString,
                                                       fromByteString,
                                                       fromByteString,
                                                       toByteString)
-import qualified Blaze.ByteString.Builder.Char8 as Builder
+import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar,
+                                                            fromShow,
+                                                            fromString)
 import Control.Exception (Exception)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
@@ -56,7 +57,6 @@ import Data.HashMap.Strict (HashMap, delete, empty, foldrWithKey, insert,
                             insertWith, lookup)
 import Data.List (foldl')
 import Data.Monoid (mconcat, mempty)
-import Data.String (IsString, fromString)
 import Data.Typeable (Typeable)
 
 -- | HTTP Methods, as per RFC 2616
@@ -150,37 +150,47 @@ composeRequestBytes q h' =
        [requestline,
         hostLine,
         headerFields,
-        "\r\n"]
+        crlf]
   where
     requestline = mconcat
        [method,
-        " ",
+        sp,
         uri,
-        " ",
+        sp,
         version,
-        "\r\n"]
+        crlf]
+
     method = case qMethod q of
-        GET     -> "GET"
-        HEAD    -> "HEAD"
-        POST    -> "POST"
-        PUT     -> "PUT"
-        DELETE  -> "DELETE"
-        TRACE   -> "TRACE"
-        OPTIONS -> "OPTIONS"
-        CONNECT -> "CONNECT"
-        PATCH   -> "PATCH"
+        GET     -> Builder.fromString "GET"
+        HEAD    -> Builder.fromString "HEAD"
+        POST    -> Builder.fromString "POST"
+        PUT     -> Builder.fromString "PUT"
+        DELETE  -> Builder.fromString "DELETE"
+        TRACE   -> Builder.fromString "TRACE"
+        OPTIONS -> Builder.fromString "OPTIONS"
+        CONNECT -> Builder.fromString "CONNECT"
+        PATCH   -> Builder.fromString "PATCH"
         (Method x) -> Builder.fromByteString x
 
     uri = Builder.copyByteString $ qPath q
-    version = "HTTP/1.1"
 
-    hostLine = mconcat ["Host: ", hostname, "\r\n"]
+    version = Builder.fromString "HTTP/1.1"
+
+    hostLine = mconcat
+       [Builder.fromString"Host: ",
+        hostname,
+        crlf]
+
     hostname = case qHost q of
         Just x' -> Builder.copyByteString x'
         Nothing -> Builder.copyByteString h'
 
     headerFields = joinHeaders $ unWrap $ qHeaders q
 
+
+crlf = Builder.fromString "\r\n"
+
+sp = Builder.fromChar ' '
 
 
 type StatusCode = Int
@@ -260,24 +270,24 @@ composeResponseBytes p =
     mconcat
        [statusline,
         headerFields,
-        "\r\n"]
+        crlf]
   where
     statusline = mconcat
        [version,
-        " ",
+        sp,
         code,
-        " ",
+        sp,
         message,
-        "\r\n"]
+        crlf]
+
     code = Builder.fromShow $ pStatusCode p
+
     message = Builder.copyByteString $ pStatusMsg p
-    version = "HTTP/1.1"
+
+    version = Builder.fromString "HTTP/1.1"
+
     headerFields = joinHeaders $ unWrap $ pHeaders p
 
-
-instance IsString Builder where
-    fromString x = Builder.fromString x
-    {-# INLINE fromString #-}
 
 --
 -- | The map of headers in a 'Request' or 'Response'. Note that HTTP
@@ -307,7 +317,7 @@ joinHeaders m = foldrWithKey combine mempty m
 
 combine :: CI ByteString -> ByteString -> Builder -> Builder
 combine k v acc =
-    mconcat [acc, key, ": ", value, "\r\n"]
+    mconcat [acc, key, Builder.fromString ": ", value, crlf]
   where
     key = Builder.copyByteString $ original k
     value = Builder.fromByteString v
