@@ -35,7 +35,7 @@ library
                      blaze-builder,
                      bytestring,
                      case-insensitive,
-                     io-streams >= 1.0 && <1.1,
+                     io-streams >= 1.0.2.2 && <1.1,
                      HsOpenSSL,
                      openssl-streams >= 1.0 && <1.1,
                      mtl,
