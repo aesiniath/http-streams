@@ -116,7 +116,7 @@ instance Eq Method where
 data Request
     = Request {
         qMethod  :: !Method,
-        qHost    ::  Maybe ByteString,
+        qHost    :: !(Maybe ByteString),
         qPath    :: !ByteString,
         qBody    :: !EntityBody,
         qExpect  :: !ExpectMode,
@@ -212,7 +212,7 @@ data Response
         pStatusMsg        :: !ByteString,
         pTransferEncoding :: !TransferEncoding,
         pContentEncoding  :: !ContentEncoding,
-        pContentLength    :: !Int64,
+        pContentLength    :: !(Maybe Int64),
         pHeaders          :: !Headers
     }
 

@@ -250,23 +250,20 @@ testContentLength = do
             end <- Streams.atEOF i2
             assertBool "Expected end of stream" end)
 
-    it "doesn't choke if server neglects content length" $ do
+    it "doesn't choke if server neglects Content-Length" $ do
         p <- Streams.withFileAsInput "tests/example3.txt" (\i -> readResponseHeader i)
 
         assertEqual "Incorrect parse of response" 200 (getStatusCode p)
         assertEqual "Incorrect parse of response" Nothing (getHeader p "Content-Length")
-        assertEqual "Should have defaulted to 0" 0 (pContentLength p)
+        assertEqual "Should not have pContentLength" Nothing (pContentLength p)
         return ()
 
-    it "handles responses without content length or chunked encoding" $ do
+    it "reads body without Content-Length or Transfer-Encoding" $ do
         c <- fakeConnectionHttp10
         q <- buildRequest $ do
             http GET "/fake"
         sendRequest c q emptyBody
         receiveResponse c (\p i1 -> do
-            let nm = getHeader p "Content-Length"
-            assertEqual "Shouldn't have been a Content-Length header" Nothing nm
-
             (i2, getCount) <- Streams.countInput i1
             o <- Streams.nullOutput
             Streams.connect i2 o
@@ -275,8 +272,7 @@ testContentLength = do
             assertBool "Expected end of stream" end
 
             len <- getCount
-            assertEqual "Incorrect number of bytes read" 10 len)
-
+            assertEqual "Incorrect number of bytes read" 4611 len)
 
         return ()
 
