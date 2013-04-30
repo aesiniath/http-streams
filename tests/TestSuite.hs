@@ -14,7 +14,8 @@
 module TestSuite where
 
 import Blaze.ByteString.Builder (Builder)
-import qualified Blaze.ByteString.Builder as Builder (toByteString)
+import qualified Blaze.ByteString.Builder as Builder (fromByteString,
+                                                      toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar,
                                                             fromString)
 import Control.Exception (Exception, bracket, handleJust)
@@ -39,6 +40,7 @@ import qualified Data.ByteString.Char8 as S
 import Debug.Trace
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
+import qualified System.IO.Streams.Debug as Streams
 
 --
 -- what we're actually testing
@@ -49,8 +51,9 @@ import Network.Http.Connection (Connection (..))
 import Network.Http.Inconvenience (HttpClientError (..),
                                    TooManyRedirects (..))
 import Network.Http.ResponseParser (readDecimal, readResponseHeader)
-import Network.Http.Types (Request (..), composeRequestBytes, lookupHeader)
-import TestServer (localPort)
+import Network.Http.Types (Request (..), Response (..), composeRequestBytes,
+                           lookupHeader)
+import MockServer (localPort)
 
 
 localhost = S.pack ("localhost:" ++ show localPort)
@@ -221,7 +224,7 @@ testChunkedEncoding =
             assertEqual "Incorrect number of bytes read" 29 len)
 
 
-testContentLength =
+testContentLength = do
     it "recognzies fixed length message" $ do
         c <- openConnection "localhost" localPort
 
@@ -246,6 +249,43 @@ testContentLength =
 
             end <- Streams.atEOF i2
             assertBool "Expected end of stream" end)
+
+    it "doesn't choke if server neglects Content-Length" $ do
+        p <- Streams.withFileAsInput "tests/example3.txt" (\i -> readResponseHeader i)
+
+        assertEqual "Incorrect parse of response" 200 (getStatusCode p)
+        assertEqual "Incorrect parse of response" Nothing (getHeader p "Content-Length")
+        assertEqual "Should not have pContentLength" Nothing (pContentLength p)
+        return ()
+
+    it "reads body without Content-Length or Transfer-Encoding" $ do
+        c <- fakeConnectionHttp10
+        q <- buildRequest $ do
+            http GET "/fake"
+        sendRequest c q emptyBody
+        receiveResponse c (\_ i1 -> do
+            (i2, getCount) <- Streams.countInput i1
+            o <- Streams.nullOutput
+            Streams.connect i2 o
+
+            end <- Streams.atEOF i2
+            assertBool "Expected end of stream" end
+
+            len <- getCount
+            assertEqual "Incorrect number of bytes read" 4611 len)
+
+        return ()
+
+
+fakeConnectionHttp10 :: IO Connection
+fakeConnectionHttp10 = do
+    x' <- S.readFile "tests/example3.txt"
+    i <- Streams.fromByteString x'
+
+    o <- Streams.nullOutput
+    c <- makeConnection "bad.example.com" (return ()) o i
+    return c
+
 
 {-
     This had to change when we moved to an internal test server; seems

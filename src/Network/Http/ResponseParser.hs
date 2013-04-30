@@ -82,16 +82,17 @@ readResponseHeader i = do
                         else Identity
             Nothing -> Identity
 
-    let n  = case lookupHeader h "Content-Length" of
-            Just x' -> readDecimal x' :: Int64
-            Nothing -> 0
+    let nm = case lookupHeader h "Content-Length" of
+            Just x' -> Just (readDecimal x' :: Int64)
+            Nothing -> Nothing
+
 
     return Response {
         pStatusCode = sc,
         pStatusMsg = sm,
         pTransferEncoding = te,
         pContentEncoding = ce,
-        pContentLength = n,
+        pContentLength = nm,
         pHeaders = h
     }
 
@@ -119,7 +120,9 @@ readResponseBody :: Response -> InputStream ByteString -> IO (InputStream ByteSt
 readResponseBody p i1 = do
 
     i2 <- case t of
-        None        -> readFixedLengthBody i1 n
+        None        -> case l of
+                        Just n  -> readFixedLengthBody i1 n
+                        Nothing -> readUnlimitedBody i1
         Chunked     -> readChunkedBody i1
 
     i3 <- case c of
@@ -131,15 +134,15 @@ readResponseBody p i1 = do
   where
     t = pTransferEncoding p
     c = pContentEncoding p
-    n = pContentLength p
+    l = pContentLength p
 
-readDecimal :: (Enum a, Num a, Bits a) => ByteString -> a
+readDecimal :: (Enum α, Num α, Bits α) => ByteString -> α
 readDecimal = S.foldl' f 0
   where
     f !cnt !i = cnt * 10 + digitToInt i
 
     {-# INLINE digitToInt #-}
-    digitToInt :: (Enum a, Num a, Bits a) => Char -> a
+    digitToInt :: (Enum α, Num α, Bits α) => Char -> α
     digitToInt c | c >= '0' && c <= '9' = toEnum $! ord c - ord '0'
                  | otherwise = error $ "'" ++ [c] ++ "' is not an ascii digit"
 {-# INLINE readDecimal #-}
@@ -245,6 +248,16 @@ readFixedLengthBody :: InputStream ByteString -> Int64 -> IO (InputStream ByteSt
 readFixedLengthBody i1 n = do
     i2 <- Streams.takeBytes n i1
     return i2
+
+{-
+    On the other hand, there is the (predominently HTTP/1.0) case
+    where there is no content length sent and no chunking, with the
+    result that only the connection closing marks the end of the
+    response body.
+-}
+readUnlimitedBody :: InputStream ByteString -> IO (InputStream ByteString)
+readUnlimitedBody i1 = do
+    return i1
 
 
 ---------------------------------------------------------------------
