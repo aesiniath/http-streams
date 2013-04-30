@@ -46,6 +46,7 @@ import qualified System.IO.Streams.Debug as Streams
 -- what we're actually testing
 --
 
+import MockServer (localPort)
 import Network.Http.Client
 import Network.Http.Connection (Connection (..))
 import Network.Http.Inconvenience (HttpClientError (..),
@@ -53,7 +54,6 @@ import Network.Http.Inconvenience (HttpClientError (..),
 import Network.Http.ResponseParser (readDecimal, readResponseHeader)
 import Network.Http.Types (Request (..), Response (..), composeRequestBytes,
                            lookupHeader)
-import MockServer (localPort)
 
 
 localhost = S.pack ("localhost:" ++ show localPort)

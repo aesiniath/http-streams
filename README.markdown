@@ -64,6 +64,10 @@ Change Log
 
 Recent API changes:
 
+* _v0.6.0_  
+	Entity body lengths (both for Requests and Responses) now Int64.
+	Library depends on io-streams 1.1.
+
 * _v0.5.0_  
 	Definition of Hostname and Port have been changed to ByteString
 	and Word16, respectively.
