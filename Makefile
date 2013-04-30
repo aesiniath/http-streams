@@ -178,7 +178,7 @@ clean:
 	@if [ -f tags ] ; then /bin/echo -e "RM\ttags" ; rm tags ; fi
 	@if [ -f config.h ] ; then /bin/echo -e "RM\tconfig.h" ; rm config.h ; fi
 
-doc: dist/setup-config tags
+doc: config tags
 	@/bin/echo -e "CABAL\thaddock"
 	cabal haddock
 
