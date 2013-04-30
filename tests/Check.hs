@@ -16,10 +16,10 @@ module Main where
 import OpenSSL (withOpenSSL)
 import Test.Hspec (hspec)
 
-import TestServer (runTestServer)
+import MockServer (runMockServer)
 import TestSuite (suite)
 
 main :: IO ()
 main = withOpenSSL $ do
-    runTestServer
+    runMockServer
     hspec suite

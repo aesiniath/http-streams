@@ -53,7 +53,7 @@ import Network.Http.Inconvenience (HttpClientError (..),
 import Network.Http.ResponseParser (readDecimal, readResponseHeader)
 import Network.Http.Types (Request (..), Response (..), composeRequestBytes,
                            lookupHeader)
-import TestServer (localPort)
+import MockServer (localPort)
 
 
 localhost = S.pack ("localhost:" ++ show localPort)
@@ -263,7 +263,7 @@ testContentLength = do
         q <- buildRequest $ do
             http GET "/fake"
         sendRequest c q emptyBody
-        receiveResponse c (\p i1 -> do
+        receiveResponse c (\_ i1 -> do
             (i2, getCount) <- Streams.countInput i1
             o <- Streams.nullOutput
             Streams.connect i2 o

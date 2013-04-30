@@ -11,7 +11,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -fno-warn-dodgy-imports #-}
 
-module TestServer (runTestServer, localPort) where
+module MockServer (runMockServer, localPort) where
 
 {-
     Per http://hackage.haskell.org/trac/ghc/ticket/7167, we suppress
@@ -59,8 +59,8 @@ go = httpServe c site
         setVerbose False emptyConfig
 
 
-runTestServer :: IO ()
-runTestServer = do
+runMockServer :: IO ()
+runMockServer = do
     _ <- forkIO go
     threadDelay 2000000
     return ()
