@@ -1,7 +1,6 @@
 HTTP/1.0 200 OK
 Connection: close
 Content-Type: text/plain
-Content-Length: 10
 
 Hi there.
 

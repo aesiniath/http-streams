@@ -14,7 +14,8 @@
 module TestSuite where
 
 import Blaze.ByteString.Builder (Builder)
-import qualified Blaze.ByteString.Builder as Builder (toByteString)
+import qualified Blaze.ByteString.Builder as Builder (fromByteString,
+                                                      toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar,
                                                             fromString)
 import Control.Exception (Exception, bracket, handleJust)
@@ -39,6 +40,7 @@ import qualified Data.ByteString.Char8 as S
 import Debug.Trace
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
+import qualified System.IO.Streams.Debug as Streams
 
 --
 -- what we're actually testing
@@ -49,7 +51,8 @@ import Network.Http.Connection (Connection (..))
 import Network.Http.Inconvenience (HttpClientError (..),
                                    TooManyRedirects (..))
 import Network.Http.ResponseParser (readDecimal, readResponseHeader)
-import Network.Http.Types (Request (..), composeRequestBytes, lookupHeader)
+import Network.Http.Types (Request (..), Response (..), composeRequestBytes,
+                           lookupHeader)
 import TestServer (localPort)
 
 
@@ -221,7 +224,7 @@ testChunkedEncoding =
             assertEqual "Incorrect number of bytes read" 29 len)
 
 
-testContentLength =
+testContentLength = do
     it "recognzies fixed length message" $ do
         c <- openConnection "localhost" localPort
 
@@ -246,6 +249,47 @@ testContentLength =
 
             end <- Streams.atEOF i2
             assertBool "Expected end of stream" end)
+
+    it "doesn't choke if server neglects content length" $ do
+        p <- Streams.withFileAsInput "tests/example3.txt" (\i -> readResponseHeader i)
+
+        assertEqual "Incorrect parse of response" 200 (getStatusCode p)
+        assertEqual "Incorrect parse of response" Nothing (getHeader p "Content-Length")
+        assertEqual "Should have defaulted to 0" 0 (pContentLength p)
+        return ()
+
+    it "handles responses without content length or chunked encoding" $ do
+        c <- fakeConnectionHttp10
+        q <- buildRequest $ do
+            http GET "/fake"
+        sendRequest c q emptyBody
+        receiveResponse c (\p i1 -> do
+            let nm = getHeader p "Content-Length"
+            assertEqual "Shouldn't have been a Content-Length header" Nothing nm
+
+            (i2, getCount) <- Streams.countInput i1
+            o <- Streams.nullOutput
+            Streams.connect i2 o
+
+            end <- Streams.atEOF i2
+            assertBool "Expected end of stream" end
+
+            len <- getCount
+            assertEqual "Incorrect number of bytes read" 10 len)
+
+
+        return ()
+
+
+fakeConnectionHttp10 :: IO Connection
+fakeConnectionHttp10 = do
+    x' <- S.readFile "tests/example3.txt"
+    i <- Streams.fromByteString x'
+
+    o <- Streams.nullOutput
+    c <- makeConnection "bad.example.com" (return ()) o i
+    return c
+
 
 {-
     This had to change when we moved to an internal test server; seems
