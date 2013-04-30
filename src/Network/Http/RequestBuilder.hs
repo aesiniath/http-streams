@@ -38,6 +38,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Base64 as BS64
 import Data.ByteString.Char8 ()
 import qualified Data.ByteString.Char8 as S
+import Data.Int (Int64)
 import Data.List (intersperse)
 import Data.Monoid (mconcat)
 
@@ -270,7 +271,7 @@ setContentType v' = do
 -- writes precisely that many bytes.
 --
 --
-setContentLength :: Int -> RequestBuilder ()
+setContentLength :: Int64 -> RequestBuilder ()
 setContentLength n = do
     deleteHeader "Transfer-Encoding"
     setHeader "Content-Length" (S.pack $ show n)

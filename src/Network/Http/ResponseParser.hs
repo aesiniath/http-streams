@@ -56,7 +56,7 @@ import Network.Http.Utilities
     bytes into our InputStream at an appropriate intermediate size.
 -}
 __BITE_SIZE__ :: Int
-__BITE_SIZE__ = (32::Int) * (1024::Int)
+__BITE_SIZE__ = 32 * 1024
 
 
 {-
@@ -83,7 +83,7 @@ readResponseHeader i = do
             Nothing -> Identity
 
     let n  = case lookupHeader h "Content-Length" of
-            Just x' -> readDecimal x' :: Int
+            Just x' -> readDecimal x' :: Int64
             Nothing -> 0
 
     return Response {
@@ -241,9 +241,9 @@ transferChunkSize = do
     after the requested number of bytes. Otherwise, code handling
     responses waits on more input until an HTTP timeout occurs.
 -}
-readFixedLengthBody :: InputStream ByteString -> Int -> IO (InputStream ByteString)
+readFixedLengthBody :: InputStream ByteString -> Int64 -> IO (InputStream ByteString)
 readFixedLengthBody i1 n = do
-    i2 <- Streams.takeBytes (fromIntegral n :: Int64) i1
+    i2 <- Streams.takeBytes n i1
     return i2
 
 

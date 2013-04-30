@@ -55,6 +55,7 @@ import qualified Data.ByteString.Char8 as S
 import Data.CaseInsensitive (CI, mk, original)
 import Data.HashMap.Strict (HashMap, delete, empty, foldrWithKey, insert,
                             insertWith, lookup)
+import Data.Int (Int64)
 import Data.List (foldl')
 import Data.Monoid (mconcat, mempty)
 import Data.Typeable (Typeable)
@@ -127,7 +128,7 @@ instance Show Request where
         S.unpack $ S.filter (/= '\r') $ Builder.toByteString $ composeRequestBytes q "<default>"
 
 
-data EntityBody = Empty | Chunking | Static Int
+data EntityBody = Empty | Chunking | Static Int64
 
 data ExpectMode = Normal | Continue
 
@@ -211,7 +212,7 @@ data Response
         pStatusMsg        :: !ByteString,
         pTransferEncoding :: !TransferEncoding,
         pContentEncoding  :: !ContentEncoding,
-        pContentLength    :: !Int,
+        pContentLength    :: !Int64,
         pHeaders          :: !Headers
     }
 
