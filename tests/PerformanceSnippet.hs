@@ -46,6 +46,7 @@ main = do
     x' <- S.readFile "tests/example2.txt"
 
     forM_ (replicate n True) (\_ -> basic x')
+    putStr "\n"
 
 
 basic :: ByteString -> IO ()
@@ -55,11 +56,13 @@ basic b' = do
     q <- buildRequest $ do
         http GET "/"
         setAccept "text/plain"
-    putStr $ show q
 
     sendRequest c q emptyBody
 
-    receiveResponse c debugHandler
+    x' <- receiveResponse c concatHandler'
+    if S.length x' > 0
+        then putStr "."
+        else putStr " "
 
     closeConnection c
 
