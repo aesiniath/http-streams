@@ -73,6 +73,8 @@ suite = do
     describe "Parsing responses" $ do
         testResponseParser1
         testResponseParserMismatch
+        testPaddedContentLength
+--      testTrailingWhitespace
         testChunkedEncoding
         testContentLength
         testCompressedResponse
@@ -203,7 +205,22 @@ testResponseParserMismatch =
         assertEqual "Incorrect parse of response" 200 (getStatusCode p)
         return ()
 
+testPaddedContentLength =
+    it "handles padded Content-Length" $ do
+        p <- Streams.withFileAsInput "tests/example4.txt" (\i -> readResponseHeader i)
 
+        let (Just len) = pContentLength p
+        assertEqual "Should have trimmed in decimal conversion" 86 len
+
+{-
+    Presently inactive
+-}
+testTrailingWhitespace =
+    it "where headers have trailing whitespace" $ do
+        p <- Streams.withFileAsInput "tests/example4.txt" (\i -> readResponseHeader i)
+
+        let (Just value) = getHeader p "Content-Length"
+        assertEqual "Should have trimmed field value" "86" value
 
 testChunkedEncoding =
     it "recognizes chunked transfer encoding and decodes" $ do

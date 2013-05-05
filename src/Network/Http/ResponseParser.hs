@@ -136,10 +136,14 @@ readResponseBody p i1 = do
     c = pContentEncoding p
     l = pContentLength p
 
+
 readDecimal :: (Enum α, Num α, Bits α) => ByteString -> α
-readDecimal = S.foldl' f 0
+readDecimal str' =
+    S.foldl' f 0 x'
   where
     f !cnt !i = cnt * 10 + digitToInt i
+
+    x' = head $ S.words str'
 
     {-# INLINE digitToInt #-}
     digitToInt :: (Enum α, Num α, Bits α) => Char -> α
