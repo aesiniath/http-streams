@@ -100,9 +100,8 @@ http m p' = do
 
     let e  = case m of
             GET   -> Empty
-            POST  -> Chunking
-            PUT   -> Chunking
-            _     -> Empty
+            TRACE -> Empty
+            _     -> Chunking
 
     let h3 = case e of
             Chunking    -> updateHeader h2 "Transfer-Encoding" "chunked"
