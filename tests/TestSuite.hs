@@ -19,7 +19,7 @@ import qualified Blaze.ByteString.Builder as Builder (fromByteString,
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar,
                                                             fromString)
 import Control.Exception (Exception, bracket, handleJust)
-import Control.Monad (guard)
+import Control.Monad (guard, forM_)
 import Data.Bits
 import Data.Maybe (fromJust)
 import Data.Monoid
@@ -93,6 +93,10 @@ suite = do
         testGeneralHandler
         testEstablishConnection
 
+    describe "Sends a request body for methods other than POST" $ do
+        testSendBodyFor PUT
+        testSendBodyFor DELETE
+        testSendBodyFor PATCH
 
 testRequestTermination =
     it "terminates with a blank line" $ do
@@ -392,6 +396,25 @@ testPutChunks =
             let size = readDecimal b' :: Int
             assertEqual "Should have replied with correct file size" 33000 size
 
+testSendBodyFor meth =
+    it ("Sends a request body for " ++ show meth) $ do
+        c <- openConnection "localhost" localPort
+
+        q <- buildRequest $ do
+            http meth "/size"
+            setContentType "text/plain"
+
+        sendRequest c q (\o -> do
+            Streams.write (Just (Builder.fromString "a request")) o)
+
+        receiveResponse c (\p i -> do
+            assertEqual "Incorrect status code" 200 (getStatusCode p)
+            (Just b') <- Streams.read i
+
+            let size = readDecimal b' :: Int
+            assertEqual "Should have received a request body" 9 size)
+
+        closeConnection c
 
 testPostChunks =
     it "POST correctly chunks a fileBody" $ do
