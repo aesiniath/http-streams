@@ -184,3 +184,6 @@ doc: config tags
 
 format: $(CORE_SOURCES) $(TEST_SOURCES)
 	stylish-haskell -i $^
+
+dist: config
+	cabal sdist
