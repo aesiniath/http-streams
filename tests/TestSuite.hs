@@ -19,7 +19,7 @@ import qualified Blaze.ByteString.Builder as Builder (fromByteString,
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar,
                                                             fromString)
 import Control.Exception (Exception, bracket, handleJust)
-import Control.Monad (guard, forM_)
+import Control.Monad (forM_, guard)
 import Data.Bits
 import Data.Maybe (fromJust)
 import Data.Monoid
@@ -93,7 +93,7 @@ suite = do
         testGeneralHandler
         testEstablishConnection
 
-    describe "Sends a request body for methods other than POST" $ do
+    describe "Corner cases in protocol compliance" $ do
         testSendBodyFor PUT
         testSendBodyFor DELETE
         testSendBodyFor PATCH
