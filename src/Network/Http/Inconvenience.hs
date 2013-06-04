@@ -219,7 +219,7 @@ baselineContextSSL = do
     SSL.contextSetDefaultCiphers ctx
 #if defined __MACOSX__
     SSL.contextSetVerificationMode ctx SSL.VerifyNone
-#elif defined __WIN32__
+#elif defined __WINDOWS__
     SSL.contextSetVerificationMode ctx SSL.VerifyNone
 #else
     SSL.contextSetCADirectory ctx "/etc/ssl/certs"
