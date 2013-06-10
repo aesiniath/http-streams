@@ -226,11 +226,12 @@ openConnection h1' p = do
 --
 openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
 openConnectionSSL ctx h1' p = do
-    s <- socket AF_INET Stream defaultProtocol
-
     is <- getAddrInfo Nothing (Just h1) (Just $ show p)
 
     let a = addrAddress $ head is
+        f = addrFamily $ head is
+    s <- socket f Stream defaultProtocol
+
     connect s a
 
     ssl <- SSL.connection ctx s
