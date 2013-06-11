@@ -365,7 +365,7 @@ getHostname c q =
 -- content from the server:
 --
 -- >     receiveResponse c (\p i -> do
--- >         m <- Streams.read b
+-- >         m <- Streams.read i
 -- >         case m of
 -- >             Just bytes -> putStr bytes
 -- >             Nothing    -> return ())
@@ -374,7 +374,7 @@ getHostname c q =
 -- 'InputStream', which is the whole point of having an @io-streams@
 -- based HTTP client library.
 --
--- The final value from the handler function.  is the return value of
+-- The final value from the handler function is the return value of
 -- @receiveResponse@, if you need it.
 --
 {-
