@@ -47,7 +47,7 @@ the underlying API is straight-forward. In particular, constructing the
 \     'sendRequest' c q 'emptyBody'
 
 \     `receiveResponse` c (\\p i -> do
-\         x <- Streams.read b
+\         x <- Streams.read i
 \         S.putStr $ fromMaybe \"\" x)
 
 \     'closeConnection' c
