@@ -26,6 +26,7 @@ module Network.Http.Connection (
     getHostname,
     sendRequest,
     receiveResponse,
+    receiveResponseRaw,
     emptyBody,
     fileBody,
     inputStreamBody,
@@ -390,6 +391,42 @@ receiveResponse :: Connection -> (Response -> InputStream ByteString -> IO β) -
 receiveResponse c handler = do
     p  <- readResponseHeader i
     i' <- readResponseBody p i
+
+    x  <- handler p i'
+
+    Streams.skipToEof i'
+
+    return x
+  where
+    i = cIn c
+
+--
+-- | Handle the response coming back from the server. This function
+-- hands control to a handler function you supply, passing you the
+-- 'Response' object with the response headers and an 'InputStream'
+-- containing the entity body.
+-- 
+-- This function *explicitly* does not handle the content encoding of
+-- the response body stream (it will not decompress anything); use
+-- `receiveResponse` if you want automatic decompression of the
+-- bytestream.
+-- 
+-- The final value from the handler function is the return value of
+-- @receiveResponse@, if you need it.
+--
+{-
+    The reponse body coming from the server MUST be fully read, even
+    if (especially if) the users's handler doesn't consume it all.
+    This is necessary to maintain the HTTP protocol invariants;
+    otherwise pipelining would not work. It's not entirely clear
+    *which* InputStream is being drained here; the underlying
+    InputStream ByteString in Connection remains unconsumed beyond the
+    threshold of the current response, which is exactly what we need.
+-}
+receiveResponseRaw :: Connection -> (Response -> InputStream ByteString -> IO β) -> IO β
+receiveResponseRaw c handler = do
+    p  <- readResponseHeader i
+    i' <- readRawResponseBody p i
 
     x  <- handler p i'
 
