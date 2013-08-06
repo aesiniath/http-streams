@@ -412,21 +412,19 @@ receiveResponse c handler = do
 -- bytestream.
 -- 
 -- The final value from the handler function is the return value of
--- @receiveResponse@, if you need it.
+-- @receiveResponseRaw@, if you need it.
 --
 {-
-    The reponse body coming from the server MUST be fully read, even
-    if (especially if) the users's handler doesn't consume it all.
-    This is necessary to maintain the HTTP protocol invariants;
-    otherwise pipelining would not work. It's not entirely clear
-    *which* InputStream is being drained here; the underlying
-    InputStream ByteString in Connection remains unconsumed beyond the
-    threshold of the current response, which is exactly what we need.
+    See notes at receiveResponse.
 -}
 receiveResponseRaw :: Connection -> (Response -> InputStream ByteString -> IO β) -> IO β
 receiveResponseRaw c handler = do
     p  <- readResponseHeader i
-    i' <- readRawResponseBody p i
+    let p' = p {
+        pContentEncoding = Identity
+    }
+
+    i' <- readResponseBody p' i
 
     x  <- handler p i'
 

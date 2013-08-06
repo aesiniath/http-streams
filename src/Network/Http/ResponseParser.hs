@@ -22,7 +22,6 @@
 module Network.Http.ResponseParser (
     readResponseHeader,
     readResponseBody,
-    readRawResponseBody,
 
         -- for testing
     readDecimal
@@ -137,12 +136,6 @@ readResponseBody p i1 = do
     c = pContentEncoding p
     l = pContentLength p
 
-readRawResponseBody :: Response -> InputStream ByteString -> IO (InputStream ByteString)
-readRawResponseBody p i = case pTransferEncoding p of
-    None    -> case pContentLength p of
-        Just n  -> readFixedLengthBody i n
-        Nothing -> readUnlimitedBody i
-    Chunked -> readChunkedBody i
 
 readDecimal :: (Enum α, Num α, Bits α) => ByteString -> α
 readDecimal str' =
