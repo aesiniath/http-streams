@@ -127,6 +127,7 @@ module Network.Http.Client (
 
     -- * Processing HTTP response
     receiveResponse,
+    receiveResponseRaw,
     StatusCode,
     getStatusCode,
     getStatusMessage,
@@ -169,4 +170,3 @@ import Network.Http.Connection
 import Network.Http.Inconvenience
 import Network.Http.RequestBuilder
 import Network.Http.Types
-
