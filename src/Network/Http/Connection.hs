@@ -401,18 +401,10 @@ receiveResponse c handler = do
     i = cIn c
 
 --
--- | Handle the response coming back from the server. This function
--- hands control to a handler function you supply, passing you the
--- 'Response' object with the response headers and an 'InputStream'
--- containing the entity body.
--- 
--- This function *explicitly* does not handle the content encoding of
--- the response body stream (it will not decompress anything); use
--- `receiveResponse` if you want automatic decompression of the
--- bytestream.
--- 
--- The final value from the handler function is the return value of
--- @receiveResponseRaw@, if you need it.
+-- | This is a specialized variant of 'receiveResponse' that /explicitly/ does
+-- not handle the content encoding of the response body stream (it will not
+-- decompress anything). Unless you really want the raw gzipped content coming
+-- down from the server, use @receiveResponse@.
 --
 {-
     See notes at receiveResponse.
