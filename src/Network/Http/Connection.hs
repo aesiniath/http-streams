@@ -26,6 +26,7 @@ module Network.Http.Connection (
     getHostname,
     sendRequest,
     receiveResponse,
+    receiveResponseRaw,
     emptyBody,
     fileBody,
     inputStreamBody,
@@ -226,11 +227,12 @@ openConnection h1' p = do
 --
 openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
 openConnectionSSL ctx h1' p = do
-    s <- socket AF_INET Stream defaultProtocol
-
     is <- getAddrInfo Nothing (Just h1) (Just $ show p)
 
     let a = addrAddress $ head is
+        f = addrFamily $ head is
+    s <- socket f Stream defaultProtocol
+
     connect s a
 
     ssl <- SSL.connection ctx s
@@ -364,7 +366,7 @@ getHostname c q =
 -- content from the server:
 --
 -- >     receiveResponse c (\p i -> do
--- >         m <- Streams.read b
+-- >         m <- Streams.read i
 -- >         case m of
 -- >             Just bytes -> putStr bytes
 -- >             Nothing    -> return ())
@@ -373,7 +375,7 @@ getHostname c q =
 -- 'InputStream', which is the whole point of having an @io-streams@
 -- based HTTP client library.
 --
--- The final value from the handler function.  is the return value of
+-- The final value from the handler function is the return value of
 -- @receiveResponse@, if you need it.
 --
 {-
@@ -389,6 +391,32 @@ receiveResponse :: Connection -> (Response -> InputStream ByteString -> IO β) -
 receiveResponse c handler = do
     p  <- readResponseHeader i
     i' <- readResponseBody p i
+
+    x  <- handler p i'
+
+    Streams.skipToEof i'
+
+    return x
+  where
+    i = cIn c
+
+--
+-- | This is a specialized variant of 'receiveResponse' that /explicitly/ does
+-- not handle the content encoding of the response body stream (it will not
+-- decompress anything). Unless you really want the raw gzipped content coming
+-- down from the server, use @receiveResponse@.
+--
+{-
+    See notes at receiveResponse.
+-}
+receiveResponseRaw :: Connection -> (Response -> InputStream ByteString -> IO β) -> IO β
+receiveResponseRaw c handler = do
+    p  <- readResponseHeader i
+    let p' = p {
+        pContentEncoding = Identity
+    }
+
+    i' <- readResponseBody p' i
 
     x  <- handler p i'
 
