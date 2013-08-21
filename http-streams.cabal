@@ -1,6 +1,6 @@
 cabal-version:       >= 1.10
 name:                http-streams
-version:             0.6.0.2
+version:             0.6.1.0
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
@@ -42,7 +42,8 @@ library
                      transformers,
                      network,
                      text,
-                     unordered-containers
+                     unordered-containers,
+                     aeson
 
   hs-source-dirs:    src
   exposed-modules:   Network.Http.Client
@@ -94,7 +95,8 @@ test-suite           check
                      system-fileio   >= 0.3.10 && < 0.4,
                      system-filepath >= 0.4.1  && < 0.5,
                      text,
-                     unordered-containers
+                     unordered-containers,
+                     aeson
 
   hs-source-dirs:    src,tests
   main-is:           Check.hs
