@@ -20,6 +20,8 @@ import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar,
                                                             fromString)
 import Control.Exception (Exception, bracket, handleJust)
 import Control.Monad (forM_, guard)
+import Data.Aeson.Encode.Pretty
+import Data.Aeson (Value(..), json, (.:))
 import Data.Bits
 import Data.Maybe (fromJust)
 import Data.Monoid
@@ -29,6 +31,9 @@ import Network.URI (parseURI)
 import Test.Hspec (Spec, describe, it)
 import Test.Hspec.Expectations (Selector, anyException, shouldThrow)
 import Test.HUnit
+import qualified Data.HashMap.Strict as Map
+
+import Debug.Trace
 
 --
 -- Otherwise redundent imports, but useful for testing in GHCi.
@@ -92,6 +97,7 @@ suite = do
         testExcessiveRedirects
         testGeneralHandler
         testEstablishConnection
+        testParsingJson
 
     describe "Corner cases in protocol compliance" $ do
         testSendBodyFor PUT
@@ -543,4 +549,16 @@ testEstablishConnection =
 
         let len = S.length x'
         assertEqual "Incorrect number of bytes read" 4611 len
+
+
+testParsingJson =
+    it "GET with JSON handler behaves" $ do
+        let url = S.concat ["http://", localhost, "/static/data-eu-gdp.json"]
+
+        x <- get url jsonHandler
+        let (Object o) = x
+        let (Just v) = Map.lookup "label" o
+        let (String t) = v
+
+        assertEqual "Incorrect response" "Europe (EU27)" t
 

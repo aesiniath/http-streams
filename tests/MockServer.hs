@@ -54,7 +54,7 @@ go = httpServe c site
     c = setAccessLog ConfigNoLog $
         setErrorLog ConfigNoLog $
         setHostname localHost $
-        setBind "localhost" $
+        setBind localHost $
         setPort (fromIntegral localPort) $
         setVerbose False emptyConfig
 
@@ -85,6 +85,7 @@ routeRequests =
              ("loop", serveRedirectEndlessly),
              ("postbox", method POST handlePostMethod),
              ("size", handleSizeRequest),
+             ("api", handleRestfulRequest),
              ("cookies", serveRepeatedResponseHeaders)]
     <|> serveNotFound
 
@@ -150,6 +151,14 @@ handleAsText = do
     writeBS "Sounds good to me\n"
 
 
+handleRestfulRequest :: Snap ()
+handleRestfulRequest = do
+    modifyResponse $ setResponseStatus 200 "OK"
+    modifyResponse $ setContentType "application/json"
+
+    sendFile "tests/data-eu-gdp.json"
+
+
 serveRedirect :: Snap ()
 serveRedirect = do
     modifyResponse $ setResponseStatus 307 "Temporary Redirect"
@@ -211,6 +220,7 @@ handleSizeRequest = do
 
     b' <- readRequestBody 65536
     writeBS $ S.pack $ show $ L.length b'
+
 
 updateResource :: Snap ()
 updateResource = do
