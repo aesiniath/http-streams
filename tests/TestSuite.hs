@@ -8,6 +8,7 @@
 -- redistribute it and/or modify it under a BSD licence.
 --
 
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
@@ -18,20 +19,25 @@ import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar,
                                                             fromString)
+import Control.Applicative
 import Control.Exception (Exception, bracket, handleJust)
 import Control.Monad (forM_, guard)
+import Data.Aeson (FromJSON, ToJSON, Value (..), json, object, parseJSON,
+                   toJSON, (.:), (.=))
 import Data.Aeson.Encode.Pretty
-import Data.Aeson (Value(..), json, (.:))
 import Data.Bits
+import qualified Data.HashMap.Strict as Map
 import Data.Maybe (fromJust)
 import Data.Monoid
 import Data.String
+import Data.Text (Text)
+import qualified Data.Text as Text
+import GHC.Generics hiding (Selector)
 import Network.Socket (SockAddr (..))
 import Network.URI (parseURI)
 import Test.Hspec (Spec, describe, it)
 import Test.Hspec.Expectations (Selector, anyException, shouldThrow)
 import Test.HUnit
-import qualified Data.HashMap.Strict as Map
 
 import Debug.Trace
 
@@ -42,6 +48,7 @@ import Debug.Trace
 import Data.Attoparsec.ByteString.Char8 (Parser, parseOnly, parseTest)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
+import qualified Data.ByteString.Lazy as L
 import Debug.Trace
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
@@ -97,7 +104,8 @@ suite = do
         testExcessiveRedirects
         testGeneralHandler
         testEstablishConnection
-        testParsingJson
+        testParsingJson1
+        testParsingJson2
 
     describe "Corner cases in protocol compliance" $ do
         testSendBodyFor PUT
@@ -551,7 +559,7 @@ testEstablishConnection =
         assertEqual "Incorrect number of bytes read" 4611 len
 
 
-testParsingJson =
+testParsingJson1 =
     it "GET with JSON handler behaves" $ do
         let url = S.concat ["http://", localhost, "/static/data-eu-gdp.json"]
 
@@ -561,4 +569,38 @@ testParsingJson =
         let (String t) = v
 
         assertEqual "Incorrect response" "Europe (EU27)" t
+
+testParsingJson2 =
+    it "GET with JSON handler parses using Aeson" $ do
+        let url = S.concat ["http://", localhost, "/static/data-jp-gdp.json"]
+
+        x <- get url jsonHandler :: IO GrossDomesticProduct
+
+        assertEqual "Incorrect response" "Japan" (gLabel x)
+        assertEqual "Data not parsed as expected" 2008 (fst $ last $ gData x)
+--      L.putStr $ encodePretty x
+
+
+{-
+    Go to the trouble to create a Haskell data type representing the JSON feed
+    we're getting from the sample data files. The Generic trick doesn't work
+    because data is a reserved word, of course.
+-}
+
+data GrossDomesticProduct = GrossDomesticProduct {
+    gLabel :: Text,
+    gData  :: [(Int, Rational)]
+} deriving (Show, Generic)
+
+instance FromJSON GrossDomesticProduct where
+    parseJSON (Object o)    = GrossDomesticProduct <$>
+                                o .: "label" <*>
+                                o .: "data"
+    parseJSON _             = undefined
+
+
+instance ToJSON GrossDomesticProduct where
+    toJSON (GrossDomesticProduct l d) = object
+                               ["label" .= l,
+                                "data"  .= d]
 

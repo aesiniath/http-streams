@@ -39,7 +39,7 @@ import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       fromWord8, toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromString)
 import Control.Exception (Exception, bracket, throw)
-import Data.Aeson (FromJSON, json', Result(..), fromJSON)
+import Data.Aeson (FromJSON, Result (..), fromJSON, json')
 import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S
