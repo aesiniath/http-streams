@@ -135,6 +135,7 @@ module Network.Http.Client (
     debugHandler,
     concatHandler,
     concatHandler',
+    jsonHandler,
 
     -- * Resource cleanup
     closeConnection,

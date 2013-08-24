@@ -27,6 +27,7 @@ module Network.Http.Inconvenience (
     put,
     baselineContextSSL,
     concatHandler',
+    jsonHandler,
 
     -- for testing
     TooManyRedirects(..),
@@ -38,6 +39,7 @@ import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       fromWord8, toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromString)
 import Control.Exception (Exception, bracket, throw)
+import Data.Aeson (FromJSON, Result (..), fromJSON, json')
 import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S
@@ -59,6 +61,7 @@ import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
+import qualified System.IO.Streams.Attoparsec as Streams
 import System.IO.Unsafe (unsafePerformIO)
 
 import Network.Http.Connection
@@ -505,4 +508,66 @@ instance Show HttpClientError where
     in the runtime when raised, not sure it's worth the bother. It's
     not like we'd want anything different in their Show instances.
 -}
+
+--
+-- | If you're working with a data stream that is in @application/json@,
+-- then chances are you're using "aeson" to handle the JSON to Haskell
+-- decoding. If so, then this helper function might be of use.
+--
+-- >     v <- get "http://api.example.com/v1/" jsonHandler
+--
+-- This function feeds the input body to the "Data.Aeson.Parser.json'"
+-- attoparsec Parser in order to get the aeson Value type. This is then
+-- marshalled to your type represeting the source data, via the FromJSON
+-- typeclass.
+--
+-- The above example was actually insufficient; when working with
+-- "aeson" you need to fix the type so it knows what FromJSON instance
+-- to use. Let's say you're getting Person objects, then it would be
+--
+-- >     v <- get "http://api.example.com/v1/person/461" jsonHandler :: IO Person
+--
+-- assuming your Person type had a FromJSON instance, of course.
+--
+-- /Note/
+--
+-- This function parses a single top level JSON object or array, which
+-- is all you're supposed to get if it's a valid document. People do
+-- all kinds of crazy things though, so beware. Also, this function (like the
+-- "concatHander" convenience) loads the entire response into memory; it's
+-- not /streaming/; if you're receiving a document wich is (say) a very
+-- long array of objects then you may want to implement your own
+-- handler function, perhaps using "Streams.parserToInputStream" and
+-- the "Data.Aeson.Parser" combinators directly — with a result type of
+-- InputStream Value, perhaps — by which you could then iterate over
+-- the Values one at a time in constant space.
+--
+{-
+    This looks simple. It wasn't. The types involved are rediculous to
+    disentangle. The biggest problem is that the Parser type used in
+    [aeson] is *NOT* the Parser type from [attoparsec]. But the parsing
+    function `json` and `json` from Aeson use the attoparsec Parser even
+    though the rest of the top level page is all about Aeson's parser as
+    used in FromJSON!
+
+    Anyway, `json` and `json'` are [attoparsec] Parser [aeson] Value; we
+    run that using the [io-streams] convenience function
+    `parseFromStream` which gets us a Value which is the intermediate
+    abstract syntax tree for a  JSON document. Then (and this was hard
+    to find) to work with that in terms of the FromJSON typeclass, you
+    use the `fromJSON` function which has type (FromJSON α => Value ->
+    Result α). Then finally, pull the result out of it. Why in Bog's
+    name this wasn't just Either I'll never know.
+-}
+jsonHandler
+    :: (FromJSON α)
+    => Response
+    -> InputStream ByteString
+    -> IO α
+jsonHandler _ i = do
+    v <- Streams.parseFromStream json' i        -- Value
+    let r = fromJSON v                          -- Result
+    case r of
+        (Success a) ->  return a
+        (Error str) ->  error str
 
