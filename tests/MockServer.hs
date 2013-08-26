@@ -83,6 +83,7 @@ routeRequests =
              ("", ifTop handleAsText),
              ("bounce", serveRedirect),
              ("loop", serveRedirectEndlessly),
+             ("empty", serveWithoutContent),
              ("postbox", method POST handlePostMethod),
              ("size", handleSizeRequest),
              ("api", handleRestfulRequest),
@@ -167,6 +168,7 @@ serveRedirect = do
   where
     r' = S.concat ["http://", localHost, ":", S.pack $ show $ localPort, "/time"]
 
+
 serveRedirectEndlessly :: Snap ()
 serveRedirectEndlessly = do
     modifyResponse $ setResponseStatus 307 "Temporary Redirect"
@@ -174,6 +176,18 @@ serveRedirectEndlessly = do
     modifyResponse $ setHeader "Location" r'
   where
     r' = S.concat ["http://", localHost, ":", S.pack $ show $ localPort, "/loop"]
+
+{-
+    Attempt to test the bug with 204 No Content not closing in absence of a
+    Content-Length header, however Snap automatically adds one, it seems. So,
+    after the fact, this is unused and the case is tested in
+    TestServer.testDevoidOfContent.
+-}
+
+serveWithoutContent :: Snap ()
+serveWithoutContent = do
+    modifyResponse $ setResponseStatus 204 "No Content"
+    modifyResponse $ setHeader "Cache-Control" "no-cache"
 
 
 serveRepeatedResponseHeaders :: Snap ()
@@ -238,9 +252,6 @@ updateResource = do
     return ()
   where
     fromLazy ls' = S.concat $ L.toChunks ls'
-
-
-
 
 
 serveNotFound :: Snap a
