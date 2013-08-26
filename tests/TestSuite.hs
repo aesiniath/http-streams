@@ -89,6 +89,7 @@ suite = do
 --      testTrailingWhitespace
         testChunkedEncoding
         testContentLength
+        testDevoidOfContent
         testCompressedResponse
         testRepeatedResponseHeaders
 
@@ -319,6 +320,42 @@ fakeConnectionHttp10 = do
 
     o <- Streams.nullOutput
     c <- makeConnection "bad.example.com" (return ()) o i
+    return c
+
+
+{-
+    Corner case where servers responding 204 No Content are not required to
+    transmit a Content-Length header; Snap *does* send one, so we can't test it
+    in the MockServer, so fake it with example5.txt
+-}
+
+testDevoidOfContent = do
+    it "handles 204 No Content response without Content-Length" $ do
+        c <- fakeConnectionNoContent
+        q <- buildRequest $ do
+            http GET "/fake"
+        sendRequest c q emptyBody
+        receiveResponse c (\_ i1 -> do
+            (i2, getCount) <- Streams.countInput i1
+            o <- Streams.nullOutput
+            Streams.connect i2 o
+
+            end <- Streams.atEOF i2
+            assertBool "Expected end of stream" end
+
+            len <- getCount
+            assertEqual "Incorrect number of bytes read" 0 len)
+
+        return ()
+
+
+fakeConnectionNoContent :: IO Connection
+fakeConnectionNoContent = do
+    x' <- S.readFile "tests/example5.txt"
+    i <- Streams.fromByteString x'
+
+    o <- Streams.nullOutput
+    c <- makeConnection "worse.example.com" (return ()) o i
     return c
 
 
