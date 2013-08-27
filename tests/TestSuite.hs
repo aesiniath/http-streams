@@ -352,11 +352,16 @@ testDevoidOfContent = do
 fakeConnectionNoContent :: IO Connection
 fakeConnectionNoContent = do
     x' <- S.readFile "tests/example5.txt"
-    i <- Streams.fromByteString x'
+    i1 <- Streams.fromByteString x'
+    i2 <- Streams.makeInputStream endless
+    i3 <- Streams.concatInputStreams [i1, i2]
 
     o <- Streams.nullOutput
-    c <- makeConnection "worse.example.com" (return ()) o i
+    c <- makeConnection "worse.example.com" (return ()) o i3
     return c
+  where
+    endless :: IO (Maybe ByteString)
+    endless = return (Just "")
 
 
 {-
