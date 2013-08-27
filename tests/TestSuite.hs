@@ -20,6 +20,7 @@ import qualified Blaze.ByteString.Builder as Builder (fromByteString,
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromChar,
                                                             fromString)
 import Control.Applicative
+import Control.Concurrent (MVar, newEmptyMVar, putMVar, takeMVar)
 import Control.Exception (Exception, bracket, handleJust)
 import Control.Monad (forM_, guard)
 import Data.Aeson (FromJSON, ToJSON, Value (..), json, object, parseJSON,
@@ -35,6 +36,7 @@ import qualified Data.Text as Text
 import GHC.Generics hiding (Selector)
 import Network.Socket (SockAddr (..))
 import Network.URI (parseURI)
+import System.Timeout (timeout)
 import Test.Hspec (Spec, describe, it)
 import Test.Hspec.Expectations (Selector, anyException, shouldThrow)
 import Test.HUnit
@@ -330,8 +332,9 @@ fakeConnectionHttp10 = do
 -}
 
 testDevoidOfContent = do
-    it "handles 204 No Content response without Content-Length" $ do
-        c <- fakeConnectionNoContent
+    it "handles 204 No Content response without Content-Length"
+      $ timeout_ 2 $ do
+        (c, mv) <- fakeConnectionNoContent
         q <- buildRequest $ do
             http GET "/fake"
         sendRequest c q emptyBody
@@ -345,23 +348,30 @@ testDevoidOfContent = do
 
             len <- getCount
             assertEqual "Incorrect number of bytes read" 0 len)
-
+        putMVar mv ()
         return ()
+  where
+    secs :: Int
+    secs = 10 ^ (6 :: Int)
+
+    timeout_ :: Int -> IO a -> IO a
+    timeout_ t m = timeout (t * secs) m >>= maybe (error "timeout") return
 
 
-fakeConnectionNoContent :: IO Connection
+fakeConnectionNoContent :: IO (Connection, MVar ())
 fakeConnectionNoContent = do
     x' <- S.readFile "tests/example5.txt"
     i1 <- Streams.fromByteString x'
-    i2 <- Streams.makeInputStream endless
+    mv <- newEmptyMVar
+    i2 <- Streams.makeInputStream $ blockOn mv
     i3 <- Streams.concatInputStreams [i1, i2]
 
     o <- Streams.nullOutput
     c <- makeConnection "worse.example.com" (return ()) o i3
-    return c
+    return (c, mv)
   where
-    endless :: IO (Maybe ByteString)
-    endless = return (Just "")
+    blockOn :: MVar () -> IO (Maybe ByteString)
+    blockOn mv = takeMVar mv >> return Nothing
 
 
 {-
