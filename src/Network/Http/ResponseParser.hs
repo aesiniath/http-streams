@@ -84,8 +84,11 @@ readResponseHeader i = do
 
     let nm = case lookupHeader h "Content-Length" of
             Just x' -> Just (readDecimal x' :: Int64)
-            Nothing -> Nothing
-
+            Nothing -> case sc of
+                        204 -> Just 0
+                        304 -> Just 0
+                        100 -> Just 0
+                        _   -> Nothing
 
     return Response {
         pStatusCode = sc,
