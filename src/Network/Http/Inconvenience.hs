@@ -511,18 +511,18 @@ instance Show HttpClientError where
 
 --
 -- | If you're working with a data stream that is in @application/json@,
--- then chances are you're using "aeson" to handle the JSON to Haskell
+-- then chances are you're using @aeson@ to handle the JSON to Haskell
 -- decoding. If so, then this helper function might be of use.
 --
 -- >     v <- get "http://api.example.com/v1/" jsonHandler
 --
--- This function feeds the input body to the "Data.Aeson.Parser.json'"
--- attoparsec Parser in order to get the aeson Value type. This is then
+-- This function feeds the input body to the 'Data.Aeson.Parser.json''
+-- @attoparsec@ Parser in order to get the aeson Value type. This is then
 -- marshalled to your type represeting the source data, via the FromJSON
 -- typeclass.
 --
 -- The above example was actually insufficient; when working with
--- "aeson" you need to fix the type so it knows what FromJSON instance
+-- @aeson@ you need to fix the type so it knows what FromJSON instance
 -- to use. Let's say you're getting Person objects, then it would be
 --
 -- >     v <- get "http://api.example.com/v1/person/461" jsonHandler :: IO Person
@@ -535,10 +535,10 @@ instance Show HttpClientError where
 -- is all you're supposed to get if it's a valid document. People do
 -- all kinds of crazy things though, so beware. Also, this function (like the
 -- "concatHander" convenience) loads the entire response into memory; it's
--- not /streaming/; if you're receiving a document wich is (say) a very
+-- not /streaming/; if you're receiving a document which is (say) a very
 -- long array of objects then you may want to implement your own
 -- handler function, perhaps using "Streams.parserToInputStream" and
--- the "Data.Aeson.Parser" combinators directly — with a result type of
+-- the 'Data.Aeson.Parser' combinators directly — with a result type of
 -- InputStream Value, perhaps — by which you could then iterate over
 -- the Values one at a time in constant space.
 --
