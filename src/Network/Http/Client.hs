@@ -95,7 +95,7 @@ module Network.Http.Client (
     -- * Connecting to server
     Hostname,
     Port,
-    Connection,
+    Connection(..),
     openConnection,
 
     -- * Building Requests
@@ -118,8 +118,8 @@ module Network.Http.Client (
     setHeader,
 
     -- * Sending HTTP request
-    Request,
-    Response,
+    Request(..),
+    Response(..),
     Headers,
     getHostname,
     sendRequest,
