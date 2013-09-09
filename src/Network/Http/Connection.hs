@@ -24,6 +24,7 @@ module Network.Http.Connection (
     openConnectionSSL,
     closeConnection,
     getHostname,
+    getRequestHeaders,
     sendRequest,
     receiveResponse,
     receiveResponseRaw,
@@ -355,6 +356,19 @@ getHostname c q =
         Just h' -> h'
         Nothing -> cHost c
 
+
+--
+-- | Get the headers that will be sent with this request as an association
+-- list. You likely won't need this but there are some corner cases where
+-- people need to make calculations based on all the headers before they
+-- go out over the wire.
+--
+getRequestHeaders :: Connection -> Request -> [(ByteString, ByteString)]
+getRequestHeaders c q =
+    ("Host", getHostname c q) : kvs
+  where
+    h = qHeaders q
+    kvs = retreiveHeaders h
 
 --
 -- | Handle the response coming back from the server. This function

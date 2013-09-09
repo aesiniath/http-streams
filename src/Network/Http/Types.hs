@@ -31,6 +31,7 @@ module Network.Http.Types (
     removeHeader,
     buildHeaders,
     lookupHeader,
+    retreiveHeaders,
     HttpParseException(..),
 
     -- for testing
@@ -54,7 +55,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.CaseInsensitive (CI, mk, original)
 import Data.HashMap.Strict (HashMap, delete, empty, foldrWithKey, insert,
-                            insertWith, lookup)
+                            insertWith, lookup, toList)
 import Data.Int (Int64)
 import Data.List (foldl')
 import Data.Monoid (mconcat, mempty)
@@ -178,7 +179,7 @@ composeRequestBytes q h' =
     version = Builder.fromString "HTTP/1.1"
 
     hostLine = mconcat
-       [Builder.fromString"Host: ",
+       [Builder.fromString "Host: ",
         hostname,
         crlf]
 
@@ -374,12 +375,23 @@ addHeader m (k,v) =
   where
     f new old = S.concat [old, ",", new]
 
+
 lookupHeader :: Headers -> ByteString -> Maybe ByteString
 lookupHeader x k =
     lookup (mk k) m
   where
     !m = unWrap x
 
+
+retreiveHeaders :: Headers -> [(ByteString, ByteString)]
+retreiveHeaders x =
+    map down $ toList m
+  where
+    !m = unWrap x
+
+down :: (CI ByteString, ByteString) -> (ByteString, ByteString)
+down (k, v) =
+    (original k, v)
 
 data HttpParseException = HttpParseException String
         deriving (Typeable, Show)

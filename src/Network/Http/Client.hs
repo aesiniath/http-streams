@@ -122,6 +122,7 @@ module Network.Http.Client (
     Response,
     Headers,
     getHostname,
+    getRequestHeaders,
     sendRequest,
     emptyBody,
     fileBody,
