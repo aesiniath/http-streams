@@ -63,6 +63,7 @@ import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
 import System.IO.Unsafe (unsafePerformIO)
+import System.Directory (doesFileExist)
 
 import Network.Http.Connection
 import Network.Http.RequestBuilder
@@ -225,11 +226,18 @@ baselineContextSSL = do
 #elif defined __WINDOWS__
     SSL.contextSetVerificationMode ctx SSL.VerifyNone
 #else
-    SSL.contextSetCADirectory ctx "/etc/ssl/certs"
-    SSL.contextSetVerificationMode ctx $
-        SSL.VerifyPeer True True Nothing
+    fedora <- doesFileExist bundle
+    if fedora
+        then do
+            SSL.contextSetCAFile ctx bundle
+        else do
+            SSL.contextSetCADirectory ctx "/etc/ssl/certs"
+            SSL.contextSetVerificationMode ctx $
+                SSL.VerifyPeer True True Nothing
 #endif
     return ctx
+  where
+    bundle = "/etc/pki/tls/certs/ca-bundle.crt"
 
 
 parseURL :: URL -> URI
