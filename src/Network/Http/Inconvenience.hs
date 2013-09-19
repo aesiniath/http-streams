@@ -34,6 +34,8 @@ module Network.Http.Inconvenience (
     HttpClientError(..)
 ) where
 
+#include "config.h"
+
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       fromWord8, toByteString)
@@ -68,7 +70,9 @@ import Network.Http.Connection
 import Network.Http.RequestBuilder
 import Network.Http.Types
 
-#include "config.h"
+#if defined __LINUX__
+import System.Directory (doesDirectoryExist)
+#endif
 
 type URL = ByteString
 
@@ -225,9 +229,13 @@ baselineContextSSL = do
 #elif defined __WINDOWS__
     SSL.contextSetVerificationMode ctx SSL.VerifyNone
 #else
-    SSL.contextSetCADirectory ctx "/etc/ssl/certs"
-    SSL.contextSetVerificationMode ctx $
-        SSL.VerifyPeer True True Nothing
+    fedora <- doesDirectoryExist "/etc/pki/tls"
+    if fedora
+        then do
+            SSL.contextSetCAFile ctx "/etc/pki/tls/certs/ca-bundle.crt"
+        else do
+            SSL.contextSetCADirectory ctx "/etc/ssl/certs"
+    SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
 #endif
     return ctx
 
