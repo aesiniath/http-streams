@@ -38,7 +38,7 @@ import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString,
                                                       toByteString)
 import qualified Blaze.ByteString.Builder.HTTP as Builder (chunkedTransferEncoding, chunkedTransferTerminator)
-import Control.Exception (bracket)
+import Control.Exception (bracket, bracketOnError, onException)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.Monoid (mappend, mempty)
@@ -165,19 +165,18 @@ openConnection h1' p = do
     is <- getAddrInfo (Just hints) (Just h1) (Just $ show p)
     let addr = head is
     let a = addrAddress addr
-    s <- socket (addrFamily addr) Stream defaultProtocol
+    bracketOnError (socket (addrFamily addr) Stream defaultProtocol) close $ \s -> do
+        connect s a
 
-    connect s a
-    (i,o1) <- Streams.socketToStreams s
+        (i, o1) <- Streams.socketToStreams s
+        o2      <- Streams.builderStream o1
 
-    o2 <- Streams.builderStream o1
-
-    return Connection {
-        cHost  = h2',
-        cClose = close s,
-        cOut   = o2,
-        cIn    = i
-    }
+        return Connection {
+            cHost  = h2',
+            cClose = close s,
+            cOut   = o2,
+            cIn    = i
+        }
   where
     hints = defaultHints {addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]}
     h2' = if p == 80
@@ -223,21 +222,20 @@ openConnectionSSL ctx h1' p = do
         f = addrFamily $ head is
     s <- socket f Stream defaultProtocol
 
-    connect s a
+    connect s a `onException` (close s)
 
-    ssl <- SSL.connection ctx s
-    SSL.connect ssl
+    bracketOnError (SSL.connection ctx s) (closeSSL s) $ \ssl -> do
+        SSL.connect ssl
 
-    (i,o1) <- Streams.sslToStreams ssl
+        (i, o1) <- Streams.sslToStreams ssl
+        o2      <- Streams.builderStream o1
 
-    o2 <- Streams.builderStream o1
-
-    return Connection {
-        cHost  = h2',
-        cClose = closeSSL s ssl,
-        cOut   = o2,
-        cIn    = i
-    }
+        return Connection {
+            cHost  = h2',
+            cClose = closeSSL s ssl,
+            cOut   = o2,
+            cIn    = i
+        }
   where
     h2' :: ByteString
     h2' = if p == 443
