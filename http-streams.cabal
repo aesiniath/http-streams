@@ -103,7 +103,7 @@ test-suite           check
                      aeson
 
   hs-source-dirs:    src,tests
-  main-is:           Check.hs
+  main-is:           check.hs
 
   ghc-options:       -O2
                      -threaded

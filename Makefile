@@ -1,6 +1,49 @@
-all: build-junk
+all: snippet
 
-BUILDDIR = /tmp/build/http-streams
+#
+# The name of the binary(ies) you want to build if `make` is invoked without an
+# explicit target - which is so important it gets to go on the first line. On
+# to business: the purpose of this Makefile is to let you build Haskell
+# programs with a minimum of fuss. You should be able to type
+#
+# $ make
+#
+# and have ./stormy be built; this will happen if and only if there is a
+# Haskell source file with a lower-cased named and a main in it by that name in
+# src/. This also works with lower-cased source files in tests/:
+#
+# $ make check
+#
+# will build ./check from tests/check.hs.
+#
+# As wired, src/ binaries are built tight and tests/ binaries are built with
+# profiling enabled.
+#
+
+#
+# GHC makes a lot of temporary files. Where to put them?
+#
+
+BUILDDIR=/tmp/build/http-streams
+
+#
+# Haskell compiler and build options. As specified here we always build with
+# the full threaded runtime and GHC profiling enabled, 'cause, you need those
+# things.
+#
+
+GHC=ghc \
+	-rtsopts \
+	-O2 \
+	-threaded \
+	-Wall \
+	-fwarn-tabs \
+	-fno-warn-missing-signatures \
+	-fno-warn-unused-binds
+
+#
+# The rest is all machinery. Here we do the V=1 trick to set verbosity.
+#
 
 ifdef V
 MAKEFLAGS=-R
@@ -9,95 +52,32 @@ MAKEFLAGS=-s -R
 REDIRECT=>/dev/null
 endif
 
-.PHONY: all dirs test build-core junk build-junk tests build-tests benchmarks \
-	build-benchmarks build-tags config
+.PHONY: all test tests config
 
 #
-# Disable missing signatures so that you can actually do development and
-# let type-inference get on with things without Haskell bothering you.
-# Likewise ignore unused functions since they're usually there while exploring
-# various alternative implementations of a function.
+# Source files, main and testing
 #
-
-GHC=ghc \
-	-rtsopts \
-	-Wall \
-	-fwarn-tabs \
-	-fno-warn-missing-signatures \
-	-fno-warn-unused-binds
 
 CORE_SOURCES=$(shell find src -name '*.hs' -type f)
 TEST_SOURCES=$(shell find tests -name '*.hs' -type f)
 
 
-dirs: $(BUILDDIR)/.dir
+%: $(BUILDDIR)/%.bin
+	@/bin/echo -e "CP\t$@"
+	cp $< $@
 
-$(BUILDDIR)/.dir:
-	@/bin/echo -e "MKDIR\t$(BUILDDIR)"
-	mkdir -p $(BUILDDIR)
-	@/bin/echo -e "MKDIR\t$(BUILDDIR)/core"
-	mkdir $(BUILDDIR)/core
-	@/bin/echo -e "MKDIR\t$(BUILDDIR)/tests"
-	mkdir $(BUILDDIR)/tests
-	@/bin/echo -e "MKDIR\t$(BUILDDIR)/junk"
-	mkdir $(BUILDDIR)/junk
-	@/bin/echo -e "MKDIR\t$(BUILDDIR)/bench"
-	mkdir $(BUILDDIR)/bench
-	touch $(BUILDDIR)/.dir
-
-
-config: config.h
-config.h: Setup.hs http-streams.cabal
-	@/bin/echo -e "CABAL\tconfigure"
-	cabal configure --enable-tests
-
-
-#
-# Build core library.
-#
-
-build-core: dirs config $(BUILDDIR)/core/httpclient.bin httpclient
-
-$(BUILDDIR)/core/httpclient.bin: $(CORE_SOURCES)
+$(BUILDDIR)/%.bin: config.h src/%.hs $(CORE_SOURCES)
+	@if [ ! -d $(BUILDDIR) ] ; then /bin/echo -e "MKDIR\t$(BUILDDIR)" ; mkdir -p $(BUILDDIR) ; fi
 	@/bin/echo -e "GHC\t$@"
-	$(GHC) --make -O2 -threaded  \
-		-prof -fprof-auto \
-		-outputdir $(BUILDDIR)/core \
+	$(GHC) --make \
+		-outputdir $(BUILDDIR)/$* \
 		-i"$(BUILDDIR):src" \
 		-I"." \
 		-o $@ \
-		src/HttpClient.hs
+		src/$*.hs
 	@/bin/echo -e "STRIP\t$@"
-	strip $@
+	strip -s $@
 
-httpclient:
-	@/bin/echo -e "LN -s\t$@"
-	ln -s $(BUILDDIR)/core/client.bin $@
-
-junk: build-junk
-build-junk: dirs config tests/Snippet.hs $(BUILDDIR)/junk/snippet.bin snippet tags
-
-tests/Snippet.hs:
-	@/bin/echo -e "Make a symlink from Snippet.hs -> whichever code you wish to run"
-	@false
-
-$(BUILDDIR)/junk/snippet.bin: $(CORE_SOURCES) $(TEST_SOURCES)
-	@/bin/echo -e "GHC\t$@"
-	$(GHC) --make -O2 -threaded  \
-		-prof -fprof-auto-top \
-		-outputdir $(BUILDDIR)/junk \
-		-i"$(BUILDDIR):src:tests" \
-		-I"." \
-		-o $@ \
-		-Wwarn \
-		-main-is Snippet.main \
-		tests/Snippet.hs
-	@/bin/echo -e "STRIP\t$@"
-	strip $@
-
-snippet:
-	@/bin/echo -e "LN -s\t$@"
-	ln -s $(BUILDDIR)/junk/snippet.bin $@
 
 tags: $(CORE_SOURCES) $(TEST_SOURCES)
 	@/bin/echo -e "CTAGS\ttags"
@@ -107,23 +87,20 @@ tags: $(CORE_SOURCES) $(TEST_SOURCES)
 # Build test suite code
 #
 
-tests: build-tests
-build-tests: dirs config $(BUILDDIR)/tests/check.bin check tags
+tests: config check
 
-$(BUILDDIR)/tests/check.bin: $(CORE_SOURCES) $(TEST_SOURCES)
+$(BUILDDIR)/%.bin: tests/%.hs $(CORE_SOURCES) $(TEST_SOURCES)
+	@if [ ! -d $(BUILDDIR) ] ; then /bin/echo -e "MKDIR\t$(BUILDDIR)" ; mkdir -p $(BUILDDIR) ; fi
 	@/bin/echo -e "GHC\t$@"
-	$(GHC) --make -O2 -threaded  \
+	$(GHC) --make \
+		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/tests \
 		-i"$(BUILDDIR):src:tests" \
 		-I"." \
 		-o $@ \
-		tests/Check.hs
+		tests/$*.hs
 	@/bin/echo -e "STRIP\t$@"
-	strip $@
-
-check:
-	@/bin/echo -e "LN -s\t$@"
-	ln -s $(BUILDDIR)/tests/check.bin $@
+	strip -s $@
 
 #
 # Run tests directly. If using inotify, invoke instead as follows:
@@ -131,59 +108,47 @@ check:
 # $ inotifymake tests -- ./check
 #
 
-test: build-tests
+test: config check
 	@/bin/echo -e "EXEC\tcheck"
-	$(BUILDDIR)/tests/check.bin
-
-#
-# Benchmarking code
-#
-
-benchmarks: build-benchmarks
-build-benchmarks: dirs config tests/Benchmark.hs $(BUILDDIR)/bench/bench.bin bench tags
-
-tests/Benchmark.hs:
-	@/bin/echo -e "Make a symlink from Benchmark.hs -> whichever code you wish to run"
-	@false
-
-$(BUILDDIR)/bench/bench.bin: $(CORE_SOURCES) $(TEST_SOURCES)
-	@/bin/echo -e "GHC\t$@"
-	$(GHC) --make -O2 -threaded  \
-		-outputdir $(BUILDDIR)/bench \
-		-i"$(BUILDDIR):src:tests" \
-		-I"." \
-		-o $@ \
-		tests/Benchmark.hs
-	@/bin/echo -e "STRIP\t$@"
-	strip $@
-
-bench:
-	@/bin/echo -e "LN -s\t$@"
-	ln -s $(BUILDDIR)/bench/bench.bin $@
-
-benchmark: build-benchmarks
-	@/bin/echo -e "EXEC\tbench"
-	$(BUILDDIR)/bench/bench.bin -g -o report.html -s 1000
+	./check
 
 #
 # Cleanup, etc
 #
 
 clean: 
-	@/bin/echo -e "RM\tbuild artifacts"
-	-rm -f *.hi *.o snippet check benchmark
+	@/bin/echo -e "RM\ttempory files"
+	-rm -f *.hi *.o
 	-rm -f *.prof
 	-rm -rf $(BUILDDIR)
 	-rm -rf dist/
+	@/bin/echo -e "RM\texecutables"
+	-ls src tests | grep ^[[:lower:]]*.hs | xargs basename -s .hs -a | xargs rm -f
 	@if [ -f tags ] ; then /bin/echo -e "RM\ttags" ; rm tags ; fi
-	@if [ -f config.h ] ; then /bin/echo -e "RM\tconfig.h" ; rm config.h ; fi
+	-rm -f config.h
 
-doc: config tags
-	@/bin/echo -e "CABAL\thaddock"
-	cabal haddock
 
 format: $(CORE_SOURCES) $(TEST_SOURCES)
 	stylish-haskell -i $^
 
-dist: config
+#
+# Specific to building http-streams
+#
+
+config: config.h
+
+config.h: Setup.hs http-streams.cabal
+	@/bin/echo -e "CABAL\tconfigure"
+	cabal configure --enable-tests
+
+doc: config.h $(CORE_SOURCES)
+	@/bin/echo -e "CABAL\thaddock"
+	cabal haddock
+
+dist: config.h
 	cabal sdist
+
+tests/snippet.hs:
+	@/bin/echo -e "Make a symlink from snippet.hs -> whichever code you wish to run"
+	@false
+

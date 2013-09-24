@@ -11,7 +11,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS -fno-warn-unused-imports #-}
 
-module Snippet where
+module Main where
 
 import Control.Exception (bracket)
 import Network.Http.Client
