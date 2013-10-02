@@ -14,8 +14,6 @@
 {-# LANGUAGE OverloadedStrings  #-}
 
 module Network.Http.Connection (
-    Hostname,
-    Port,
     Connection(..),
         -- constructors only for testing
     makeConnection,
@@ -43,7 +41,6 @@ import Control.Exception (bracket)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.Monoid (mappend, mempty)
-import Data.Word (Word16)
 import Network.Socket
 import OpenSSL.Session (SSL, SSLContext)
 import qualified OpenSSL.Session as SSL
@@ -54,16 +51,7 @@ import qualified System.IO.Streams.SSL as Streams hiding (connect)
 import Network.Http.ResponseParser
 import Network.Http.Types
 
-{-
-    This is a String because that's what the uri package works in. There
-    was a fairly detailed disucssion on haskell-cafe about this, with
-    the conclusion that URLs are composed of characters, not octets.
--}
-
-type Hostname = ByteString
-
-type Port = Word16
-
+--
 -- | A connection to a web server.
 --
 data Connection
