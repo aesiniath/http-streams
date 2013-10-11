@@ -30,6 +30,7 @@ library
   default-language:  Haskell2010
 
   build-depends:     attoparsec,
+                     http-common,
                      base >= 4 && <5,
                      directory,
                      base64-bytestring,
@@ -75,6 +76,7 @@ test-suite           check
   default-language:  Haskell2010
 
   build-depends:
+                     http-common,
                      HUnit,
                      HsOpenSSL,
                      MonadCatchIO-transformers,
