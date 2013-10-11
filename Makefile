@@ -66,7 +66,7 @@ TEST_SOURCES=$(shell find tests -name '*.hs' -type f)
 	@/bin/echo -e "CP\t$@"
 	cp $< $@
 
-$(BUILDDIR)/%.bin: config.h src/%.hs $(CORE_SOURCES)
+$(BUILDDIR)/%.bin: config.h src/%.hs $(CORE_SOURCES) tags
 	@if [ ! -d $(BUILDDIR) ] ; then /bin/echo -e "MKDIR\t$(BUILDDIR)" ; mkdir -p $(BUILDDIR) ; fi
 	@/bin/echo -e "GHC\t$@"
 	$(GHC) --make \
@@ -89,7 +89,7 @@ tags: $(CORE_SOURCES) $(TEST_SOURCES)
 
 tests: config check
 
-$(BUILDDIR)/%.bin: tests/%.hs $(CORE_SOURCES) $(TEST_SOURCES)
+$(BUILDDIR)/%.bin: config.h tests/%.hs $(CORE_SOURCES) $(TEST_SOURCES)
 	@if [ ! -d $(BUILDDIR) ] ; then /bin/echo -e "MKDIR\t$(BUILDDIR)" ; mkdir -p $(BUILDDIR) ; fi
 	@/bin/echo -e "GHC\t$@"
 	$(GHC) --make \
