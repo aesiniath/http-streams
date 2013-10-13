@@ -89,7 +89,7 @@ tags: $(CORE_SOURCES) $(TEST_SOURCES)
 
 tests: config check
 
-$(BUILDDIR)/%.bin: tests/%.hs $(CORE_SOURCES) $(TEST_SOURCES)
+$(BUILDDIR)/%.bin: config.h tests/%.hs $(CORE_SOURCES) $(TEST_SOURCES)
 	@if [ ! -d $(BUILDDIR) ] ; then /bin/echo -e "MKDIR\t$(BUILDDIR)" ; mkdir -p $(BUILDDIR) ; fi
 	@/bin/echo -e "GHC\t$@"
 	$(GHC) --make \

@@ -49,9 +49,7 @@ library
 
   hs-source-dirs:    src
   exposed-modules:   Network.Http.Client
-  other-modules:     Network.Http.Types,
-                     Network.Http.Connection,
-                     Network.Http.RequestBuilder,
+  other-modules:     Network.Http.Connection,
                      Network.Http.ResponseParser,
                      Network.Http.Utilities,
                      Network.Http.Inconvenience
