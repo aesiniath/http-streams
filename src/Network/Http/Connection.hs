@@ -23,6 +23,7 @@ module Network.Http.Connection (
     closeConnection,
     getHostname,
     getRequestHeaders,
+    getHeadersFull,
     sendRequest,
     receiveResponse,
     receiveResponseRaw,
@@ -345,18 +346,25 @@ getHostname c q =
         Nothing -> cHost c
 
 
---
--- | Get the headers that will be sent with this request as an association
--- list. You likely won't need this but there are some corner cases where
--- people need to make calculations based on all the headers before they
--- go out over the wire.
---
+{-# DEPRECATED getRequestHeaders "use retreiveHeaders . getHeadersFull instead" #-}
 getRequestHeaders :: Connection -> Request -> [(ByteString, ByteString)]
 getRequestHeaders c q =
     ("Host", getHostname c q) : kvs
   where
     h = qHeaders q
     kvs = retreiveHeaders h
+
+--
+-- | Get the headers that will be sent with this request. You likely won't
+-- need this but there are some corner cases where people need to make
+-- calculations based on all the headers before they go out over the wire.
+--
+-- If you'd like this as an association list, use retreiveHeaders as follows:
+--
+-- > let kvs = (retreiveHeaders . getHeadersFull) c q
+--
+getHeadersFull :: Connection -> Request -> Headers
+getHeadersFull _ _ = undefined
 
 --
 -- | Handle the response coming back from the server. This function

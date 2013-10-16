@@ -121,8 +121,9 @@ module Network.Http.Client (
     Request,
     Response,
     Headers,
+    getHeaders,
+    getHeadersFull,
     getHostname,
-    getRequestHeaders,
     sendRequest,
     emptyBody,
     fileBody,
@@ -168,10 +169,13 @@ module Network.Http.Client (
     establishConnection,
 
     -- * Testing support
-    makeConnection
+    makeConnection,
+
+    -- * Deprecated
+    getRequestHeaders
 ) where
+
+import Network.Http.Types
 
 import Network.Http.Connection
 import Network.Http.Inconvenience
-import Network.Http.RequestBuilder
-import Network.Http.Types
