@@ -152,3 +152,5 @@ tests/snippet.hs:
 	@/bin/echo -e "Make a symlink from snippet.hs -> whichever code you wish to run"
 	@false
 
+install: config.h all
+	cabal install
