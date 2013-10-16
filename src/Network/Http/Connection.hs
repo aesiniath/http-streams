@@ -359,12 +359,23 @@ getRequestHeaders c q =
 -- need this but there are some corner cases where people need to make
 -- calculations based on all the headers before they go out over the wire.
 --
--- If you'd like this as an association list, use retreiveHeaders as follows:
+-- If you'd like the request headers as an association list, import the header
+-- functions:
 --
--- > let kvs = (retreiveHeaders . getHeadersFull) c q
+-- > import Network.Http.Types
+--
+-- then use 'Network.Http.Types.retreiveHeaders' as follows:
+--
+-- >>> let kvs = retreiveHeaders $ getHeadersFull c q
+-- >>> :t kvs
+-- :: [(ByteString, ByteString)]
 --
 getHeadersFull :: Connection -> Request -> Headers
-getHeadersFull _ _ = undefined
+getHeadersFull c q =
+    h'
+  where
+    h  = qHeaders q
+    h' = updateHeader h "Host" (getHostname c q)
 
 --
 -- | Handle the response coming back from the server. This function
