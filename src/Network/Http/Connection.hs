@@ -48,8 +48,8 @@ import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.SSL as Streams hiding (connect)
 
+import Network.Http.Internal
 import Network.Http.ResponseParser
-import Network.Http.Types
 
 --
 -- | A connection to a web server.
