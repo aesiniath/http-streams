@@ -120,9 +120,6 @@ module Network.Http.Client (
     -- * Sending HTTP request
     Request,
     Response,
-    Headers,
-    getHeaders,
-    getHeadersFull,
     getHostname,
     sendRequest,
     emptyBody,
@@ -170,6 +167,9 @@ module Network.Http.Client (
 
     -- * Testing support
     makeConnection,
+    Headers,
+    getHeaders,
+    getHeadersFull,
 
     -- * Deprecated
     getRequestHeaders
