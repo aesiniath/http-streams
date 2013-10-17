@@ -14,8 +14,6 @@
 {-# LANGUAGE OverloadedStrings  #-}
 
 module Network.Http.Connection (
-    Hostname,
-    Port,
     Connection(..),
         -- constructors only for testing
     makeConnection,
@@ -25,6 +23,7 @@ module Network.Http.Connection (
     closeConnection,
     getHostname,
     getRequestHeaders,
+    getHeadersFull,
     sendRequest,
     receiveResponse,
     receiveResponseRaw,
@@ -43,7 +42,6 @@ import Control.Exception (bracket)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.Monoid (mappend, mempty)
-import Data.Word (Word16)
 import Network.Socket
 import OpenSSL.Session (SSL, SSLContext)
 import qualified OpenSSL.Session as SSL
@@ -51,19 +49,10 @@ import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.SSL as Streams hiding (connect)
 
+import Network.Http.Internal
 import Network.Http.ResponseParser
-import Network.Http.Types
 
-{-
-    This is a String because that's what the uri package works in. There
-    was a fairly detailed disucssion on haskell-cafe about this, with
-    the conclusion that URLs are composed of characters, not octets.
--}
-
-type Hostname = ByteString
-
-type Port = Word16
-
+--
 -- | A connection to a web server.
 --
 data Connection
@@ -357,18 +346,36 @@ getHostname c q =
         Nothing -> cHost c
 
 
---
--- | Get the headers that will be sent with this request as an association
--- list. You likely won't need this but there are some corner cases where
--- people need to make calculations based on all the headers before they
--- go out over the wire.
---
+{-# DEPRECATED getRequestHeaders "use retreiveHeaders . getHeadersFull instead" #-}
 getRequestHeaders :: Connection -> Request -> [(ByteString, ByteString)]
 getRequestHeaders c q =
     ("Host", getHostname c q) : kvs
   where
     h = qHeaders q
     kvs = retreiveHeaders h
+
+--
+-- | Get the headers that will be sent with this request. You likely won't
+-- need this but there are some corner cases where people need to make
+-- calculations based on all the headers before they go out over the wire.
+--
+-- If you'd like the request headers as an association list, import the header
+-- functions:
+--
+-- > import Network.Http.Types
+--
+-- then use 'Network.Http.Types.retreiveHeaders' as follows:
+--
+-- >>> let kvs = retreiveHeaders $ getHeadersFull c q
+-- >>> :t kvs
+-- :: [(ByteString, ByteString)]
+--
+getHeadersFull :: Connection -> Request -> Headers
+getHeadersFull c q =
+    h'
+  where
+    h  = qHeaders q
+    h' = updateHeader h "Host" (getHostname c q)
 
 --
 -- | Handle the response coming back from the server. This function

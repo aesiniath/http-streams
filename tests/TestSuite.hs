@@ -66,7 +66,7 @@ import Network.Http.Connection (Connection (..))
 import Network.Http.Inconvenience (HttpClientError (..),
                                    TooManyRedirects (..))
 import Network.Http.ResponseParser (readDecimal, readResponseHeader)
-import Network.Http.Types (Request (..), Response (..), composeRequestBytes,
+import Network.Http.Internal (Request (..), Response (..), composeRequestBytes,
                            lookupHeader)
 
 

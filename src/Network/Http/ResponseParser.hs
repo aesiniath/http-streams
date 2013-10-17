@@ -45,7 +45,7 @@ import System.IO.Streams (Generator, InputStream)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
 
-import Network.Http.Types
+import Network.Http.Internal
 import Network.Http.Utilities
 
 {-

@@ -49,7 +49,7 @@ ifdef V
 MAKEFLAGS=-R
 else
 MAKEFLAGS=-s -R
-REDIRECT=>/dev/null
+REDIRECT=2>/dev/null
 endif
 
 .PHONY: all test tests config
@@ -81,7 +81,7 @@ $(BUILDDIR)/%.bin: config.h src/%.hs $(CORE_SOURCES) tags
 
 tags: $(CORE_SOURCES) $(TEST_SOURCES)
 	@/bin/echo -e "CTAGS\ttags"
-	hothasktags $^ > tags
+	@hothasktags $^ > tags $(REDIRECT)
 
 #
 # Build test suite code
@@ -89,7 +89,7 @@ tags: $(CORE_SOURCES) $(TEST_SOURCES)
 
 tests: config check
 
-$(BUILDDIR)/%.bin: config.h tests/%.hs $(CORE_SOURCES) $(TEST_SOURCES)
+$(BUILDDIR)/%.bin: config.h tests/%.hs $(CORE_SOURCES) $(TEST_SOURCES) tags
 	@if [ ! -d $(BUILDDIR) ] ; then /bin/echo -e "MKDIR\t$(BUILDDIR)" ; mkdir -p $(BUILDDIR) ; fi
 	@/bin/echo -e "GHC\t$@"
 	$(GHC) --make \
@@ -141,7 +141,7 @@ config.h: Setup.hs http-streams.cabal
 	@/bin/echo -e "CABAL\tconfigure"
 	cabal configure --enable-tests
 
-doc: config.h $(CORE_SOURCES)
+doc: config.h $(CORE_SOURCES) all
 	@/bin/echo -e "CABAL\thaddock"
 	cabal haddock
 
@@ -152,3 +152,5 @@ tests/snippet.hs:
 	@/bin/echo -e "Make a symlink from snippet.hs -> whichever code you wish to run"
 	@false
 
+install: config.h all
+	cabal install --force-reinstalls
