@@ -346,13 +346,13 @@ getHostname c q =
         Nothing -> cHost c
 
 
-{-# DEPRECATED getRequestHeaders "use retreiveHeaders . getHeadersFull instead" #-}
+{-# DEPRECATED getRequestHeaders "use retrieveHeaders . getHeadersFull instead" #-}
 getRequestHeaders :: Connection -> Request -> [(ByteString, ByteString)]
 getRequestHeaders c q =
     ("Host", getHostname c q) : kvs
   where
     h = qHeaders q
-    kvs = retreiveHeaders h
+    kvs = retrieveHeaders h
 
 --
 -- | Get the headers that will be sent with this request. You likely won't
