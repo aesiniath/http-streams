@@ -351,16 +351,6 @@ wrapRedirect u n handler p i = do
                                                                     , uriQuery = uriQuery u''
                                                                     , uriFragment = uriFragment u''
                                                                     } ""
-    {--
-    if isAbsoluteURI lm
-            then lm
-            else URI { uriScheme = uriScheme u
-                     , uriAuthority = uriAuthority u
-                     , uriPath = uriPath $ fromJust $ parseRelativeReference lm
-                     , uriQuery = uriQuery $ fromJust $ parseRelativeReference lm
-                     , uriFragment = uriFragment $ fromJust $ parseRelativeReference lm
-                     }
-                     --}
     !n' = if n < 5
             then n + 1
             else throw $! TooManyRedirects n
