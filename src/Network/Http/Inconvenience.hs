@@ -31,7 +31,8 @@ module Network.Http.Inconvenience (
 
     -- for testing
     TooManyRedirects(..),
-    HttpClientError(..)
+    HttpClientError(..),
+    splitURI
 ) where
 
 #include "config.h"
@@ -58,7 +59,7 @@ import Data.Typeable (Typeable)
 import Data.Word (Word16)
 import GHC.Exts
 import GHC.Word (Word8 (..))
-import Network.URI (URI (..), URIAuth (..), parseURI)
+import Network.URI (URI (..), URIAuth (..), uriToString, parseURI, parseRelativeReference, isAbsoluteURI)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream)
@@ -73,6 +74,7 @@ import Network.Http.Types
 #if defined __LINUX__
 import System.Directory (doesDirectoryExist)
 #endif
+
 
 type URL = ByteString
 
@@ -310,7 +312,7 @@ getN n r' handler = do
 
         sendRequest c q emptyBody
 
-        receiveResponse c (wrapRedirect n handler)
+        receiveResponse c (wrapRedirect u n handler)
 
 
 {-
@@ -322,15 +324,16 @@ getN n r' handler = do
 -}
 
 wrapRedirect
-    :: Int
+    :: URI
+    -> Int
     -> (Response -> InputStream ByteString -> IO β)
     -> Response
     -> InputStream ByteString
     -> IO β
-wrapRedirect n handler p i = do
+wrapRedirect u n handler p i = do
     if (s == 301 || s == 302 || s == 303 || s == 307)
         then case lm of
-                Just l  -> getN n' l handler
+                Just l  -> getN n' (splitURI u l) handler
                 Nothing -> handler p i
         else handler p i
   where
@@ -339,6 +342,16 @@ wrapRedirect n handler p i = do
     !n' = if n < 5
             then n + 1
             else throw $! TooManyRedirects n
+
+splitURI :: URI -> URL -> URL
+splitURI old new | (isAbsoluteURI . S.unpack) new = new
+                 | otherwise = let rel = (parseRelativeReference . S.unpack) new
+                               in case rel of
+                                       Nothing -> new
+                                       Just x -> S.pack $ uriToString id old { uriPath = uriPath x
+                                                                            , uriQuery = uriQuery x
+                                                                            , uriFragment = uriFragment x
+                                                                            } ""
 
 data TooManyRedirects = TooManyRedirects Int
         deriving (Typeable, Show, Eq)
