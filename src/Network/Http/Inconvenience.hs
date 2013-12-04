@@ -31,7 +31,8 @@ module Network.Http.Inconvenience (
 
     -- for testing
     TooManyRedirects(..),
-    HttpClientError(..)
+    HttpClientError(..),
+    splitURI
 ) where
 
 #include "config.h"
@@ -332,28 +333,25 @@ wrapRedirect
 wrapRedirect u n handler p i = do
     if (s == 301 || s == 302 || s == 303 || s == 307)
         then case lm of
-                Just l  -> getN n' (ur u l) handler
+                Just l  -> getN n' (splitURI u l) handler
                 Nothing -> handler p i
         else handler p i
   where
     s  = getStatusCode p
-    lm :: Maybe ByteString
     lm = getHeader p "Location"
-    ur :: URI -> ByteString -> ByteString
-    ur u' s' = if (isAbsoluteURI $ S.unpack s')
-                  then s'
-                  else splitURI u' s'
-    splitURI :: URI -> ByteString -> ByteString
-    splitURI u' s' = let rel = parseRelativeReference $ S.unpack s'
-                     in  case rel of 
-                              Nothing -> s'
-                              Just u'' -> S.pack $ uriToString id u' { uriPath = uriPath u''
-                                                                    , uriQuery = uriQuery u''
-                                                                    , uriFragment = uriFragment u''
-                                                                    } ""
     !n' = if n < 5
             then n + 1
             else throw $! TooManyRedirects n
+
+splitURI :: URI -> URL -> URL
+splitURI old new | (isAbsoluteURI . S.unpack) new = new
+                 | otherwise = let rel = (parseRelativeReference . S.unpack) new
+                               in case rel of
+                                       Nothing -> new
+                                       Just x -> S.pack $ uriToString id old { uriPath = uriPath x
+                                                                            , uriQuery = uriQuery x
+                                                                            , uriFragment = uriFragment x
+                                                                            } ""
 
 data TooManyRedirects = TooManyRedirects Int
         deriving (Typeable, Show, Eq)

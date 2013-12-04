@@ -64,6 +64,7 @@ import MockServer (localPort)
 import Network.Http.Client
 import Network.Http.Connection (Connection (..))
 import Network.Http.Inconvenience (HttpClientError (..),
+                                   splitURI,
                                    TooManyRedirects (..))
 import Network.Http.ResponseParser (readDecimal, readResponseHeader)
 import Network.Http.Internal (Request (..), Response (..), composeRequestBytes,
@@ -103,6 +104,8 @@ suite = do
         testPostChunks
         testPostWithForm
         testGetRedirects
+        testSplitURI
+        testGetLocalRedirects
         testGetFormatsRequest
         testExcessiveRedirects
         testGeneralHandler
@@ -537,6 +540,41 @@ testGetRedirects =
 
             len <- getCount
             assertEqual "Incorrect number of bytes read" 29 len
+
+testGetLocalRedirects =
+    it "GET internal handler follows local redirect on 307" $ do
+        let url = S.concat ["http://", localhost, "/local"]
+
+        get url handler
+      where
+        handler :: Response -> InputStream ByteString -> IO ()
+        handler p i1 = do
+            let code = getStatusCode p
+            assertEqual "Should have been final code" 200 code
+
+            (i2, getCount) <- Streams.countInput i1
+            Streams.skipToEof i2
+
+            len <- getCount
+            assertEqual "Incorrect number of bytes read" 29 len
+
+testSplitURI = 
+    it "check splitURI for local redirects" $ do
+        let absoluteURL = "http://asdf@ya.ru:8000/hello/?asd=asd&abc=2"
+            relativeURL =                S.pack "/hello/?asd=asd&abc=2"
+        assertEqual "Incorrect split uri 1" (S.pack absoluteURL) (splitURI (fromJust $ parseURI absoluteURL) relativeURL) 
+        let absoluteURL = "http://asdf@ya.ru:8000/again/?asd=asd&abc=2"
+            relativeURL =                S.pack "/again/?asd=asd&abc=2"
+        assertEqual "Incorrect split uri 2" (S.pack absoluteURL) (splitURI (fromJust $ parseURI absoluteURL) relativeURL) 
+        let absoluteURL = "http://ya.ru:8000/here/?asd=asd&abc=2"
+            relativeURL =           S.pack "/here/?asd=asd&abc=2"
+        assertEqual "Incorrect split uri 3" (S.pack absoluteURL) (splitURI (fromJust $ parseURI absoluteURL) relativeURL) 
+        let absoluteURL = "http://ya.ru/?asd=asd&abc=2#papa"
+            relativeURL =      S.pack "/?asd=asd&abc=2#papa"
+        assertEqual "Incorrect split uri 4" (S.pack absoluteURL) (splitURI (fromJust $ parseURI absoluteURL) relativeURL) 
+        let absoluteURL = "http://ya.ru/?asd=asd&abc=2#papa"
+            notRelativeURL = S.pack "http://google.ru/"
+        assertEqual "Incorrect split uri 5" relativeURL (splitURI (fromJust $ parseURI absoluteURL) relativeURL) 
 
 testGetFormatsRequest =
     it "GET includes a properly formatted request path" $ do

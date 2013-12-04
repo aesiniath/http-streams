@@ -82,6 +82,7 @@ routeRequests =
              ("time", serveTime),
              ("", ifTop handleAsText),
              ("bounce", serveRedirect),
+             ("local", serveLocalRedirect),
              ("loop", serveRedirectEndlessly),
              ("empty", serveWithoutContent),
              ("postbox", method POST handlePostMethod),
@@ -168,6 +169,13 @@ serveRedirect = do
   where
     r' = S.concat ["http://", localHost, ":", S.pack $ show $ localPort, "/time"]
 
+serveLocalRedirect :: Snap ()
+serveLocalRedirect = do
+    modifyResponse $ setResponseStatus 307 "Temporary Redirect"
+    modifyResponse $ setHeader "Cache-Control" "no-cache"
+    modifyResponse $ setHeader "Location" r'
+  where
+    r' = S.pack "/time"
 
 serveRedirectEndlessly :: Snap ()
 serveRedirectEndlessly = do
