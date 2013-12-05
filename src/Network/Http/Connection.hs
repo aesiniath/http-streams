@@ -38,7 +38,7 @@ import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (flush, fromByteString,
                                                       toByteString)
 import qualified Blaze.ByteString.Builder.HTTP as Builder (chunkedTransferEncoding, chunkedTransferTerminator)
-import Control.Exception (bracket, bracketOnError, onException)
+import Control.Exception (bracket, bracketOnError, onException, finally)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.Monoid (mappend, mempty)
@@ -244,9 +244,7 @@ openConnectionSSL ctx h1' p = do
     h1  = S.unpack h1'
 
 closeSSL :: Socket -> SSL -> IO ()
-closeSSL s ssl = do
-    SSL.shutdown ssl SSL.Unidirectional
-    close s
+closeSSL s ssl = SSL.shutdown ssl SSL.Unidirectional `finally` close s
 
 --
 -- | Having composed a 'Request' object with the headers and metadata for
