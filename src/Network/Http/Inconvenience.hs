@@ -344,15 +344,27 @@ wrapRedirect u n handler p i = do
             then n + 1
             else throw $! TooManyRedirects n
 
+
 splitURI :: URI -> URL -> URL
-splitURI old new | (isAbsoluteURI . S.unpack) new = new
-                 | otherwise = let rel = (parseRelativeReference . S.unpack) new
-                               in case rel of
-                                       Nothing -> new
-                                       Just x -> S.pack $ uriToString id old { uriPath = uriPath x
-                                                                            , uriQuery = uriQuery x
-                                                                            , uriFragment = uriFragment x
-                                                                            } ""
+splitURI old new' =
+  let
+    new = S.unpack new'
+  in
+    if isAbsoluteURI new
+       then
+            new'
+       else
+         let
+            rel = parseRelativeReference new
+         in
+            case rel of
+                Nothing -> new'
+                Just x  -> S.pack $ uriToString id old {
+                                                    uriPath = uriPath x,
+                                                    uriQuery = uriQuery x,
+                                                    uriFragment = uriFragment x
+                                                   } ""
+
 
 data TooManyRedirects = TooManyRedirects Int
         deriving (Typeable, Show, Eq)
