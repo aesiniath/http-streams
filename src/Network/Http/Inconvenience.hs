@@ -59,7 +59,8 @@ import Data.Typeable (Typeable)
 import Data.Word (Word16)
 import GHC.Exts
 import GHC.Word (Word8 (..))
-import Network.URI (URI (..), URIAuth (..), uriToString, parseURI, parseRelativeReference, isAbsoluteURI)
+import Network.URI (URI (..), URIAuth (..), isAbsoluteURI,
+                    parseRelativeReference, parseURI, uriToString)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream)
