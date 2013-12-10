@@ -27,6 +27,7 @@ module Network.Http.Connection (
     sendRequest,
     receiveResponse,
     receiveResponseRaw,
+    UnexpectedCompression,
     emptyBody,
     fileBody,
     inputStreamBody,
@@ -398,6 +399,9 @@ getHeadersFull c q =
 --
 -- The final value from the handler function is the return value of
 -- @receiveResponse@, if you need it.
+--
+-- Throws 'UnexpectedCompression' if it doesn't know how to handle the
+-- compression format used in the response.
 --
 {-
     The reponse body coming from the server MUST be fully read, even
