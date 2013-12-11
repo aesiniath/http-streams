@@ -28,10 +28,10 @@ module Network.Http.Inconvenience (
     baselineContextSSL,
     concatHandler',
     jsonHandler,
-
-    -- for testing
     TooManyRedirects(..),
     HttpClientError(..),
+
+        -- for testing
     splitURI
 ) where
 
@@ -288,6 +288,8 @@ path u = case url of
 -- but for anything more refined you'll find it easy to simply write
 -- your own handler function.
 --
+-- Throws 'TooManyRedirects' if more than 5 redirects are thrown.
+--
 get :: URL
     -- ^ Resource to GET from.
     -> (Response -> InputStream ByteString -> IO β)
@@ -516,8 +518,8 @@ put r' t body handler = do
 
 --
 -- | A special case of 'concatHandler', this function will return the
--- entire response body as a single ByteString, but will throw an
--- exception if the response status code was other than @2xx@.
+-- entire response body as a single ByteString, but will throw
+-- 'HttpClientError' if the response status code was other than @2xx@.
 --
 concatHandler' :: Response -> InputStream ByteString -> IO ByteString
 concatHandler' p i =

@@ -130,6 +130,7 @@ module Network.Http.Client (
     -- * Processing HTTP response
     receiveResponse,
     receiveResponseRaw,
+    UnexpectedCompression,
     StatusCode,
     getStatusCode,
     getStatusMessage,
@@ -137,6 +138,7 @@ module Network.Http.Client (
     debugHandler,
     concatHandler,
     concatHandler',
+    HttpClientError,
     jsonHandler,
 
     -- * Resource cleanup
@@ -155,6 +157,7 @@ module Network.Http.Client (
     --
     URL,
     get,
+    TooManyRedirects,
     post,
     postForm,
     put,
