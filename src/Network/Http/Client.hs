@@ -130,6 +130,7 @@ module Network.Http.Client (
     -- * Processing HTTP response
     receiveResponse,
     receiveResponseRaw,
+    UnexpectedCompression,
     StatusCode,
     getStatusCode,
     getStatusMessage,

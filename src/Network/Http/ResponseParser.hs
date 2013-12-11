@@ -22,7 +22,7 @@
 module Network.Http.ResponseParser (
     readResponseHeader,
     readResponseBody,
-    UnexpectedCompression,
+    UnexpectedCompression(..),
 
         -- for testing
     readDecimal
