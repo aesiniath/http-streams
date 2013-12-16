@@ -63,8 +63,9 @@ TEST_SOURCES=$(shell find tests -name '*.hs' -type f)
 
 
 %: $(BUILDDIR)/%.bin
-	@/bin/echo -e "CP\t$@"
-	cp $< $@
+	@/bin/echo -e "STRIP\t$@"
+	strip -s $<
+	mv $< $@
 
 $(BUILDDIR)/%.bin: config.h src/%.hs $(CORE_SOURCES) tags
 	@if [ ! -d $(BUILDDIR) ] ; then /bin/echo -e "MKDIR\t$(BUILDDIR)" ; mkdir -p $(BUILDDIR) ; fi
@@ -75,8 +76,6 @@ $(BUILDDIR)/%.bin: config.h src/%.hs $(CORE_SOURCES) tags
 		-I"." \
 		-o $@ \
 		src/$*.hs
-	@/bin/echo -e "STRIP\t$@"
-	strip -s $@
 
 
 tags: $(CORE_SOURCES) $(TEST_SOURCES)
@@ -99,8 +98,6 @@ $(BUILDDIR)/%.bin: config.h tests/%.hs $(CORE_SOURCES) $(TEST_SOURCES) tags
 		-I"." \
 		-o $@ \
 		tests/$*.hs
-	@/bin/echo -e "STRIP\t$@"
-	strip -s $@
 
 #
 # Run tests directly. If using inotify, invoke instead as follows:
