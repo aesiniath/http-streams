@@ -65,7 +65,7 @@ import Network.Http.Client
 import Network.Http.Connection (Connection (..))
 import Network.Http.Inconvenience (HttpClientError (..),
                                    TooManyRedirects (..), splitURI)
-import Network.Http.Internal (Request (..), Response (..),
+import Network.Http.Internal (Request (..), Response (..), EntityBody(..),
                               composeRequestBytes, lookupHeader)
 import Network.Http.ResponseParser (readDecimal, readResponseHeader)
 
@@ -468,9 +468,11 @@ testSendBodyFor meth =
     it ("Sends a request body for " ++ show meth) $ do
         c <- openConnection "localhost" localPort
 
-        q <- buildRequest $ do
+        q' <- buildRequest $ do
             http meth "/size"
             setContentType "text/plain"
+            setHeader "Transfer-Encoding" "chunked"
+        let q = q'{qBody = Chunking}
 
         sendRequest c q (\o -> do
             Streams.write (Just (Builder.fromString "a request")) o)
