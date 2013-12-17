@@ -115,6 +115,7 @@ module Network.Http.Client (
     setContentType,
     setContentLength,
     setExpectContinue,
+    setTransferEncoding,
     setHeader,
 
     -- * Sending HTTP request

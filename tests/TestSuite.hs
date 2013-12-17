@@ -472,6 +472,7 @@ testSendBodyFor meth =
         q <- buildRequest $ do
             http meth "/size"
             setContentType "text/plain"
+            setTransferEncoding
 
         sendRequest c q (\o -> do
             Streams.write (Just (Builder.fromString "a request")) o)
