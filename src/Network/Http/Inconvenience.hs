@@ -47,7 +47,7 @@ import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.ByteString.Internal (c2w, w2c)
-import Data.Char (intToDigit, isAlphaNum)
+import Data.Char (intToDigit)
 import Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
@@ -122,7 +122,10 @@ hexd c0 = Builder.fromWord8 (c2w '%') `mappend` Builder.fromWord8 hi
 urlEncodeTable :: HashSet Char
 urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
   where
-    f c = isAlphaNum c || elem c "$-.!*'(),"
+    f c | c >= 'A' && c <= 'Z' = True
+        | c >= 'a' && c <= 'z' = True
+        | c >= '0' && c <= '9' = True
+    f c = c `elem` "$-_.!~*'(),"
 
 
 ------------------------------------------------------------------------------

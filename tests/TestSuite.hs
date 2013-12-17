@@ -33,6 +33,7 @@ import Data.Monoid
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as Text
+import qualified Data.Text.Encoding as Text
 import GHC.Generics hiding (Selector)
 import Network.Socket (SockAddr (..))
 import Network.URI (parseURI)
@@ -508,19 +509,24 @@ testPostWithForm =
     it "POST with form data correctly encodes parameters" $ do
         let url = S.concat ["http://", localhost, "/postbox"]
 
-        postForm url [("name","Kermit"),("role","St&gehand")] handler
+        postForm url [ ("name", "Kermit")
+                     , ("role", "St&gehand")
+                     , ("country", Text.encodeUtf8 $ Text.pack "Nørway")
+                     ] handler
       where
         handler :: Response -> InputStream ByteString -> IO ()
         handler p i = do
             let code = getStatusCode p
             assertEqual "Expected 201" 201 code
 
-            b' <- Streams.readExactly 28 i
+            b' <- Streams.readExactly 48 i
 
             end <- Streams.atEOF i
             assertBool "Expected end of stream" end
 
-            assertEqual "Incorrect URL encoding" "name=Kermit&role=St%26gehand" b'
+            assertEqual "Incorrect URL encoding"
+                        "name=Kermit&role=St%26gehand&country=N%c3%b8rway"
+                        b'
 
 
 testGetRedirects =
