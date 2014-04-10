@@ -692,7 +692,7 @@ testParsingJson2 =
 
 data GrossDomesticProduct = GrossDomesticProduct {
     gLabel :: Text,
-    gData  :: [(Int, Rational)]
+    gData  :: [(Int, Double)]
 } deriving (Show, Generic)
 
 instance FromJSON GrossDomesticProduct where
