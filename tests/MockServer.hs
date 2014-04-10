@@ -9,6 +9,7 @@
 --
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports    #-}
 {-# OPTIONS -fno-warn-dodgy-imports #-}
 
 module MockServer (runMockServer, localPort) where
@@ -23,7 +24,7 @@ import Control.Applicative
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Exception (SomeException)
 import Control.Monad.CatchIO (catch)
-import Control.Monad.Trans (liftIO)
+import "mtl" Control.Monad.Trans (liftIO)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import qualified Data.ByteString.Lazy.Char8 as L
