@@ -44,6 +44,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import Data.Monoid (mappend, mempty)
 import Network.Socket
+import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSL, SSLContext)
 import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream, stdout)
@@ -189,13 +190,10 @@ openConnection h1' p = do
 --
 -- | Open a secure connection to a web server.
 --
--- You need to wrap this (and subsequent code using this connection)
--- within a call to 'OpenSSL.withOpenSSL':
---
 -- > import OpenSSL (withOpenSSL)
 -- >
 -- > main :: IO ()
--- > main = withOpenSSL $ do
+-- > main = do
 -- >     ctx <- baselineContextSSL
 -- >     c <- openConnectionSSL ctx "api.github.com" 443
 -- >     ...
@@ -216,8 +214,11 @@ openConnection h1' p = do
 -- Crypto is as provided by the system @openssl@ library, as wrapped
 -- by the @HsOpenSSL@ package and @openssl-streams@.
 --
+-- /There is no longer a need to call @withOpenSSL@ explicitly; the
+-- initialization is invoked once per process for you/
+--
 openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
-openConnectionSSL ctx h1' p = do
+openConnectionSSL ctx h1' p = withOpenSSL $ do
     is <- getAddrInfo Nothing (Just h1) (Just $ show p)
 
     let a = addrAddress $ head is
