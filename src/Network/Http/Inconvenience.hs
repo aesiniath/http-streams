@@ -61,6 +61,7 @@ import GHC.Exts
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), isAbsoluteURI,
                     parseRelativeReference, parseURI, uriToString)
+import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream)
@@ -186,7 +187,7 @@ establish u =
     case scheme of
         "http:"  -> do
                         openConnection host port
-        "https:" -> do
+        "https:" -> withOpenSSL $ do
                         ctx <- readIORef global
                         openConnectionSSL ctx host ports
         _        -> error ("Unknown URI scheme " ++ scheme)
