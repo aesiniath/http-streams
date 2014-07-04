@@ -181,7 +181,10 @@ openConnection h1' p = do
         cIn    = i
     }
   where
-    hints = defaultHints {addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV]}
+    hints = defaultHints {
+        addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV],
+        addrSocketType = Stream
+    }
     h2' = if p == 80
         then h1'
         else S.concat [ h1', ":", S.pack $ show p ]
