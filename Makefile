@@ -32,7 +32,7 @@ BUILDDIR=/tmp/build/http-streams
 # things.
 #
 
-GHC=ghc \
+GHC=ghc --make \
 	-rtsopts \
 	-O2 \
 	-threaded \
@@ -70,7 +70,7 @@ TEST_SOURCES=$(shell find tests -name '*.hs' -type f)
 $(BUILDDIR)/%.bin: config.h src/%.hs $(CORE_SOURCES) tags
 	@if [ ! -d $(BUILDDIR) ] ; then /bin/echo -e "MKDIR\t$(BUILDDIR)" ; mkdir -p $(BUILDDIR) ; fi
 	@/bin/echo -e "GHC\t$@"
-	$(GHC) --make \
+	$(GHC) \
 		-outputdir $(BUILDDIR)/$* \
 		-i"$(BUILDDIR):src" \
 		-I"." \
@@ -91,7 +91,7 @@ tests: config check
 $(BUILDDIR)/%.bin: config.h tests/%.hs $(CORE_SOURCES) $(TEST_SOURCES) tags
 	@if [ ! -d $(BUILDDIR) ] ; then /bin/echo -e "MKDIR\t$(BUILDDIR)" ; mkdir -p $(BUILDDIR) ; fi
 	@/bin/echo -e "GHC\t$@"
-	$(GHC) --make \
+	$(GHC) \
 		-prof -fprof-auto \
 		-outputdir $(BUILDDIR)/tests \
 		-i"$(BUILDDIR):src:tests" \
