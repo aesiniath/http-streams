@@ -231,11 +231,7 @@ baselineContextSSL :: IO SSLContext
 baselineContextSSL = do
     ctx <- SSL.context
     SSL.contextSetDefaultCiphers ctx
-#if defined __MACOSX__
-    SSL.contextSetVerificationMode ctx SSL.VerifyNone
-#elif defined __WINDOWS__
-    SSL.contextSetVerificationMode ctx SSL.VerifyNone
-#else
+#if defined __LINUX__
     fedora <- doesDirectoryExist "/etc/pki/tls"
     if fedora
         then do
@@ -243,6 +239,10 @@ baselineContextSSL = do
         else do
             SSL.contextSetCADirectory ctx "/etc/ssl/certs"
     SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
+#elif defined __FREEBSD__
+    SSL.contextSetCAFile ctx "/usr/local/share/certs/ca-root-nss.crt"
+#else
+    SSL.contextSetVerificationMode ctx SSL.VerifyNone
 #endif
     return ctx
 
