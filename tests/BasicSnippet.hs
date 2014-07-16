@@ -29,9 +29,9 @@ main :: IO ()
 main = do
     c <- openConnection "kernel.operationaldynamics.com" 58080
 
-    q <- buildRequest $ do
-        http GET "/time"
-        setAccept "text/plain"
+    let q = buildRequest $ do
+                http GET "/time"
+                setAccept "text/plain"
 
     sendRequest c q emptyBody
 

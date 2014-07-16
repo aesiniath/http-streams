@@ -35,17 +35,17 @@ main :: IO ()
 main = do
     c <- openConnection "kernel.operationaldynamics.com" 58080
 
-    q1 <- buildRequest $ do
-        http GET "/time?id=1"
-        setAccept "text/plain"
+    let q1 = buildRequest $ do
+                http GET "/time?id=1"
+                setAccept "text/plain"
 
-    q2 <- buildRequest $ do
-        http GET "/time?id=2"
-        setAccept "text/plain"
+    let q2 = buildRequest $ do
+                http GET "/time?id=2"
+                setAccept "text/plain"
 
-    q3 <- buildRequest $ do
-        http GET "/time?id=3"
-        setAccept "text/plain"
+    let q3 = buildRequest $ do
+                http GET "/time?id=3"
+                setAccept "text/plain"
 
     sendRequest c q1 emptyBody
     threadDelay 1000000

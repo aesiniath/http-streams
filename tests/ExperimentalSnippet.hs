@@ -57,9 +57,9 @@ basic = do
     c <- openConnection "kernel.operationaldynamics.com" 58080
     putStrLn $ show c
 
-    q <- buildRequest $ do
-        http GET "/time"
-        setAccept "text/plain"
+    let q = buildRequest $ do
+                http GET "/time"
+                setAccept "text/plain"
     putStr $ show q
             -- Requests [headers] are terminated by a double newline
             -- already. We need a better way of emitting debug
@@ -95,11 +95,11 @@ resource = bracket
 
 doStuff :: Connection -> IO ByteString
 doStuff c = do
-    q <- buildRequest $ do
-        http PUT "/put"
-        setAccept "*/*"
-        setContentType "text/plain"
-        setContentLength 12
+    let q = buildRequest $ do
+                http PUT "/put"
+                setAccept "*/*"
+                setContentType "text/plain"
+                setContentLength 12
 
     sendRequest c q (\o ->
         Streams.write (Just "Hello World\n") o)

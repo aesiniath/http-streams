@@ -53,9 +53,9 @@ basic :: ByteString -> IO ()
 basic b' = do
     c <- fakeConnection b'
 
-    q <- buildRequest $ do
-        http GET "/"
-        setAccept "text/plain"
+    let q = buildRequest $ do
+                http GET "/"
+                setAccept "text/plain"
 
     sendRequest c q emptyBody
 

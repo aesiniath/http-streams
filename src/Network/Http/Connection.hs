@@ -118,7 +118,7 @@ makeConnection h c o1 i = do
 -- @Connection@ afterwards.
 --
 -- >     x <- withConnection (openConnection "s3.example.com" 80) $ (\c -> do
--- >         q <- buildRequest $ do
+-- >         let q = buildRequest $ do
 -- >             http GET "/bucket42/object/149"
 -- >         sendRequest c q emptyBody
 -- >         ...
@@ -519,7 +519,7 @@ inputStreamBody i1 o = do
 --
 -- >     c <- openConnection "kernel.operationaldynamics.com" 58080
 -- >
--- >     q <- buildRequest $ do
+-- >     let q = buildRequest $ do
 -- >         http GET "/time"
 -- >
 -- >     sendRequest c q emptyBody
