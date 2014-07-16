@@ -25,7 +25,6 @@ import Network.Http.Client
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
-import qualified Data.ByteString.UTF8 as S
 import Debug.Trace
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
@@ -39,9 +38,9 @@ actual :: ByteString -> IO ()
 actual x' = do
     c <- fakeConnection x'
 
-    q <- buildRequest $ do
-        http GET "/bucket42/object149"
-        setAccept "text/plain"
+    let q = buildRequest $ do
+                http GET "/bucket42/object149"
+                setAccept "text/plain"
 
     sendRequest c q emptyBody
 

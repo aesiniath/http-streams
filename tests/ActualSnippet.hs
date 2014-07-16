@@ -13,6 +13,7 @@
 
 module Main where
 
+import GHC.Conc
 import Network.Http.Client
 
 --
@@ -27,11 +28,13 @@ import qualified System.IO.Streams as Streams
 
 main :: IO ()
 main = do
+    let n = numCapabilities
+    putStrLn (show n)
     c <- openConnection "kernel.operationaldynamics.com" 58080
 
-    q <- buildRequest $ do
-        http GET "/time"
-        setAccept "text/plain"
+    let q = buildRequest $ do
+                http GET "/time"
+                setAccept "text/plain"
     putStr $ show q
             -- Requests [headers] are terminated by a double newline
             -- already. We need a better way of emitting debug
