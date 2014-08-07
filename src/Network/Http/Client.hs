@@ -97,6 +97,7 @@ module Network.Http.Client (
     Port,
     Connection,
     openConnection,
+    openBoundConnection,
 
     -- * Building Requests
     -- | You setup a request using the RequestBuilder monad, and
@@ -117,6 +118,7 @@ module Network.Http.Client (
     setExpectContinue,
     setTransferEncoding,
     setHeader,
+    toSockAddrIPv4,
 
     -- * Sending HTTP request
     Request,
@@ -165,6 +167,7 @@ module Network.Http.Client (
 
     -- * Secure connections
     openConnectionSSL,
+    openBoundConnectionSSL,
     baselineContextSSL,
     modifyContextSSL,
     establishConnection,
