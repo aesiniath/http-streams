@@ -169,6 +169,19 @@ withConnection mkC =
 openConnection :: Hostname -> Port -> IO Connection
 openConnection = openBoundConnection Nothing
 
+--
+-- | A version of 'openConnection' where the client connection is
+-- bound to a specific source IP address. For convenience
+-- 'toSockAddrIPv4' can be used to create a SockAddr for the selected
+-- IP.
+--
+-- Usage:
+--
+-- >     sa <- toSockAddrIPv4 "192.168.100.1"
+-- >     c  <- openBoundConnection (Just sa) "localhost" 80
+-- >     ...
+-- >     closeConnection c
+--
 openBoundConnection :: Maybe SockAddr -> Hostname -> Port -> IO Connection
 openBoundConnection b h1' p = do
     is <- getAddrInfo (Just hints) (Just h1) (Just $ show p)
@@ -231,6 +244,14 @@ openBoundConnection b h1' p = do
 openConnectionSSL :: SSLContext -> Hostname -> Port -> IO Connection
 openConnectionSSL = openBoundConnectionSSL Nothing
 
+--
+-- | A version of 'openConnectionSSL' where the client connection is
+-- bound to a specific source IP address. For convenience
+-- 'toSockAddrIPv4' can be used to create a SockAddr for the selected
+-- IP address.
+--
+-- See 'openBoundConnection' for example on usage.
+--
 openBoundConnectionSSL :: Maybe SockAddr -> SSLContext -> Hostname -> Port -> IO Connection
 openBoundConnectionSSL b ctx h1' p = withOpenSSL $ do
     is <- getAddrInfo Nothing (Just h1) (Just $ show p)
@@ -632,7 +653,12 @@ concatHandler _ i1 = do
 closeConnection :: Connection -> IO ()
 closeConnection c = cClose c
 
+--
+-- | Convert from an IPv4 address (on the client's machine) to a
+-- SockAddr data structure. To be used for binding a client connection to a
+-- specific source address.
+--
 toSockAddrIPv4 :: HostName -> IO SockAddr
 toSockAddrIPv4 str =
-  SockAddrInet aNY_PORT <$> do
+  SockAddrInet aNY_PORT <$>
     head . hostAddresses <$> getHostByName str
