@@ -64,6 +64,9 @@ Change Log
 
 Recent API changes:
 
+* _v0.8.0_  
+	Support for Unix domain socket has been added.
+
 * _v0.7.0_  
 	The Request, Response, Headers, and RequestBuilder types have been
 	factored out and moved to **http-common**. They are still exported

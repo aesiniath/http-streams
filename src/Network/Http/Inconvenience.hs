@@ -158,8 +158,8 @@ modifyContextSSL f = do
     writeIORef global ctx'
 
 --
--- | Given a URL, work out whether it is normal or secure, and then
--- open the connection to the webserver including setting the
+-- | Given a URL, work out whether it is normal, secure, or unix domain,
+-- and then open the connection to the webserver including setting the
 -- appropriate default port if one was not specified in the URL. This
 -- is what powers the convenience API, but you may find it useful in
 -- composing your own similar functions.
@@ -190,6 +190,8 @@ establish u =
         "https:" -> withOpenSSL $ do
                         ctx <- readIORef global
                         openConnectionSSL ctx host ports
+        "unix:"  -> do
+                        openConnectionUnix $ uriPath u
         _        -> error ("Unknown URI scheme " ++ scheme)
   where
     scheme = uriScheme u
