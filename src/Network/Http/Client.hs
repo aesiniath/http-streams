@@ -139,6 +139,7 @@ module Network.Http.Client (
     debugHandler,
     concatHandler,
     concatHandler',
+    httpClientErrorCodeBody,
     HttpClientError,
     jsonHandler,
 
