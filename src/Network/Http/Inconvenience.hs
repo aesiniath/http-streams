@@ -28,6 +28,7 @@ module Network.Http.Inconvenience (
     baselineContextSSL,
     concatHandler',
     jsonHandler,
+    httpClientErrorCodeBody,
     TooManyRedirects(..),
     HttpClientError(..),
 
@@ -541,6 +542,9 @@ instance Exception HttpClientError
 
 instance Show HttpClientError where
     show (HttpClientError s msg) = Prelude.show s ++ " " ++ S.unpack msg
+
+httpClientErrorCodeBody :: HttpClientError -> (Int, ByteString)
+httpClientErrorCodeBody (HttpClientError c b) = (c, b)
 
 {-
     There should probably also be HttpServerError and maybe even
