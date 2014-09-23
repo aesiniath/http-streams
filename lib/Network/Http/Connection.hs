@@ -520,7 +520,7 @@ inputStreamBody i1 o = do
 -- >     c <- openConnection "kernel.operationaldynamics.com" 58080
 -- >
 -- >     let q = buildRequest $ do
--- >         http GET "/time"
+-- >                 http GET "/time"
 -- >
 -- >     sendRequest c q emptyBody
 -- >

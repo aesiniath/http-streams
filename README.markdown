@@ -23,9 +23,9 @@ main :: IO ()
 main = do
     c <- openConnection "www.example.com" 80
     
-    q <- buildRequest $ do
-        http GET "/"
-        setAccept "text/html"
+    let q = buildRequest $ do
+                http GET "/"
+                setAccept "text/html"
     
     sendRequest c q emptyBody
     
@@ -63,6 +63,9 @@ Change Log
 ---------
 
 Recent API changes:
+
+* _v0.8.0_  
+	The buildRequest function is now pure.
 
 * _v0.7.0_  
 	The Request, Response, Headers, and RequestBuilder types have been

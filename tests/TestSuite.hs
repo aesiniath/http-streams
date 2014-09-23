@@ -152,8 +152,8 @@ testRequestLineFormat = do
         (fakeConnection)
         (return)
         (\c -> do
-            q <- buildRequest $ do
-                http GET ""
+            let q = buildRequest $ do
+                        http GET ""
 
             let e' = Builder.toByteString $ composeRequestBytes q (cHost c)
             let l' = S.takeWhile (/= '\r') e'

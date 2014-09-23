@@ -172,7 +172,7 @@ modifyContextSSL f = do
 -- >
 -- >     c <- establishConnection url
 -- >     let q = buildRequest $ do
--- >         http GET url
+-- >                 http GET url
 -- >     ...
 --
 establishConnection :: URL -> IO (Connection)

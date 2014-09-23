@@ -43,8 +43,8 @@
 -- \    c <- 'openConnection' \"www.example.com\" 80
 --
 -- \     let q = 'buildRequest' $ do
---         'http' GET \"\/\"
---         'setAccept' \"text/html\"
+--                 'http' GET \"\/\"
+--                 'setAccept' \"text/html\"
 --
 -- \     'sendRequest' c q 'emptyBody'
 --
