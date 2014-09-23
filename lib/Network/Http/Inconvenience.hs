@@ -171,8 +171,8 @@ modifyContextSSL f = do
 -- >     let url = "https://www.example.com/photo.jpg"
 -- >
 -- >     c <- establishConnection url
--- >     q <- buildRequest $ do
--- >         http GET url
+-- >     let q = buildRequest $ do
+-- >                 http GET url
 -- >     ...
 --
 establishConnection :: URL -> IO (Connection)
@@ -312,11 +312,11 @@ getN n r' handler = do
 
     u = parseURL r'
 
-    process c = do
-        q <- buildRequest $ do
+    q = buildRequest $ do
             http GET (path u)
             setAccept "*/*"
 
+    process c = do
         sendRequest c q emptyBody
 
         receiveResponse c (wrapRedirect u n handler)
@@ -401,12 +401,12 @@ post r' t body handler = do
 
     u = parseURL r'
 
-    process c = do
-        q <- buildRequest $ do
+    q = buildRequest $ do
             http POST (path u)
             setAccept "*/*"
             setContentType t
 
+    process c = do
         _ <- sendRequest c q body
 
         x <- receiveResponse c handler
@@ -438,12 +438,12 @@ postForm r' nvs handler = do
 
     u = parseURL r'
 
-    process c = do
-        q <- buildRequest $ do
+    q = buildRequest $ do
             http POST (path u)
             setAccept "*/*"
             setContentType "application/x-www-form-urlencoded"
 
+    process c = do
         _ <- sendRequest c q (encodedFormBody nvs)
 
         x <- receiveResponse c handler
@@ -508,12 +508,12 @@ put r' t body handler = do
 
     u = parseURL r'
 
-    process c = do
-        q <- buildRequest $ do
+    q = buildRequest $ do
             http PUT (path u)
             setAccept "*/*"
             setHeader "Content-Type" t
 
+    process c = do
         _ <- sendRequest c q body
 
         x <- receiveResponse c handler

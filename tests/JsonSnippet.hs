@@ -48,9 +48,9 @@ main0 :: IO ()
 main0 = do
     c <- openConnection "ip.jsontest.com" 80
 
-    q <- buildRequest $ do
-        http GET "/"
-        setAccept "application/json"
+    let q = buildRequest $ do
+                http GET "/"
+                setAccept "application/json"
 
     putStr $ show q
             -- Requests [headers] are terminated by a double newline

@@ -42,9 +42,9 @@
 -- main = do
 -- \    c <- 'openConnection' \"www.example.com\" 80
 --
--- \     q <- 'buildRequest' $ do
---         'http' GET \"\/\"
---         'setAccept' \"text/html\"
+-- \     let q = 'buildRequest' $ do
+--                 'http' GET \"\/\"
+--                 'setAccept' \"text/html\"
 --
 -- \     'sendRequest' c q 'emptyBody'
 --
