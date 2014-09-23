@@ -9,5 +9,3 @@ report.html
 tags
 TAGS
 config.h
-tests/benchmark.hs
-tests/snippet.hs
