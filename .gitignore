@@ -9,3 +9,7 @@ report.html
 tags
 TAGS
 config.h
+
+.cabal-sandbox/
+cabal.config
+cabal.sandbox.config
