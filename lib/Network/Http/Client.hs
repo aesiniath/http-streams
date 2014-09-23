@@ -139,7 +139,7 @@ module Network.Http.Client (
     debugHandler,
     concatHandler,
     concatHandler',
-    HttpClientError,
+    HttpClientError(..),
     jsonHandler,
 
     -- * Resource cleanup

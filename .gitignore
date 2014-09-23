@@ -9,5 +9,7 @@ report.html
 tags
 TAGS
 config.h
-tests/benchmark.hs
-tests/snippet.hs
+
+.cabal-sandbox/
+cabal.config
+cabal.sandbox.config

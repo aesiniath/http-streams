@@ -17,9 +17,9 @@ license:             BSD3
 license-file:        LICENCE
 author:              Andrew Cowie <andrew@operationaldynamics.com>
 maintainer:          Andrew Cowie <andrew@operationaldynamics.com>
-copyright:           © 2012-2013 Operational Dynamics Consulting, Pty Ltd and Others
+copyright:           © 2012-2014 Operational Dynamics Consulting, Pty Ltd and Others
 category:            Web
-tested-with:         GHC == 7.6
+tested-with:         GHC == 7.8
 stability:           experimental
 homepage:            http://research.operationaldynamics.com/projects/http-streams/
 bug-reports:         https://github.com/afcowie/http-streams/issues
@@ -47,7 +47,7 @@ library
                      unordered-containers,
                      aeson
 
-  hs-source-dirs:    src
+  hs-source-dirs:    lib
   exposed-modules:   Network.Http.Client
   other-modules:     Network.Http.Connection,
                      Network.Http.ResponseParser,
@@ -73,8 +73,7 @@ test-suite           check
 
   default-language:  Haskell2010
 
-  build-depends:
-                     HUnit,
+  build-depends:     HUnit,
                      HsOpenSSL,
                      MonadCatchIO-transformers,
                      aeson-pretty,
@@ -103,7 +102,7 @@ test-suite           check
                      http-common  >= 0.8.0,
                      http-streams >= 0.8.0
 
-  hs-source-dirs:    tests,src
+  hs-source-dirs:    lib,tests
   main-is:           check.hs
 
   ghc-options:       -O2
@@ -123,8 +122,7 @@ test-suite           snippet
 
   default-language:  Haskell2010
 
-  build-depends:
-                     base,
+  build-depends:     base,
                      bytestring,
                      io-streams,
                      http-streams >= 0.8.0
