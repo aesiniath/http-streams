@@ -32,7 +32,8 @@ build: dist/setup-config tags
 
 test: dist/setup-config tags
 	@/bin/echo -e "CABAL\ttest"
-	cabal test
+	cabal build check
+	dist/build/check/check
 
 dist/setup-config: http-streams.cabal Setup.hs
 	cabal configure \

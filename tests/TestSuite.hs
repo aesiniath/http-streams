@@ -135,7 +135,7 @@ testRequestTermination =
 
         closeConnection c
 
-testRequestLineFormat =
+testRequestLineFormat = do
     it "has a properly formatted request line" $ bracket
         (fakeConnection)
         (return)
@@ -147,6 +147,18 @@ testRequestLineFormat =
             let l' = S.takeWhile (/= '\r') e'
 
             assertEqual "Invalid HTTP request line" "GET /time HTTP/1.1" l')
+
+    it "handles empty request path" $ bracket
+        (fakeConnection)
+        (return)
+        (\c -> do
+            q <- buildRequest $ do
+                http GET ""
+
+            let e' = Builder.toByteString $ composeRequestBytes q (cHost c)
+            let l' = S.takeWhile (/= '\r') e'
+
+            assertEqual "Invalid HTTP request line" "GET / HTTP/1.1" l')
 
 
 fakeConnection :: IO Connection
