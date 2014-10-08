@@ -35,11 +35,11 @@ test: dist/setup-config tags
 	cabal build check
 	dist/build/check/check
 
-dist/setup-config: http-streams.cabal Setup.hs
+dist/setup-config: http-streams.cabal .cabal-sandbox/add-source-timestamps Setup.hs
 	cabal configure \
 		--enable-tests \
 		--enable-benchmarks \
-		-v0 2>/dev/null || /bin/echo -e "CABAL\tinstall --only-dependencies" && cabal install --only-dependencies --enable-tests --enable-benchmarks
+		-v0 2>/dev/null || /bin/echo -e "CABAL\tinstall --only-dependencies" && cabal install --only-dependencies -j --enable-tests --enable-benchmarks
 	@/bin/echo -e "CABAL\tconfigure"
 	cabal configure \
 		--enable-tests \
