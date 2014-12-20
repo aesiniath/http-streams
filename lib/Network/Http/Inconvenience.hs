@@ -126,7 +126,7 @@ urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
     f c | c >= 'A' && c <= 'Z' = True
         | c >= 'a' && c <= 'z' = True
         | c >= '0' && c <= '9' = True
-    f c = c `elem` "$-_.!~*'(),"
+    f c = c `elem` ("$-_.!~*'(),"::String)
 
 
 ------------------------------------------------------------------------------
