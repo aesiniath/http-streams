@@ -42,7 +42,8 @@ library
                      openssl-streams >= 1.1 && < 1.4,
                      mtl,
                      transformers,
-                     network,
+                     network >= 2.6,
+                     network-uri >= 2.6,
                      text,
                      unordered-containers,
                      aeson
