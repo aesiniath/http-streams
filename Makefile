@@ -44,8 +44,7 @@ dist/setup-config: http-streams.cabal .cabal-sandbox/add-source-timestamps Setup
 	cabal configure \
 		--enable-tests \
 		--enable-benchmarks \
-		--disable-library-profiling \
-		--disable-executable-profiling
+		--disable-library-profiling
 
 
 # This will match writer-test/writer-test, so we have to strip the directory
