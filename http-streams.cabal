@@ -81,7 +81,7 @@ test-suite           check
   default-language:  Haskell2010
 
   build-depends:
-                     http-common >= 0.7.2 && < 0.8,
+                     http-common >= 0.8.0,
                      HUnit,
                      HsOpenSSL,
                      MonadCatchIO-transformers,
