@@ -1,6 +1,6 @@
 cabal-version:       >= 1.10
 name:                http-streams
-version:             0.7.2.5
+version:             0.7.2.6
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
@@ -17,7 +17,7 @@ license:             BSD3
 license-file:        LICENCE
 author:              Andrew Cowie <andrew@operationaldynamics.com>
 maintainer:          Andrew Cowie <andrew@operationaldynamics.com>
-copyright:           © 2012-2014 Operational Dynamics Consulting, Pty Ltd and Others
+copyright:           © 2012-2015 Operational Dynamics Consulting, Pty Ltd and Others
 category:            Web
 tested-with:         GHC == 7.8
 stability:           experimental
