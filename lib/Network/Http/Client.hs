@@ -42,19 +42,19 @@
 -- main = do
 -- \    c <- 'openConnection' \"www.example.com\" 80
 --
--- \     let q = 'buildRequest' $ do
+-- \    let q = 'buildRequest'' $ do
 --                 'http' GET \"\/\"
 --                 'setAccept' \"text/html\"
 --
--- \     'sendRequest' c q 'emptyBody'
+-- \    'sendRequest' c q 'emptyBody'
 --
--- \     `receiveResponse` c (\\p i -> do
+-- \    `receiveResponse` c (\\p i -> do
 --         xm <- Streams.read i
 --         case xm of
 --             Just x    -> S.putStr x
 --             Nothing   -> \"\")
 --
--- \     'closeConnection' c
+-- \    'closeConnection' c
 -- @
 --
 -- which would print the first chunk of the response back from the
@@ -73,7 +73,7 @@
 -- foo :: IO ByteString
 -- foo = 'withConnection' ('openConnection' \"www.example.com\" 80) doStuff
 --
--- \ doStuff :: Connection -> IO ByteString
+-- doStuff :: Connection -> IO ByteString
 -- @
 --
 -- There are also a set of convenience APIs that do just that, along with
@@ -105,6 +105,7 @@ module Network.Http.Client (
     -- it is, don't you think?
     Method(..),
     RequestBuilder,
+    buildRequest',
     buildRequest,
     http,
     setHostname,

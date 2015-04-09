@@ -1,6 +1,6 @@
 cabal-version:       >= 1.10
 name:                http-streams
-version:             0.8.0.2
+version:             0.8.1.1
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
@@ -34,7 +34,7 @@ library
   default-language:  Haskell2010
 
   build-depends:     attoparsec,
-                     http-common >= 0.8.0,
+                     http-common >= 0.8.1,
                      base >= 4 && <5,
                      directory,
                      base64-bytestring,
@@ -81,7 +81,7 @@ test-suite           check
   default-language:  Haskell2010
 
   build-depends:
-                     http-common >= 0.8.0,
+                     http-common >= 0.8.1,
                      HUnit,
                      HsOpenSSL,
                      MonadCatchIO-transformers,
@@ -109,8 +109,8 @@ test-suite           check
                      text,
                      unordered-containers,
                      aeson,
-                     http-common  >= 0.8.0,
-                     http-streams >= 0.8.0
+                     http-common  >= 0.8.1,
+                     http-streams >= 0.8.1
 
   hs-source-dirs:    lib,tests
   main-is:           check.hs
