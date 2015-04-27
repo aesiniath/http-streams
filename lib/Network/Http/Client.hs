@@ -42,7 +42,7 @@
 -- main = do
 -- \    c <- 'openConnection' \"www.example.com\" 80
 --
--- \    let q = 'buildRequest'' $ do
+-- \    let q = 'buildRequest1' $ do
 --                 'http' GET \"\/\"
 --                 'setAccept' \"text/html\"
 --
@@ -100,12 +100,12 @@ module Network.Http.Client (
 
     -- * Building Requests
     -- | You setup a request using the RequestBuilder monad, and
-    -- get the resultant Request object by running 'buildRequest'. The
+    -- get the resultant Request object by running 'buildRequest1'. The
     -- first call doesn't have to be to 'http', but it looks better when
     -- it is, don't you think?
     Method(..),
     RequestBuilder,
-    buildRequest',
+    buildRequest1,
     buildRequest,
     http,
     setHostname,

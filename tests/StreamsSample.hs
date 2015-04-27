@@ -29,7 +29,7 @@ sampleViaHttpStreams :: IO ()
 sampleViaHttpStreams = do
     c <- openConnection "localhost" 80
 
-    let q = buildRequest $ do
+    let q = buildRequest1 $ do
                 http GET "/"
                 setAccept "text/html"
 

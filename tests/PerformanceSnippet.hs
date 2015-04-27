@@ -53,7 +53,7 @@ basic :: ByteString -> IO ()
 basic b' = do
     c <- fakeConnection b'
 
-    let q = buildRequest $ do
+    let q = buildRequest1 $ do
                 http GET "/"
                 setAccept "text/plain"
 

@@ -32,7 +32,7 @@ main = do
     putStrLn (show n)
     c <- openConnection "kernel.operationaldynamics.com" 58080
 
-    let q = buildRequest $ do
+    let q = buildRequest1 $ do
                 http GET "/time"
                 setAccept "text/plain"
     putStr $ show q

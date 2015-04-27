@@ -48,7 +48,7 @@ main0 :: IO ()
 main0 = do
     c <- openConnection "ip.jsontest.com" 80
 
-    let q = buildRequest $ do
+    let q = buildRequest1 $ do
                 http GET "/"
                 setAccept "application/json"
 

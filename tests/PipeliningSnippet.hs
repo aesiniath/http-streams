@@ -35,15 +35,15 @@ main :: IO ()
 main = do
     c <- openConnection "kernel.operationaldynamics.com" 58080
 
-    let q1 = buildRequest $ do
+    let q1 = buildRequest1 $ do
                 http GET "/time?id=1"
                 setAccept "text/plain"
 
-    let q2 = buildRequest $ do
+    let q2 = buildRequest1 $ do
                 http GET "/time?id=2"
                 setAccept "text/plain"
 
-    let q3 = buildRequest $ do
+    let q3 = buildRequest1 $ do
                 http GET "/time?id=3"
                 setAccept "text/plain"
 

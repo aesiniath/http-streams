@@ -171,7 +171,7 @@ modifyContextSSL f = do
 -- >     let url = "https://www.example.com/photo.jpg"
 -- >
 -- >     c <- establishConnection url
--- >     let q = buildRequest' $ do
+-- >     let q = buildRequest1 $ do
 -- >                 http GET url
 -- >     ...
 --
@@ -312,7 +312,7 @@ getN n r' handler = do
 
     u = parseURL r'
 
-    q = buildRequest' $ do
+    q = buildRequest1 $ do
             http GET (path u)
             setAccept "*/*"
 
@@ -401,7 +401,7 @@ post r' t body handler = do
 
     u = parseURL r'
 
-    q = buildRequest' $ do
+    q = buildRequest1 $ do
             http POST (path u)
             setAccept "*/*"
             setContentType t
@@ -438,7 +438,7 @@ postForm r' nvs handler = do
 
     u = parseURL r'
 
-    q = buildRequest' $ do
+    q = buildRequest1 $ do
             http POST (path u)
             setAccept "*/*"
             setContentType "application/x-www-form-urlencoded"
@@ -508,7 +508,7 @@ put r' t body handler = do
 
     u = parseURL r'
 
-    q = buildRequest' $ do
+    q = buildRequest1 $ do
             http PUT (path u)
             setAccept "*/*"
             setHeader "Content-Type" t

@@ -38,7 +38,7 @@ example1 = withOpenSSL $ do
     ctx <- baselineContextSSL
     c <- openConnectionSSL ctx "api.github.com" 443
 
-    let q = buildRequest $ do
+    let q = buildRequest1 $ do
                 http GET "/users/afcowie/orgs"
                 setAccept "application/json"
     putStr $ show q

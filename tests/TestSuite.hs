@@ -121,7 +121,7 @@ suite = do
 testRequestTermination =
     it "terminates with a blank line" $ do
         c <- openConnection "localhost" localPort
-        let q = buildRequest $ do
+        let q = buildRequest1 $ do
                     http GET "/time"
                     setAccept "text/plain"
 
@@ -140,7 +140,7 @@ testRequestLineFormat = do
         (fakeConnection)
         (return)
         (\c -> do
-            let q = buildRequest $ do
+            let q = buildRequest1 $ do
                         http GET "/time"
 
             let e' = Builder.toByteString $ composeRequestBytes q (cHost c)
@@ -152,7 +152,7 @@ testRequestLineFormat = do
         (fakeConnection)
         (return)
         (\c -> do
-            let q = buildRequest $ do
+            let q = buildRequest1 $ do
                         http GET ""
 
             let e' = Builder.toByteString $ composeRequestBytes q (cHost c)
@@ -171,7 +171,7 @@ fakeConnection = do
 
 testAcceptHeaderFormat =
     it "properly formats Accept header" $ do
-        let q = buildRequest $ do
+        let q = buildRequest1 $ do
                     setAccept' [("text/html", 1),("*/*", 0.0)]
 
         let h = qHeaders q
@@ -180,7 +180,7 @@ testAcceptHeaderFormat =
 
 testBasicAuthorizatonHeader =
     it "properly formats Authorization header" $ do
-        let q = buildRequest $ do
+        let q = buildRequest1 $ do
                     setAuthorizationBasic "Aladdin" "open sesame"
 
         let h = qHeaders q
@@ -206,20 +206,20 @@ testConnectionHost = do
 -}
 testEnsureHostField =
     it "has a properly formatted Host header" $ do
-        let q1 = buildRequest $ do
+        let q1 = buildRequest1 $ do
                     http GET "/hello.txt"
 
         let h1 = qHost q1
         assertEqual "Incorrect Host header" Nothing h1
 
-        let q2 = buildRequest $ do
+        let q2 = buildRequest1 $ do
                     http GET "/hello.txt"
                     setHostname "other.example.com" 80
 
         let h2 = qHost q2
         assertEqual "Incorrect Host header" (Just "other.example.com") h2
 
-        let q3 = buildRequest $ do
+        let q3 = buildRequest1 $ do
                     http GET "/hello.txt"
                     setHostname "other.example.com" 54321
 
@@ -262,7 +262,7 @@ testChunkedEncoding =
     it "recognizes chunked transfer encoding and decodes" $ do
         c <- openConnection "localhost" localPort
 
-        let q = buildRequest $ do
+        let q = buildRequest1 $ do
                     http GET "/time"
 
         sendRequest c q emptyBody
@@ -281,7 +281,7 @@ testContentLength = do
     it "recognzies fixed length message" $ do
         c <- openConnection "localhost" localPort
 
-        let q = buildRequest $ do
+        let q = buildRequest1 $ do
                     http GET "/static/statler.jpg"
 
         sendRequest c q emptyBody
@@ -313,7 +313,7 @@ testContentLength = do
 
     it "reads body without Content-Length or Transfer-Encoding" $ do
         c <- fakeConnectionHttp10
-        let q = buildRequest $ do
+        let q = buildRequest1 $ do
                     http GET "/fake"
         sendRequest c q emptyBody
         receiveResponse c (\_ i1 -> do
@@ -350,7 +350,7 @@ testDevoidOfContent = do
     it "handles 204 No Content response without Content-Length"
       $ timeout_ 2 $ do
         (c, mv) <- fakeConnectionNoContent
-        let q = buildRequest $ do
+        let q = buildRequest1 $ do
                     http GET "/fake"
         sendRequest c q emptyBody
         receiveResponse c (\_ i1 -> do
@@ -398,7 +398,7 @@ testCompressedResponse =
     it "recognizes gzip content encoding and decompresses" $ do
         c <- openConnection "localhost" localPort
 
-        let q = buildRequest $ do
+        let q = buildRequest1 $ do
                     http GET "/static/hello.html"
                     setHeader "Accept-Encoding" "gzip"
 
@@ -430,7 +430,7 @@ testExpectationContinue =
     it "sends expectation and handles 100 response" $ do
         c <- openConnection "localhost" localPort
 
-        let q = buildRequest $ do
+        let q = buildRequest1 $ do
                     http PUT "/resource/x149"
                     setExpectContinue
 
@@ -481,7 +481,7 @@ testSendBodyFor meth =
     it ("Sends a request body for " ++ show meth) $ do
         c <- openConnection "localhost" localPort
 
-        let q = buildRequest $ do
+        let q = buildRequest1 $ do
                     http meth "/size"
                     setContentType "text/plain"
                     setTransferEncoding
@@ -663,7 +663,7 @@ testEstablishConnection =
         let url = S.concat ["http://", localhost, "/static/statler.jpg"]
 
         x' <- withConnection (establishConnection url) $ (\c -> do
-            let q = buildRequest $ do
+            let q = buildRequest1 $ do
                         http GET "/static/statler.jpg"
                     -- TODO be nice if we could replace that with 'url';
                     -- fix the routeRequests function in TestServer maybe?

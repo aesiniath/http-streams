@@ -38,7 +38,7 @@ actual :: ByteString -> IO ()
 actual x' = do
     c <- fakeConnection x'
 
-    let q = buildRequest $ do
+    let q = buildRequest1 $ do
                 http GET "/bucket42/object149"
                 setAccept "text/plain"
 
