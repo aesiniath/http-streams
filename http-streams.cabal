@@ -23,6 +23,7 @@ tested-with:         GHC == 7.8
 stability:           experimental
 homepage:            http://research.operationaldynamics.com/projects/http-streams/
 bug-reports:         https://github.com/afcowie/http-streams/issues
+extra-source-files:  README.markdown CHANGELOG.markdown
 
 build-type:          Custom
 
