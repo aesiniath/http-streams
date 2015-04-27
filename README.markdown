@@ -64,8 +64,9 @@ Change Log
 
 Recent API changes:
 
-* _v0.8.0_  
+* _v0.8.3_  
 	The buildRequest function is now pure.
+	Support for Unix domain socket has been added.
 
 * _v0.7.0_  
 	The Request, Response, Headers, and RequestBuilder types have been

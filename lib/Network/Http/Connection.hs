@@ -20,6 +20,7 @@ module Network.Http.Connection (
     withConnection,
     openConnection,
     openConnectionSSL,
+    openConnectionUnix,
     closeConnection,
     getHostname,
     getRequestHeaders,
@@ -254,6 +255,34 @@ closeSSL :: Socket -> SSL -> IO ()
 closeSSL s ssl = do
     SSL.shutdown ssl SSL.Unidirectional
     close s
+
+--
+-- | Open a connection to a Unix domain socket.
+--
+-- > main :: IO ()
+-- > main = do
+-- >     c <- openConnectionUnix "/var/run/docker.sock"
+-- >     ...
+-- >     closeConnection c
+--
+openConnectionUnix :: FilePath -> IO Connection
+openConnectionUnix path = do
+    let a = SockAddrUnix path
+    s <- socket AF_UNIX Stream defaultProtocol
+
+    connect s a
+    (i,o1) <- Streams.socketToStreams s
+
+    o2 <- Streams.builderStream o1
+
+    return Connection {
+        cHost  = path',
+        cClose = close s,
+        cOut   = o2,
+        cIn    = i
+    }
+  where
+    path'  = S.pack path
 
 --
 -- | Having composed a 'Request' object with the headers and metadata for
