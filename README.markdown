@@ -23,7 +23,7 @@ main :: IO ()
 main = do
     c <- openConnection "www.example.com" 80
     
-    let q = buildRequest $ do
+    let q = buildRequest1 $ do
                 http GET "/"
                 setAccept "text/html"
     
@@ -54,7 +54,7 @@ response as a ByteString using one of the pre-defined handlers:
 ```
 
 See the documentation in
-[Network.Http.Client](http://research.operationaldynamics.com/projects/http-streams/doc/Network-Http-Client.html)
+[Network.Http.Client](https://hackage.haskell.org/package/http-streams/docs/Network-Http-Client.html)
 for further examples and details of usage of the API. There's also a [blog
 post](http://blogs.operationaldynamics.com/andrew/software/haskell/http-streams-introduction)
 introducing the library with a discussion of the design and usage.
