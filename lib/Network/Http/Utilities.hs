@@ -24,7 +24,6 @@
 {-# LANGUAGE MagicHash          #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE Rank2Types         #-}
-{-# LANGUAGE Trustworthy        #-}
 {-# LANGUAGE UnboxedTuples      #-}
 
 module Network.Http.Utilities (
