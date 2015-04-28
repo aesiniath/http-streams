@@ -1,5 +1,5 @@
 * _v0.8.3_  
-	The buildRequest function is now pure.
+	A pure version of `buildRequest` is now available as `buildRequest1`.
 	Support for Unix domain socket has been added.
 
 * _v0.7.0_  
