@@ -1,6 +1,6 @@
 * _v0.8.3_  
 	A pure version of `buildRequest` is now available as `buildRequest1`.
-	Support for Unix domain socket has been added.
+	Support for connecting to Unix domain sockets has been added.
 
 * _v0.7.0_  
 	The Request, Response, Headers, and RequestBuilder types have been
