@@ -160,10 +160,14 @@ module Network.Http.Client (
     --
     URL,
     get,
+    getWithHeader,
     TooManyRedirects,
     post,
+    postWithHeader,
     postForm,
+    postFormWithHeader,
     put,
+    putWithHeader,
 
     -- * Secure connections
     openConnectionSSL,

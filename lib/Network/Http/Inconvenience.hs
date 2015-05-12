@@ -312,7 +312,7 @@ get r' handler = getN 0 r' [] handler
 -- headers. Be aware that these extras are set after the "known" header
 -- args are and will override those already specified should they overlap.
 --
--- By default, 'setAccept' @*/*@ will be first specified. Only after will
+-- By default, 'setAccept' @"*/*"@ will be first specified. Only after will
 -- the rest of the name=value Header pairs be specified via 'setHeader'.
 -- Should any names collide, the last one specified will be one used
 -- in the Header of the request.
@@ -355,12 +355,12 @@ getN n r' h handler = do
     q = buildRequest1 $ do
             http GET (path u)
             setAccept "*/*"
-            mapM (uncurry setHeader) h
+            mapM_ (uncurry setHeader) h
 
     process c = do
         sendRequest c q emptyBody
 
-        receiveResponse c (wrapRedirect u header n handler)
+        receiveResponse c (wrapRedirect u h n handler)
 
 {-
     This is fairly simple-minded. Improvements could include reusing
@@ -435,7 +435,7 @@ post r' t body handler = postWithHeader r' t [] body handler
 
 --
 -- | The same as 'post' but with the ability to add on generic additional
--- headers. By default, 'postWithHeader' specifies 'setAccept' @*/*@ and 'setContentType' first.
+-- headers. By default, 'postWithHeader' specifies 'setAccept' @"*/*"@ and 'setContentType' first.
 --
 -- Beware of Header name collisions. Please refer to 'getWithHeader' for more information.
 --
@@ -487,11 +487,11 @@ postForm
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-postForm r' nvs handler = postFormWithHeader r' [] nvs handler
+postForm r' nvs handler = postFormWithHeader r' nvs [] handler
 
 --
 -- | The same as 'postForm' but with the ability to add on generic additional
--- headers. By default, 'postFormWithHeader' specifies 'setAccept' @*/*@ and
+-- headers. By default, 'postFormWithHeader' specifies 'setAccept' and
 -- 'setContentType' @"application/x-www-form-urlencoded"@.
 --
 -- Beware of Header name collisions. Please refer to 'getWithHeader' for more
@@ -581,7 +581,7 @@ put r' t body handler = putWithHeader r' t [] body handler
 
 --
 -- | The same as 'put' but with the ability to add on generic additional
--- headers. By default, 'postWithHeader' specifies 'setAccept' @*/*@ and
+-- headers. By default, 'postWithHeader' specifies 'setAccept' @"*/*"@ and
 -- 'setContentType' first.
 --
 -- Beware of Header name collisions. Please refer to 'getWithHeader' for
