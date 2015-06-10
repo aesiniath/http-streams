@@ -1,6 +1,6 @@
 cabal-version:       >= 1.10
 name:                http-streams
-version:             0.8.3.1
+version:             0.8.3.2
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
@@ -24,6 +24,19 @@ stability:           experimental
 homepage:            http://research.operationaldynamics.com/projects/http-streams/
 bug-reports:         https://github.com/afcowie/http-streams/issues
 extra-source-files:  README.markdown CHANGELOG.markdown
+                     tests/MockServer.hs
+                     tests/TestSuite.hs
+                     tests/data-eu-gdp.json
+                     tests/data-us-gdp.json
+                     tests/data-jp-gdp.json
+                     tests/statler.jpg
+                     tests/example1.txt
+                     tests/example2.txt
+                     tests/example3.txt
+                     tests/example4.txt
+                     tests/example5.txt
+                     tests/hello.txt
+                     tests/hello.html
 
 build-type:          Custom
 
