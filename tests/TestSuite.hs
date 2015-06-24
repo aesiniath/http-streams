@@ -112,6 +112,7 @@ suite = do
         testEstablishConnection
         testParsingJson1
         testParsingJson2
+        testFetching
 
     describe "Corner cases in protocol compliance" $ do
         testSendBodyFor PUT
@@ -693,6 +694,13 @@ testParsingJson2 =
 
         assertEqual "Incorrect response" "Japan" (gLabel x)
         assertEqual "Data not parsed as expected" 2008 (fst $ last $ gData x)
+
+testFetching =
+  it "plain GET, shouldn't crash" $ do
+        let url = "http://highpointdental.com.au"
+        x <- get url concatHandler
+        assertEqual "a" "a" "context"
+
 --      L.putStr $ encodePretty x
 
 
