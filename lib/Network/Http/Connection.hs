@@ -9,6 +9,7 @@
 -- the BSD licence.
 --
 
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DoAndIfThenElse    #-}
 {-# LANGUAGE OverloadedStrings  #-}
@@ -43,7 +44,6 @@ import qualified Blaze.ByteString.Builder.HTTP as Builder (chunkedTransferEncodi
 import Control.Exception (bracket)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
-import Data.Monoid (mappend, mempty)
 import Network.Socket
 import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSL, SSLContext)
@@ -51,6 +51,10 @@ import qualified OpenSSL.Session as SSL
 import System.IO.Streams (InputStream, OutputStream, stdout)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.SSL as Streams hiding (connect)
+
+#if !MIN_VERSION_base(4,8,0)
+import Data.Monoid (mappend, mempty)
+#endif
 
 import Network.Http.Internal
 import Network.Http.ResponseParser
