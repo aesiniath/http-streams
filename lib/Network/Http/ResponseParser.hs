@@ -16,6 +16,7 @@
 --
 
 {-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
@@ -30,7 +31,6 @@ module Network.Http.ResponseParser (
 
 import Prelude hiding (take, takeWhile)
 
-import Control.Applicative
 import Control.Exception (Exception, throwIO)
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
@@ -45,6 +45,10 @@ import Data.Typeable (Typeable)
 import System.IO.Streams (Generator, InputStream)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
+
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative
+#endif
 
 import Network.Http.Internal
 import Network.Http.Utilities

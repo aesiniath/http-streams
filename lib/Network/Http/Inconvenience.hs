@@ -52,7 +52,6 @@ import Data.HashSet (HashSet)
 import qualified Data.HashSet as HashSet
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Data.List (intersperse)
-import Data.Monoid (Monoid (..), mappend)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Data.Typeable (Typeable)
@@ -68,6 +67,10 @@ import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
 import System.IO.Unsafe (unsafePerformIO)
+
+#if !MIN_VERSION_base(4,8,0)
+import Data.Monoid (Monoid (..), mappend)
+#endif
 
 import Network.Http.Connection
 import Network.Http.RequestBuilder
