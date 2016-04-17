@@ -240,6 +240,8 @@ baselineContextSSL = do
     SSL.contextSetVerificationMode ctx SSL.VerifyNone
 #elif defined __WINDOWS__
     SSL.contextSetVerificationMode ctx SSL.VerifyNone
+#elif defined __FREEBSD__
+    SSL.contextSetCAFile ctx "/usr/local/etc/ssl/cert.pem"
 #else
     fedora <- doesDirectoryExist "/etc/pki/tls"
     if fedora
@@ -615,4 +617,3 @@ jsonHandler _ i = do
     case r of
         (Success a) ->  return a
         (Error str) ->  error str
-
