@@ -98,7 +98,6 @@ test-suite           check
                      http-common >= 0.8.2,
                      HUnit,
                      HsOpenSSL,
-                     MonadCatchIO-transformers,
                      aeson-pretty,
                      attoparsec,
                      base,
