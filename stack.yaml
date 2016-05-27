@@ -1,0 +1,4 @@
+resolver: lts-5.17
+flags:
+  http-streams:
+    network-uri: true

@@ -1,5 +1,4 @@
-cabal-dev/
-dist/
+/dist/
 snippet
 check
 bench
@@ -9,7 +8,5 @@ report.html
 tags
 TAGS
 config.h
-
-.cabal-sandbox/
-cabal.config
-cabal.sandbox.config
+/.stack-work/
+/codex.tags
