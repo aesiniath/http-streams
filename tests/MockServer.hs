@@ -23,7 +23,7 @@ import Prelude hiding (catch)
 import Control.Applicative
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Exception (SomeException)
-import Control.Monad.CatchIO (catch)
+import Control.Exception.Lifted (catch)
 import "mtl" Control.Monad.Trans (liftIO)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
