@@ -1,3 +1,6 @@
+* _v0.8.4_  
+	Support GHC 8.
+
 * _v0.8.3_  
 	A pure version of `buildRequest` is now available as `buildRequest1`.
 	Support for connecting to Unix domain sockets has been added.
