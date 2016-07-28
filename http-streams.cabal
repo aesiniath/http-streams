@@ -1,6 +1,6 @@
 cabal-version:       >= 1.10
 name:                http-streams
-version:             0.8.3.3
+version:             0.8.4.0
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
@@ -17,9 +17,9 @@ license:             BSD3
 license-file:        LICENCE
 author:              Andrew Cowie <andrew@operationaldynamics.com>
 maintainer:          Andrew Cowie <andrew@operationaldynamics.com>
-copyright:           © 2012-2015 Operational Dynamics Consulting, Pty Ltd and Others
+copyright:           © 2012-2016 Operational Dynamics Consulting, Pty Ltd and Others
 category:            Web, IO-Streams
-tested-with:         GHC == 7.8
+tested-with:         GHC == 8.0
 stability:           experimental
 homepage:            http://research.operationaldynamics.com/projects/http-streams/
 bug-reports:         https://github.com/afcowie/http-streams/issues
@@ -48,7 +48,6 @@ library
   default-language:  Haskell2010
 
   build-depends:     attoparsec,
-                     http-common >= 0.8.2,
                      base >= 4 && <5,
                      directory,
                      base64-bytestring,
@@ -62,7 +61,8 @@ library
                      transformers,
                      text,
                      unordered-containers,
-                     aeson
+                     aeson,
+                     http-common >= 0.8.2
   if flag(network-uri)
     build-depends: network-uri >= 2.6, network >= 2.6
   else
@@ -86,7 +86,7 @@ library
 
   include-dirs:      .
 
-  ghc-prof-options:  -prof -fprof-auto-top
+  ghc-prof-options:  -fprof-auto-top
 
 
 test-suite           check
@@ -95,7 +95,6 @@ test-suite           check
   default-language:  Haskell2010
 
   build-depends:
-                     http-common >= 0.8.2,
                      HUnit,
                      HsOpenSSL,
                      lifted-base,
@@ -124,7 +123,7 @@ test-suite           check
                      unordered-containers,
                      aeson,
                      http-common  >= 0.8.2,
-                     http-streams >= 0.8.2
+                     http-streams >= 0.8.4
 
   hs-source-dirs:    lib,tests
   main-is:           check.hs
