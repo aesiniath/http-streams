@@ -1,19 +1,7 @@
-resolver: nightly-2016-08-19
+resolver: lts-8.6
 
 packages:
 - .
-- location:
-    git: https://github.com/snapframework/snap-server
-    commit: 6977049674f406944d325b1575d7e2b588da7c92
-  extra-dep: true
-- location:
-    git: https://github.com/snapframework/snap-core
-    commit: 3f49a1662cad466861b5ec4b1e88812328d26b1b
-  extra-dep: true
-- location:
-    git: https://github.com/snapframework/io-streams-haproxy
-    commit: ee84473f6fe3a6049a40ea4156277efcfde37603
-  extra-dep: true
 
 flags:
   http-streams:
