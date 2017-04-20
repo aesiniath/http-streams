@@ -76,7 +76,7 @@ import Network.Http.Connection
 import Network.Http.RequestBuilder
 import Network.Http.Types
 
-#if defined __LINUX__
+#if defined __LINUX__ || defined __FREEBSD__
 import System.Directory (doesDirectoryExist)
 #endif
 
