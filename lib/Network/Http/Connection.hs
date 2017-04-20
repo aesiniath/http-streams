@@ -236,6 +236,7 @@ openConnectionSSL ctx h1' p = withOpenSSL $ do
     connect s a
 
     ssl <- SSL.connection ctx s
+    SSL.setTlsextHostName ssl h1
     SSL.connect ssl
 
     (i,o1) <- Streams.sslToStreams ssl
