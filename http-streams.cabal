@@ -1,6 +1,6 @@
 cabal-version:       >= 1.10
 name:                http-streams
-version:             0.8.5.0
+version:             0.8.5.1
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
@@ -39,6 +39,10 @@ extra-source-files:  README.markdown CHANGELOG.markdown
                      tests/hello.html
 
 build-type:          Custom
+
+custom-setup
+  setup-depends:     base >= 4,
+                     Cabal
 
 flag network-uri
    description: Get Network.URI from the network-uri package
