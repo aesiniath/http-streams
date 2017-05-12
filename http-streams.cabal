@@ -1,6 +1,6 @@
 cabal-version:       >= 1.10
 name:                http-streams
-version:             0.8.5.1
+version:             0.8.5.2
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
@@ -19,7 +19,7 @@ author:              Andrew Cowie <andrew@operationaldynamics.com>
 maintainer:          Andrew Cowie <andrew@operationaldynamics.com>
 copyright:           © 2012-2017 Operational Dynamics Consulting, Pty Ltd and Others
 category:            Web, IO-Streams
-tested-with:         GHC == 7.10.3, GHC == 8.0.2
+tested-with:         GHC == 8.0.2
 stability:           experimental
 homepage:            http://github.com/afcowie/http-streams/
 bug-reports:         https://github.com/afcowie/http-streams/issues
@@ -58,7 +58,7 @@ library
                      blaze-builder >= 0.4,
                      bytestring,
                      case-insensitive,
-                     io-streams >= 1.3 && < 1.4,
+                     io-streams >= 1.3 && < 1.5,
                      HsOpenSSL >= 0.10.3.5,
                      openssl-streams >= 1.1 && < 1.4,
                      mtl,
@@ -127,10 +127,12 @@ test-suite           check
                      unordered-containers,
                      aeson,
                      http-common  >= 0.8.2,
-                     http-streams >= 0.8.4
+                     http-streams >= 0.8.5
 
   hs-source-dirs:    lib,tests
   main-is:           check.hs
+  other-modules:     TestSuite
+                     MockServer
 
   ghc-options:       -O2
                      -threaded
