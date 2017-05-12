@@ -1,6 +1,6 @@
 cabal-version:       >= 1.10
 name:                http-streams
-version:             0.8.5.2
+version:             0.8.5.3
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
@@ -79,8 +79,7 @@ library
                      Network.Http.Utilities,
                      Network.Http.Inconvenience
 
-  ghc-options:       -O2
-                     -Wall
+  ghc-options:       -Wall
                      -Wwarn
                      -fwarn-tabs
                      -funbox-strict-fields
@@ -90,7 +89,7 @@ library
 
   include-dirs:      .
 
-  ghc-prof-options:  -fprof-auto-top
+  ghc-prof-options:  -fprof-auto-exported
 
 
 test-suite           check
