@@ -140,7 +140,7 @@ urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
     was described on a Haskell Wiki page, so that makes it an officially
     supported kludge. The justification for doing this is a) the functions
     accessing this IORef are themselves all in the IO monad, and b) these
-    contortions are necessary to allow the library to be used for http:// URLs
+    contortions are necessary to allow the library to be used for https:// URLs
     *without* requiring the developer to do 'withOpenSSL'.
 -}
 global :: IORef SSLContext
@@ -190,7 +190,7 @@ establish u =
     case scheme of
         "http:"  -> do
                         openConnection host port
-        "https:" -> withOpenSSL $ do
+        "https:" -> do
                         ctx <- readIORef global
                         openConnectionSSL ctx host ports
         "unix:"  -> do
@@ -233,7 +233,7 @@ establish u =
     hsopenssl, but feel free to change this as appropriate for your OS.
 -}
 baselineContextSSL :: IO SSLContext
-baselineContextSSL = do
+baselineContextSSL = withOpenSSL $ do
     ctx <- SSL.context
     SSL.contextSetDefaultCiphers ctx
 #if defined __MACOSX__
