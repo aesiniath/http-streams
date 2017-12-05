@@ -1,4 +1,4 @@
-cabal-version:       >= 1.10
+cabal-version:       >= 1.24
 name:                http-streams
 version:             0.8.5.5
 synopsis:            An HTTP client using io-streams
@@ -126,15 +126,14 @@ test-suite           check
                      unordered-containers,
                      aeson,
                      http-common  >= 0.8.2,
-                     http-streams >= 0.8.5
+                     http-streams
 
   hs-source-dirs:    lib,tests
   main-is:           check.hs
   other-modules:     TestSuite
                      MockServer
 
-  ghc-options:       -O2
-                     -threaded
+  ghc-options:       -threaded
                      -Wall
                      -Wwarn
                      -fwarn-tabs
