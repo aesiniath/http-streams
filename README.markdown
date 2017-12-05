@@ -2,9 +2,8 @@ An HTTP client
 ==============
 
 An HTTP client library for Haskell using the Snap Framework's
-[io-streams](https://github.com/snapframework/io-streams) library to
-handle the streaming IO.
-<!-- replace with link to hackage when it is released -->
+[io-streams](https://hackage.haskell.org/package/io-streams) library to handle
+the streaming IO.
 
 A common case in writing RESTful web services is needing to make onward calls
 to further servers. This package is intended to make this easy to do.
