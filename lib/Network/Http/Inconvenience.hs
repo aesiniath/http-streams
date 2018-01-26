@@ -243,6 +243,9 @@ baselineContextSSL = withOpenSSL $ do
 #elif defined __FREEBSD__
     SSL.contextSetCAFile ctx "/usr/local/etc/ssl/cert.pem"
     SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
+#elif defined __OPENBSD__
+    SSL.contextSetCAFile ctx "/etc/ssl/cert.pem"
+    SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
 #else
     fedora <- doesDirectoryExist "/etc/pki/tls"
     if fedora
