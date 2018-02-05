@@ -217,13 +217,14 @@ establish u =
 -- @\"https:\/\/\"@ request using one of the convenience functions. It
 -- configures OpenSSL to use the default set of ciphers.
 --
--- On Linux systems, this function also configures OpenSSL to verify
--- certificates using the system certificates stored in @\/etc\/ssl\/certs@.
+-- On Linux, OpenBSD and FreeBSD systems, this function also configures
+-- OpenSSL to verify certificates using the system/distribution supplied
+-- certificate authorities' certificates
 --
 -- On other systems, /no certificate validation is performed/ by the
 -- generated 'SSLContext' because there is no canonical place to find
--- the set of system certificates. When using this library on a
--- non-Linux system, you are encouraged to install the system
+-- the set of system certificates. When using this library on such system,
+-- you are encouraged to install the system
 -- certificates somewhere and create your own 'SSLContext'.
 --
 {-
@@ -242,6 +243,9 @@ baselineContextSSL = withOpenSSL $ do
     SSL.contextSetVerificationMode ctx SSL.VerifyNone
 #elif defined __FREEBSD__
     SSL.contextSetCAFile ctx "/usr/local/etc/ssl/cert.pem"
+    SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
+#elif defined __OPENBSD__
+    SSL.contextSetCAFile ctx "/etc/ssl/cert.pem"
     SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
 #else
     fedora <- doesDirectoryExist "/etc/pki/tls"
