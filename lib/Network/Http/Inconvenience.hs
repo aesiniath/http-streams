@@ -36,8 +36,6 @@ module Network.Http.Inconvenience (
     splitURI
 ) where
 
-#include "config.h"
-
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder (fromByteString,
                                                       fromWord8, toByteString)
@@ -77,10 +75,11 @@ import Network.Http.Connection
 import Network.Http.RequestBuilder
 import Network.Http.Types
 
-#if defined __LINUX__ || defined __FREEBSD__
+-- (see also http://downloads.haskell.org/~ghc/8.4.2/docs/html/users_guide/phases.html#standard-cpp-macros
+-- for a list of predefined CPP macros provided by GHC and/or Cabal; see also the cabal user's guide)
+#if defined(linux_HOST_OS) || defined(freebsd_HOST_OS)
 import System.Directory (doesDirectoryExist)
 #endif
-
 
 type URL = ByteString
 
@@ -238,14 +237,14 @@ baselineContextSSL :: IO SSLContext
 baselineContextSSL = withOpenSSL $ do
     ctx <- SSL.context
     SSL.contextSetDefaultCiphers ctx
-#if defined __MACOSX__
+#if defined(darwin_HOST_OS)
     SSL.contextSetVerificationMode ctx SSL.VerifyNone
-#elif defined __WINDOWS__
+#elif defined(mingw32_HOST_OS)
     SSL.contextSetVerificationMode ctx SSL.VerifyNone
-#elif defined __FREEBSD__
+#elif defined(freebsd_HOST_OS)
     SSL.contextSetCAFile ctx "/usr/local/etc/ssl/cert.pem"
     SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
-#elif defined __OPENBSD__
+#elif defined(openbsd_HOST_OS)
     SSL.contextSetCAFile ctx "/etc/ssl/cert.pem"
     SSL.contextSetVerificationMode ctx $ SSL.VerifyPeer True True Nothing
 #else
