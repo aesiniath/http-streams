@@ -1,6 +1,6 @@
 cabal-version:       >= 1.24
 name:                http-streams
-version:             0.8.5.6
+version:             0.8.6.1
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
@@ -73,11 +73,11 @@ library
     build-depends: network-uri < 2.6, network < 2.6
 
   hs-source-dirs:    lib
-  exposed-modules:   Network.Http.Client
-  other-modules:     Network.Http.Connection,
+  exposed-modules:   Network.Http.Client,
+                     Network.Http.Connection,
                      Network.Http.ResponseParser,
-                     Network.Http.Utilities,
                      Network.Http.Inconvenience
+  other-modules:     Network.Http.Utilities
 
   ghc-options:       -Wall
                      -Wwarn
@@ -128,7 +128,7 @@ test-suite           check
                      http-common  >= 0.8.2,
                      http-streams
 
-  hs-source-dirs:    lib,tests
+  hs-source-dirs:    tests
   main-is:           check.hs
   other-modules:     TestSuite
                      MockServer

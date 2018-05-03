@@ -1,5 +1,12 @@
+* _v0.8.6_  
+	Internal modules are exposed. Mostly so the test suite would only
+	depend on the library and not the code directly, but occasionally
+	someone needed to poke at the internals. Usual warning against
+	doing that applies. They are _not_ visible in the generated Haddock
+	documentation.
+
 * _v0.8.4_  
-	Support GHC 8.
+	Support GHC 8.0
 
 * _v0.8.3_  
 	A pure version of `buildRequest` is now available as `buildRequest1`.

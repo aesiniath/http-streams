@@ -1,7 +1,7 @@
 --
 -- HTTP client for use with io-streams
 --
--- Copyright © 2012-2014 Operational Dynamics Consulting, Pty Ltd
+-- Copyright © 2012-2018 Operational Dynamics Consulting, Pty Ltd
 --
 -- The code in this file, and the program it is a part of, is
 -- made available to you by its authors as open source software:
@@ -19,6 +19,7 @@
 {-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
+{-# OPTIONS_HADDOCK hide, not-home #-}
 
 module Network.Http.ResponseParser (
     readResponseHeader,
