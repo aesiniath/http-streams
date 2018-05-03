@@ -1,8 +1,12 @@
-resolver: lts-10.5
+resolver: nightly-2018-05-02
 
 packages:
 - .
 
+extra-deps:
+
 flags:
   http-streams:
     network-uri: true
+
+allow-newer: true
