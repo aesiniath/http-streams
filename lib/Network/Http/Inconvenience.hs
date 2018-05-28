@@ -33,7 +33,8 @@ module Network.Http.Inconvenience (
     HttpClientError(..),
 
         -- for testing
-    splitURI
+    splitURI,
+    parseURL
 ) where
 
 import Blaze.ByteString.Builder (Builder)
@@ -58,7 +59,8 @@ import Data.Word (Word16)
 import GHC.Exts
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), isAbsoluteURI,
-                    parseRelativeReference, parseURI, uriToString)
+                    parseRelativeReference,
+                    parseURI, escapeURIString, isUnescapedInURI, uriToString)
 import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
@@ -265,7 +267,7 @@ parseURL r' =
         Just u  -> u
         Nothing -> error ("Can't parse URI " ++ r)
   where
-    r = T.unpack $ T.decodeUtf8 r'
+    r = escapeURIString isUnescapedInURI $ T.unpack $ T.decodeUtf8 r'
 
 ------------------------------------------------------------------------------
 
