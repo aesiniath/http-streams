@@ -36,7 +36,7 @@ import qualified Data.Text as Text
 import qualified Data.Text.Encoding as Text
 import GHC.Generics hiding (Selector)
 import Network.Socket (SockAddr (..))
-import Network.URI (parseURI)
+import Network.URI (parseURI, URI(..), URIAuth(..))
 import System.Timeout (timeout)
 import Test.Hspec (Spec, describe, it)
 import Test.Hspec.Expectations (Selector, anyException, shouldThrow)
@@ -65,7 +65,8 @@ import MockServer (localPort)
 import Network.Http.Client
 import Network.Http.Connection (Connection (..))
 import Network.Http.Inconvenience (HttpClientError (..),
-                                   TooManyRedirects (..), splitURI)
+                                   TooManyRedirects (..),
+                                   splitURI, parseURL)
 import Network.Http.Internal (Request (..), Response (..),
                               composeRequestBytes, lookupHeader)
 import Network.Http.ResponseParser (readDecimal, readResponseHeader)
@@ -105,6 +106,7 @@ suite = do
         testPostWithForm
         testGetRedirects
         testSplitURI
+        testParseURL
         testGetLocalRedirects
         testGetFormatsRequest
         testExcessiveRedirects
@@ -600,6 +602,12 @@ testSplitURI =
             r5 = S.pack "http://google.ru/"
         assertEqual "Incorrect split uri 5" r5          (splitURI (fromJust $ parseURI a5) r5)
 
+testParseURL =
+    it "Parse URL with chars needing encoding" $ do
+        let url = parseURL (Text.encodeUtf8 $ Text.pack "http://example.com/α")
+        assertEqual "Incorrect URL parsing"
+          (URI "http:" (Just $ URIAuth "" "example.com" "") "/%CE%B1" "" "") url
+
 
 testGetFormatsRequest =
     it "GET includes a properly formatted request path" $ do
@@ -694,7 +702,6 @@ testParsingJson2 =
         assertEqual "Incorrect response" "Japan" (gLabel x)
         assertEqual "Data not parsed as expected" 2008 (fst $ last $ gData x)
 --      L.putStr $ encodePretty x
-
 
 {-
     Go to the trouble to create a Haskell data type representing the JSON feed
