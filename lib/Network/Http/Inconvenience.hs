@@ -22,10 +22,14 @@ module Network.Http.Inconvenience (
     modifyContextSSL,
     establishConnection,
     get,
+    getWithHeader,
     post,
+    postWithHeader,
     postForm,
+    postFormWithHeader,
     encodedFormBody,
     put,
+    putWithHeader,
     baselineContextSSL,
     concatHandler',
     jsonHandler,
@@ -311,9 +315,43 @@ get :: URL
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-get r' handler = getN 0 r' handler
+get r' handler = getN 0 r' [] handler
 
-getN n r' handler = do
+--
+-- | The same as 'get' but with the ability to add on generic additional
+-- headers. Be aware that these extras are set after the "known" header
+-- args are and will override those already specified should they overlap.
+--
+-- By default, 'setAccept' @"*/*"@ will be first specified. Only after will
+-- the rest of the name=value Header pairs be specified via 'setHeader'.
+-- Should any names collide, the last one specified will be one used
+-- in the Header of the request.
+--
+-- For example, the following are wholly equivilent:
+--
+-- >    get "foo.com/bar"
+-- >    getWithHeader "foo.com/bar" []
+-- >    getWithHeader "foo.com/bar" [("Accept", "*/*")]
+--
+-- In this example, "Accept" could be overwriten (intentionally or
+-- unintentionally) via:
+--
+-- >    getWithHeader "foo.com/bar" [("Accept", "text/json")]
+--
+-- Though appropriate for protoypes a more typesafe system is provided
+-- via 'buildRequest1' or 'buildRequest' and is thus recommended. See
+-- the aforementioned as well as 'setHeader' for more details.
+--
+getWithHeader :: URL
+    -- ^ Resource to GET from.
+    -> [(ByteString, ByteString)]
+    -- ^ List of Header key=value pairs each applied via 'setHeader'
+    -> (Response -> InputStream ByteString -> IO β)
+    -- ^ Handler function to receive the response from the server.
+    -> IO β
+getWithHeader r' h handler = getN 0 r' h handler
+
+getN n r' h handler = do
     bracket
         (establish u)
         (teardown)
@@ -327,12 +365,12 @@ getN n r' handler = do
     q = buildRequest1 $ do
             http GET (path u)
             setAccept "*/*"
+            mapM_ (uncurry setHeader) h
 
     process c = do
         sendRequest c q emptyBody
 
-        receiveResponse c (wrapRedirect u n handler)
-
+        receiveResponse c (wrapRedirect u h n handler)
 
 {-
     This is fairly simple-minded. Improvements could include reusing
@@ -344,15 +382,16 @@ getN n r' handler = do
 
 wrapRedirect
     :: URI
+    -> [(ByteString, ByteString)]
     -> Int
     -> (Response -> InputStream ByteString -> IO β)
     -> Response
     -> InputStream ByteString
     -> IO β
-wrapRedirect u n handler p i = do
+wrapRedirect u h n handler p i = do
     if (s == 301 || s == 302 || s == 303 || s == 307)
         then case lm of
-                Just l  -> getN n' (splitURI u l) handler
+                Just l  -> getN n' (splitURI u l) h handler
                 Nothing -> handler p i
         else handler p i
   where
@@ -361,7 +400,6 @@ wrapRedirect u n handler p i = do
     !n' = if n < 5
             then n + 1
             else throw $! TooManyRedirects n
-
 
 splitURI :: URI -> URL -> URL
 splitURI old new' =
@@ -403,7 +441,26 @@ post :: URL
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-post r' t body handler = do
+post r' t body handler = postWithHeader r' t [] body handler
+
+--
+-- | The same as 'post' but with the ability to add on generic additional
+-- headers. By default, 'postWithHeader' specifies 'setAccept' @"*/*"@ and 'setContentType' first.
+--
+-- Beware of Header name collisions. Please refer to 'getWithHeader' for more information.
+--
+postWithHeader :: URL
+    -- ^ Resource to POST to.
+    -> ContentType
+    -- ^ MIME type of the request body being sent.
+    -> [(ByteString, ByteString)]
+    -- ^ List of Header name=value pairs each applied via 'setHeader'
+    -> (OutputStream Builder -> IO α)
+    -- ^ Handler function to write content to server.
+    -> (Response -> InputStream ByteString -> IO β)
+    -- ^ Handler function to receive the response from the server.
+    -> IO β
+postWithHeader r' t h body handler = do
     bracket
         (establish u)
         (teardown)
@@ -417,13 +474,13 @@ post r' t body handler = do
             http POST (path u)
             setAccept "*/*"
             setContentType t
+            mapM_ (uncurry setHeader) h
 
     process c = do
         _ <- sendRequest c q body
 
         x <- receiveResponse c handler
         return x
-
 
 --
 -- | Send form data to a server via an HTTP POST request. This is the
@@ -440,7 +497,27 @@ postForm
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-postForm r' nvs handler = do
+postForm r' nvs handler = postFormWithHeader r' nvs [] handler
+
+--
+-- | The same as 'postForm' but with the ability to add on generic additional
+-- headers. By default, 'postFormWithHeader' specifies 'setAccept' and
+-- 'setContentType' @"application/x-www-form-urlencoded"@.
+--
+-- Beware of Header name collisions. Please refer to 'getWithHeader' for more
+-- information.
+--
+postFormWithHeader
+    :: URL
+    -- ^ Resource to POST to.
+    -> [(ByteString, ByteString)]
+    -- ^ List of form body name=value pairs. Will be sent URL-encoded.
+    -> [(ByteString, ByteString)]
+    -- ^ List of additional Header name=value pairs each applied via 'setHeader'
+    -> (Response -> InputStream ByteString -> IO β)
+    -- ^ Handler function to receive the response from the server.
+    -> IO β
+postFormWithHeader r' nvs h handler = do
     bracket
         (establish u)
         (teardown)
@@ -454,13 +531,13 @@ postForm r' nvs handler = do
             http POST (path u)
             setAccept "*/*"
             setContentType "application/x-www-form-urlencoded"
+            mapM_ (uncurry setHeader) h
 
     process c = do
         _ <- sendRequest c q (encodedFormBody nvs)
 
         x <- receiveResponse c handler
         return x
-
 
 --
 -- | Specify name/value pairs to be sent to the server in the manner
@@ -510,7 +587,28 @@ put :: URL
     -> (Response -> InputStream ByteString -> IO β)
     -- ^ Handler function to receive the response from the server.
     -> IO β
-put r' t body handler = do
+put r' t body handler = putWithHeader r' t [] body handler
+
+--
+-- | The same as 'put' but with the ability to add on generic additional
+-- headers. By default, 'postWithHeader' specifies 'setAccept' @"*/*"@ and
+-- 'setContentType' first.
+--
+-- Beware of Header name collisions. Please refer to 'getWithHeader' for
+-- more information.
+--
+putWithHeader :: URL
+    -- ^ Resource to PUT to.
+    -> ContentType
+    -- ^ MIME type of the request body being sent.
+    -> [(ByteString, ByteString)]
+    -- ^ List of additional Header name=value pairs each applied via 'setHeader'
+    -> (OutputStream Builder -> IO α)
+    -- ^ Handler function to write content to server.
+    -> (Response -> InputStream ByteString -> IO β)
+    -- ^ Handler function to receive the response from the server.
+    -> IO β
+putWithHeader r' t h body handler = do
     bracket
         (establish u)
         (teardown)
@@ -523,7 +621,8 @@ put r' t body handler = do
     q = buildRequest1 $ do
             http PUT (path u)
             setAccept "*/*"
-            setHeader "Content-Type" t
+            setContentType t
+            mapM_ (uncurry setHeader) h
 
     process c = do
         _ <- sendRequest c q body
