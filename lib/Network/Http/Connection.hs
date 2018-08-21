@@ -30,6 +30,7 @@ module Network.Http.Connection (
     sendRequest,
     receiveResponse,
     receiveResponseRaw,
+    unsafeReceiveResponse,
     UnexpectedCompression,
     emptyBody,
     fileBody,
@@ -490,6 +491,21 @@ receiveResponseRaw c handler = do
   where
     i = cIn c
 
+--
+-- | Handle the response coming back from the server. This function
+-- is the same as receiveResponse, but it does not consume the body for
+-- you after the handler is done.  This means that it can only be safely used
+-- if the handler will fully consume the body, there is no body, or when
+-- the connection is not being reused (no pipelining).
+--
+unsafeReceiveResponse :: Connection -> (Response -> InputStream ByteString -> IO β) -> IO β
+unsafeReceiveResponse c handler = do
+    p  <- readResponseHeader i
+    i' <- readResponseBody p i
+
+    handler p i'
+  where
+    i = cIn c
 
 --
 -- | Use this for the common case of the HTTP methods that only send
