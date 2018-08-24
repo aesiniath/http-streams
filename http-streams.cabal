@@ -1,6 +1,6 @@
 cabal-version:       1.24
 name:                http-streams
-version:             0.8.6.2
+version:             0.8.7.1
 synopsis:            An HTTP client using io-streams
 description:
  /Overview/
@@ -114,8 +114,8 @@ test-suite           check
                      network >= 2.6,
                      network-uri >= 2.6,
                      openssl-streams >= 1.1    && < 1.4,
-                     snap-core       >= 1.0    && < 1.1,
-                     snap-server     >= 1.0    && < 1.1,
+                     snap-core       >= 1.0    && < 1.2,
+                     snap-server     >= 1.0    && < 1.2,
                      system-fileio   >= 0.3.10 && < 0.4,
                      system-filepath >= 0.4.1  && < 0.5,
                      text,
