@@ -1,6 +1,7 @@
-resolver: lts-12.7
+resolver: lts-13.14
 
 packages:
+- ../http-common
 - .
 
 extra-deps:
