@@ -19,7 +19,7 @@ author:              Andrew Cowie <andrew@operationaldynamics.com>
 maintainer:          Andrew Cowie <andrew@operationaldynamics.com>
 copyright:           © 2012-2019 Operational Dynamics Consulting, Pty Ltd and Others
 category:            Web, IO-Streams
-tested-with:         GHC == 8.2.2, GHC == 8.4.3, GHC == 8.6.4
+tested-with:         GHC == 8.2.2, GHC == 8.4.3, GHC == 8.6.5
 stability:           experimental
 homepage:            https://github.com/afcowie/http-streams/
 bug-reports:         https://github.com/afcowie/http-streams/issues
