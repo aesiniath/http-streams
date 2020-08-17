@@ -189,7 +189,7 @@ openConnection h1' p = do
     }
   where
     hints = defaultHints {
-        addrFlags = [AI_ADDRCONFIG, AI_NUMERICSERV],
+        addrFlags = [AI_NUMERICSERV],
         addrSocketType = Stream
     }
     h2' = if p == 80
