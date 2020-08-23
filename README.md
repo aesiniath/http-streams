@@ -61,7 +61,7 @@ introducing the library with a discussion of the design and usage.
 Change Log
 ----------
 
-Now included in separate file [CHANGELOG](CHANGELOG.markdown).
+Now included in separate file [CHANGELOG](CHANGELOG.md).
 
 AfC
 

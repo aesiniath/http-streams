@@ -23,7 +23,7 @@ tested-with:         GHC == 8.8.3
 stability:           experimental
 homepage:            https://github.com/aesiniath/http-streams/
 bug-reports:         https://github.com/aesiniath/http-streams/issues
-extra-source-files:  README.markdown CHANGELOG.markdown
+extra-source-files:  README.md CHANGELOG.md
                      tests/MockServer.hs
                      tests/TestSuite.hs
                      tests/data-eu-gdp.json
