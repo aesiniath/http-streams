@@ -6,7 +6,6 @@ report.html
 *.prof
 *.mem
 tags
-TAGS
 config.h
 /.stack-work/
-/codex.tags
+/stack.yaml.lock
