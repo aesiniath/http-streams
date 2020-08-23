@@ -21,8 +21,8 @@ copyright:           © 2012-2020 Athae Eredh Siniath and Others
 category:            Web, IO-Streams
 tested-with:         GHC == 8.8.3
 stability:           experimental
-homepage:            https://github.com/afcowie/http-streams/
-bug-reports:         https://github.com/afcowie/http-streams/issues
+homepage:            https://github.com/aesiniath/http-streams/
+bug-reports:         https://github.com/aesiniath/http-streams/issues
 extra-source-files:  README.markdown CHANGELOG.markdown
                      tests/MockServer.hs
                      tests/TestSuite.hs
@@ -143,7 +143,7 @@ test-suite           check
 
 source-repository    head
   type:              git
-  location:          git://github.com/afcowie/http-streams.git
+  location:          git://github.com/aesiniath/http-streams.git
 
 
 -- vim: set tabstop=21 expandtab:
