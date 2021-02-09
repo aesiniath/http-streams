@@ -107,6 +107,7 @@ suite = do
         testGetRedirects
         testSplitURI
         testParseURL
+        testParseURLHasEscaped
         testGetLocalRedirects
         testGetFormatsRequest
         testExcessiveRedirects
@@ -608,6 +609,11 @@ testParseURL =
         assertEqual "Incorrect URL parsing"
           (URI "http:" (Just $ URIAuth "" "example.com" "") "/%CE%B1" "" "") url
 
+testParseURLHasEscaped =
+    it "Parse URL with chars already encoded" $ do
+        let url = parseURL (Text.encodeUtf8 $ Text.pack "http://example.com/hello%20world")
+        assertEqual "Incorrect URL parsing"
+          (URI "http:" (Just $ URIAuth "" "example.com" "") "/hello%20world" "" "") url
 
 testGetFormatsRequest =
     it "GET includes a properly formatted request path" $ do
