@@ -52,7 +52,7 @@
 --         xm <- Streams.read i
 --         case xm of
 --             Just x    -> S.putStr x
---             Nothing   -> \"\")
+--             Nothing   -> S.putStr \"\")
 --
 -- \    'closeConnection' c
 -- @
