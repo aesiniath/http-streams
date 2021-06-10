@@ -1,4 +1,4 @@
-resolver: lts-16.10
+resolver: lts-17.15
 
 packages:
 - ../http-common
