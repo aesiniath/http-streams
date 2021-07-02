@@ -114,6 +114,7 @@ suite = do
         testEstablishConnection
         testParsingJson1
         testParsingJson2
+        testPostWithSimple
         testPostWithJson
 
     describe "Corner cases in protocol compliance" $ do
@@ -726,6 +727,20 @@ instance ToJSON GrossDomesticProduct where
     toJSON (GrossDomesticProduct l d) = object
                                ["label" .= l,
                                 "data"  .= d]
+
+
+testPostWithSimple =
+    it "PUT with static data" $ do
+        let url = S.concat ["http://", localhost, "/resource/y98"]
+
+        x' <- put url "text/plain" (simpleBody b') concatHandler
+
+        assertEqual "Object was encoded to JSON as expected"
+                    "Hello"
+                    x'
+      where
+        b' :: ByteString
+        b' = S.pack "Hello"
 
 testPostWithJson =
     it "PUT with json data" $ do

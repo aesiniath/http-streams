@@ -126,6 +126,7 @@ module Network.Http.Client (
     getHostname,
     sendRequest,
     emptyBody,
+    simpleBody,
     fileBody,
     inputStreamBody,
     encodedFormBody,
