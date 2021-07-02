@@ -126,9 +126,11 @@ module Network.Http.Client (
     getHostname,
     sendRequest,
     emptyBody,
+    simpleBody,
     fileBody,
     inputStreamBody,
     encodedFormBody,
+    jsonBody,
 
     -- * Processing HTTP response
     receiveResponse,

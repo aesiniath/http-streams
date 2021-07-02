@@ -33,6 +33,7 @@ module Network.Http.Connection (
     unsafeReceiveResponse,
     UnexpectedCompression,
     emptyBody,
+    simpleBody,
     fileBody,
     inputStreamBody,
     debugHandler,
@@ -514,6 +515,16 @@ unsafeReceiveResponse c handler = do
 emptyBody :: OutputStream Builder -> IO ()
 emptyBody _ = return ()
 
+{-|
+Sometimes you just want to send some bytes to the server as a the body of your
+request. This is easy to use, but if you're doing anything massive use
+'inputStreamBody'; if you're sending a file use 'fileBody'; if you have an
+object that needs to be sent as JSON use 'jsonBody'
+-}
+simpleBody :: ByteString -> OutputStream Builder -> IO ()
+simpleBody x' o = do
+    let b = Builder.fromByteString x'
+    Streams.write (Just b) o
 
 --
 -- | Specify a local file to be sent to the server as the body of the
@@ -536,7 +547,6 @@ emptyBody _ = return ()
 fileBody :: FilePath -> OutputStream Builder -> IO ()
 fileBody p o = do
     Streams.withFileAsInput p (\i -> inputStreamBody i o)
-
 
 --
 -- | Read from a pre-existing 'InputStream' and pipe that through to the
