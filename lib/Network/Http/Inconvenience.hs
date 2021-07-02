@@ -28,6 +28,7 @@ module Network.Http.Inconvenience (
     put,
     baselineContextSSL,
     concatHandler',
+    jsonBody,
     jsonHandler,
     TooManyRedirects(..),
     HttpClientError(..),
@@ -38,11 +39,11 @@ module Network.Http.Inconvenience (
 ) where
 
 import Blaze.ByteString.Builder (Builder)
-import qualified Blaze.ByteString.Builder as Builder (fromByteString,
+import qualified Blaze.ByteString.Builder as Builder (fromByteString, fromLazyByteString,
                                                       fromWord8, toByteString)
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromString)
 import Control.Exception (Exception, bracket, throw)
-import Data.Aeson (FromJSON, Result (..), fromJSON, json')
+import Data.Aeson (FromJSON, ToJSON, Result (..), fromJSON, json', encode)
 import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S
@@ -562,6 +563,21 @@ instance Show HttpClientError where
     in the runtime when raised, not sure it's worth the bother. It's
     not like we'd want anything different in their Show instances.
 -}
+
+
+{-|
+If you've got an object of a type with a 'ToJSON' instance and you need to
+send that object as JSON up to a web service API, this can help.
+
+You use this partially applied:
+
+>    sendRequest c q (jsonBody thing)
+
+-}
+jsonBody :: ToJSON a => a -> OutputStream Builder -> IO ()
+jsonBody thing o = do
+    let b = Builder.fromLazyByteString (encode thing)
+    Streams.write (Just b) o
 
 --
 -- | If you're working with a data stream that is in @application/json@,

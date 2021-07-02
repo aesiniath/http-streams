@@ -129,6 +129,7 @@ module Network.Http.Client (
     fileBody,
     inputStreamBody,
     encodedFormBody,
+    jsonBody,
 
     -- * Processing HTTP response
     receiveResponse,

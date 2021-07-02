@@ -537,7 +537,6 @@ fileBody :: FilePath -> OutputStream Builder -> IO ()
 fileBody p o = do
     Streams.withFileAsInput p (\i -> inputStreamBody i o)
 
-
 --
 -- | Read from a pre-existing 'InputStream' and pipe that through to the
 -- connection to the server. This is useful in the general case where

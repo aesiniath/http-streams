@@ -1,6 +1,6 @@
 cabal-version:       1.24
 name:                http-streams
-version:             0.8.7.3
+version:             0.8.8.1
 synopsis:            An HTTP client using io-streams
 description:
  An HTTP client, using the Snap Framework's 'io-streams' library to
