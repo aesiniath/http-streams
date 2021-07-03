@@ -7,7 +7,7 @@ the streaming IO.
 
 A common case in writing RESTful web services is needing to make onward calls
 to further servers. This package is intended to make this easy to do.
-Though originally written for making calls from wep apps written with
+Though originally written for making calls from web apps written with
 Snap, you can use this from any library or framework.
 
 Enjoy!

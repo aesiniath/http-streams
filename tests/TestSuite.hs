@@ -24,7 +24,7 @@ import Control.Concurrent (MVar, newEmptyMVar, putMVar, takeMVar)
 import Control.Exception (Exception, bracket, handleJust)
 import Control.Monad (forM_, guard)
 import Data.Aeson (FromJSON, ToJSON, Value (..), json, object, parseJSON,
-                   toJSON, (.:), (.=))
+                   toJSON, (.:), (.=), encode)
 import Data.Aeson.Encode.Pretty
 import Data.Bits
 import qualified Data.HashMap.Strict as Map
@@ -115,6 +115,8 @@ suite = do
         testEstablishConnection
         testParsingJson1
         testParsingJson2
+        testPostWithSimple
+        testPostWithJson
 
     describe "Corner cases in protocol compliance" $ do
         testSendBodyFor PUT
@@ -732,3 +734,35 @@ instance ToJSON GrossDomesticProduct where
                                ["label" .= l,
                                 "data"  .= d]
 
+
+testPostWithSimple =
+    it "PUT with static data" $ do
+        let url = S.concat ["http://", localhost, "/resource/y98"]
+
+        x' <- put url "text/plain" (simpleBody b') concatHandler
+
+        assertEqual "Object was encoded to JSON as expected"
+                    "Hello"
+                    x'
+      where
+        b' :: ByteString
+        b' = S.pack "Hello"
+
+testPostWithJson =
+    it "PUT with json data" $ do
+        let url = S.concat ["http://", localhost, "/resource/y99"]
+
+        x' <- put url "application/json" (jsonBody obj) concatHandler
+
+        assertEqual "Object was encoded to JSON as expected"
+                    "{\"data\":[[2000,1],[2020,0]],\"label\":\"Sealand\"}"
+                    x'
+      where
+        obj :: GrossDomesticProduct
+        obj = GrossDomesticProduct {
+                    gLabel = "Sealand",
+                    gData = [(2000,1),(2020,0)]
+                }
+
+        obj' :: ByteString
+        obj' = L.toStrict (encode obj)
