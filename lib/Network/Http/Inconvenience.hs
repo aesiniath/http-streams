@@ -61,7 +61,7 @@ import GHC.Exts
 import GHC.Word (Word8 (..))
 import Network.URI (URI (..), URIAuth (..), isAbsoluteURI,
                     parseRelativeReference,
-                    parseURI, escapeURIString, isUnescapedInURI, uriToString)
+                    parseURI, escapeURIString, isAllowedInURI, uriToString)
 import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
@@ -268,7 +268,7 @@ parseURL r' =
         Just u  -> u
         Nothing -> error ("Can't parse URI " ++ r)
   where
-    r = escapeURIString isUnescapedInURI $ T.unpack $ T.decodeUtf8 r'
+    r = escapeURIString isAllowedInURI $ T.unpack $ T.decodeUtf8 r'
 
 ------------------------------------------------------------------------------
 
