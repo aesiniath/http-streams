@@ -8,12 +8,11 @@
 -- you can redistribute it and/or modify it under the terms of
 -- the BSD licence.
 --
-
-{-# LANGUAGE BangPatterns       #-}
-{-# LANGUAGE CPP                #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE MagicHash          #-}
-{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# OPTIONS_HADDOCK hide, not-home #-}
 
@@ -31,20 +30,23 @@ module Network.Http.Inconvenience (
     concatHandler',
     jsonBody,
     jsonHandler,
-    TooManyRedirects(..),
-    HttpClientError(..),
-
-        -- for testing
+    TooManyRedirects (..),
+    HttpClientError (..),
+    -- for testing
     splitURI,
-    parseURL
+    parseURL,
 ) where
 
 import Blaze.ByteString.Builder (Builder)
-import qualified Blaze.ByteString.Builder as Builder (fromByteString, fromLazyByteString,
-                                                      fromWord8, toByteString)
+import qualified Blaze.ByteString.Builder as Builder (
+    fromByteString,
+    fromLazyByteString,
+    fromWord8,
+    toByteString,
+ )
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromString)
 import Control.Exception (Exception, bracket, throw)
-import Data.Aeson (FromJSON, ToJSON, Result (..), fromJSON, json', encode)
+import Data.Aeson (FromJSON, Result (..), ToJSON, encode, fromJSON, json')
 import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S
@@ -60,9 +62,16 @@ import Data.Typeable (Typeable)
 import Data.Word (Word16)
 import GHC.Exts
 import GHC.Word (Word8 (..))
-import Network.URI (URI (..), URIAuth (..), isAbsoluteURI,
-                    parseRelativeReference,
-                    parseURI, escapeURIString, isAllowedInURI, uriToString)
+import Network.URI (
+    URI (..),
+    URIAuth (..),
+    escapeURIString,
+    isAbsoluteURI,
+    isAllowedInURI,
+    parseRelativeReference,
+    parseURI,
+    uriToString,
+ )
 import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
@@ -89,52 +98,52 @@ type URL = ByteString
 
 ------------------------------------------------------------------------------
 
---
--- | URL-escapes a string (see
--- <http://tools.ietf.org/html/rfc2396.html#section-2.4>)
---
+{- |
+URL-escapes a string (see
+<http://tools.ietf.org/html/rfc2396.html#section-2.4>)
+-}
 urlEncode :: ByteString -> URL
 urlEncode = Builder.toByteString . urlEncodeBuilder
 {-# INLINE urlEncode #-}
 
-
---
--- | URL-escapes a string (see
--- <http://tools.ietf.org/html/rfc2396.html#section-2.4>) into a 'Builder'.
---
+{- |
+URL-escapes a string (see
+<http://tools.ietf.org/html/rfc2396.html#section-2.4>) into a 'Builder'.
+-}
 urlEncodeBuilder :: ByteString -> Builder
 urlEncodeBuilder = go mempty
   where
     go !b !s = maybe b' esc (S.uncons y)
       where
-        (x,y)     = S.span (flip HashSet.member urlEncodeTable) s
-        b'        = b `mappend` Builder.fromByteString x
-        esc (c,r) = let b'' = if c == ' '
-                                then b' `mappend` Builder.fromWord8 (c2w '+')
-                                else b' `mappend` hexd c
-                    in go b'' r
-
+        (x, y) = S.span (flip HashSet.member urlEncodeTable) s
+        b' = b `mappend` Builder.fromByteString x
+        esc (c, r) =
+            let b'' =
+                    if c == ' '
+                        then b' `mappend` Builder.fromWord8 (c2w '+')
+                        else b' `mappend` hexd c
+             in go b'' r
 
 hexd :: Char -> Builder
-hexd c0 = Builder.fromWord8 (c2w '%') `mappend` Builder.fromWord8 hi
-                                      `mappend` Builder.fromWord8 low
+hexd c0 =
+    Builder.fromWord8 (c2w '%') `mappend` Builder.fromWord8 hi
+        `mappend` Builder.fromWord8 low
   where
-    !c        = c2w c0
-    toDigit   = c2w . intToDigit
-    !low      = toDigit $ fromEnum $ c .&. 0xf
-    !hi       = toDigit $ (c .&. 0xf0) `shiftr` 4
+    !c = c2w c0
+    toDigit = c2w . intToDigit
+    !low = toDigit $ fromEnum $ c .&. 0xf
+    !hi = toDigit $ (c .&. 0xf0) `shiftr` 4
 
     shiftr (W8# a#) (I# b#) = I# (word2Int# (uncheckedShiftRL# a# b#))
 
-
 urlEncodeTable :: HashSet Char
-urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0..255]
+urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0 .. 255]
   where
-    f c | c >= 'A' && c <= 'Z' = True
+    f c
+        | c >= 'A' && c <= 'Z' = True
         | c >= 'a' && c <= 'z' = True
         | c >= '0' && c <= '9' = True
-    f c = c `elem` ("$-_.!~*'(),"::String)
-
+    f c = c `elem` ("$-_.!~*'()," :: String)
 
 ------------------------------------------------------------------------------
 
@@ -153,35 +162,35 @@ global = unsafePerformIO $ do
     newIORef ctx
 {-# NOINLINE global #-}
 
---
--- | Modify the context being used to configure the SSL tunnel used by
--- the convenience API functions to make @https://@ connections. The
--- default is that setup by 'baselineContextSSL'.
---
+{- |
+Modify the context being used to configure the SSL tunnel used by
+the convenience API functions to make @https://@ connections. The
+default is that setup by 'baselineContextSSL'.
+-}
 modifyContextSSL :: (SSLContext -> IO SSLContext) -> IO ()
 modifyContextSSL f = do
     ctx <- readIORef global
     ctx' <- f ctx
     writeIORef global ctx'
 
---
--- | Given a URL, work out whether it is normal, secure, or unix domain,
--- and then open the connection to the webserver including setting the
--- appropriate default port if one was not specified in the URL. This
--- is what powers the convenience API, but you may find it useful in
--- composing your own similar functions.
---
--- For example (on the assumption that your server behaves when given
--- an absolute URI as the request path), this will open a connection
--- to server @www.example.com@ port @443@ and request @/photo.jpg@:
---
--- >     let url = "https://www.example.com/photo.jpg"
--- >
--- >     c <- establishConnection url
--- >     let q = buildRequest1 $ do
--- >                 http GET url
--- >     ...
---
+{- |
+Given a URL, work out whether it is normal, secure, or unix domain,
+and then open the connection to the webserver including setting the
+appropriate default port if one was not specified in the URL. This
+is what powers the convenience API, but you may find it useful in
+composing your own similar functions.
+
+For example (on the assumption that your server behaves when given
+an absolute URI as the request path), this will open a connection
+to server @www.example.com@ port @443@ and request @/photo.jpg@:
+
+>     let url = "https://www.example.com/photo.jpg"
+>
+>     c <- establishConnection url
+>     let q = buildRequest1 $ do
+>                 http GET url
+>     ...
+-}
 establishConnection :: URL -> IO (Connection)
 establishConnection r' = do
     establish u
@@ -192,45 +201,45 @@ establishConnection r' = do
 establish :: URI -> IO (Connection)
 establish u =
     case scheme of
-        "http:"  -> do
-                        openConnection host port
+        "http:" -> do
+            openConnection host port
         "https:" -> do
-                        ctx <- readIORef global
-                        openConnectionSSL ctx host ports
-        "unix:"  -> do
-                        openConnectionUnix $ uriPath u
-        _        -> error ("Unknown URI scheme " ++ scheme)
+            ctx <- readIORef global
+            openConnectionSSL ctx host ports
+        "unix:" -> do
+            openConnectionUnix $ uriPath u
+        _ -> error ("Unknown URI scheme " ++ scheme)
   where
     scheme = uriScheme u
 
     auth = case uriAuthority u of
-        Just x  -> x
+        Just x -> x
         Nothing -> URIAuth "" "localhost" ""
 
     host = S.pack (uriRegName auth)
     port = case uriPort auth of
-        ""  -> 80
-        _   -> read $ tail $ uriPort auth :: Word16
+        "" -> 80
+        _ -> read $ tail $ uriPort auth :: Word16
     ports = case uriPort auth of
-        ""  -> 443
-        _   -> read $ tail $ uriPort auth :: Word16
+        "" -> 443
+        _ -> read $ tail $ uriPort auth :: Word16
 
+{- |
+Creates a basic SSL context. This is the SSL context used if you make an
+@\"https:\/\/\"@ request using one of the convenience functions. It
+configures OpenSSL to use the default set of ciphers.
 
---
--- | Creates a basic SSL context. This is the SSL context used if you make an
--- @\"https:\/\/\"@ request using one of the convenience functions. It
--- configures OpenSSL to use the default set of ciphers.
---
--- On Linux, OpenBSD and FreeBSD systems, this function also configures
--- OpenSSL to verify certificates using the system/distribution supplied
--- certificate authorities' certificates
---
--- On other systems, /no certificate validation is performed/ by the
--- generated 'SSLContext' because there is no canonical place to find
--- the set of system certificates. When using this library on such system,
--- you are encouraged to install the system
--- certificates somewhere and create your own 'SSLContext'.
---
+On Linux, OpenBSD and FreeBSD systems, this function also configures
+OpenSSL to verify certificates using the system/distribution supplied
+certificate authorities' certificates
+
+On other systems, /no certificate validation is performed/ by the
+generated 'SSLContext' because there is no canonical place to find
+the set of system certificates. When using this library on such system,
+you are encouraged to install the system
+certificates somewhere and create your own 'SSLContext'.
+-}
+
 {-
     We would like to turn certificate verification on for everyone, but
     this has proved contingent on leveraging platform specific mechanisms
@@ -262,11 +271,10 @@ baselineContextSSL = withOpenSSL $ do
 #endif
     return ctx
 
-
 parseURL :: URL -> URI
 parseURL r' =
     case parseURI r of
-        Just u  -> u
+        Just u -> u
         Nothing -> error ("Can't parse URI " ++ r)
   where
     r = escapeURIString isAllowedInURI $ T.unpack $ T.decodeUtf8 r'
@@ -280,41 +288,42 @@ parseURL r' =
 
 path :: URI -> ByteString
 path u = case url of
-            ""  -> "/"
-            _   -> url
+    "" -> "/"
+    _ -> url
   where
-    url = T.encodeUtf8 $! T.pack
-                      $! concat [uriPath u, uriQuery u, uriFragment u]
-
+    url =
+        T.encodeUtf8 $! T.pack
+            $! concat [uriPath u, uriQuery u, uriFragment u]
 
 ------------------------------------------------------------------------------
 
---
--- | Issue an HTTP GET request and pass the resultant response to the
--- supplied handler function. This code will silently follow redirects,
--- to a maximum depth of 5 hops.
---
--- The handler function is as for 'receiveResponse', so you can use one
--- of the supplied convenience handlers if you're in a hurry:
---
--- >     x' <- get "http://www.bbc.co.uk/news/" concatHandler
---
--- But as ever the disadvantage of doing this is that you're not doing
--- anything intelligent with the HTTP response status code. If you want
--- an exception raised in the event of a non @2xx@ response, you can use:
---
--- >     x' <- get "http://www.bbc.co.uk/news/" concatHandler'
---
--- but for anything more refined you'll find it easy to simply write
--- your own handler function.
---
--- Throws 'TooManyRedirects' if more than 5 redirects are thrown.
---
-get :: URL
-    -- ^ Resource to GET from.
-    -> (Response -> InputStream ByteString -> IO β)
-    -- ^ Handler function to receive the response from the server.
-    -> IO β
+{- |
+Issue an HTTP GET request and pass the resultant response to the
+supplied handler function. This code will silently follow redirects,
+to a maximum depth of 5 hops.
+
+The handler function is as for 'receiveResponse', so you can use one
+of the supplied convenience handlers if you're in a hurry:
+
+>     x' <- get "http://www.bbc.co.uk/news/" concatHandler
+
+But as ever the disadvantage of doing this is that you're not doing
+anything intelligent with the HTTP response status code. If you want
+an exception raised in the event of a non @2xx@ response, you can use:
+
+>     x' <- get "http://www.bbc.co.uk/news/" concatHandler'
+
+but for anything more refined you'll find it easy to simply write
+your own handler function.
+
+Throws 'TooManyRedirects' if more than 5 redirects are thrown.
+-}
+get ::
+    -- | Resource to GET from.
+    URL ->
+    -- | Handler function to receive the response from the server.
+    (Response -> InputStream ByteString -> IO β) ->
+    IO β
 get r' handler = getN 0 r' handler
 
 getN n r' handler = do
@@ -322,21 +331,19 @@ getN n r' handler = do
         (establish u)
         (teardown)
         (process)
-
   where
     teardown = closeConnection
 
     u = parseURL r'
 
     q = buildRequest1 $ do
-            http GET (path u)
-            setAccept "*/*"
+        http GET (path u)
+        setAccept "*/*"
 
     process c = do
         sendRequest c q emptyBody
 
         receiveResponse c (wrapRedirect u n handler)
-
 
 {-
     This is fairly simple-minded. Improvements could include reusing
@@ -346,67 +353,66 @@ getN n r' handler = do
     it for now.
 -}
 
-wrapRedirect
-    :: URI
-    -> Int
-    -> (Response -> InputStream ByteString -> IO β)
-    -> Response
-    -> InputStream ByteString
-    -> IO β
+wrapRedirect ::
+    URI ->
+    Int ->
+    (Response -> InputStream ByteString -> IO β) ->
+    Response ->
+    InputStream ByteString ->
+    IO β
 wrapRedirect u n handler p i = do
     if (s == 301 || s == 302 || s == 303 || s == 307)
         then case lm of
-                Just l  -> getN n' (splitURI u l) handler
-                Nothing -> handler p i
+            Just l -> getN n' (splitURI u l) handler
+            Nothing -> handler p i
         else handler p i
   where
-    s  = getStatusCode p
+    s = getStatusCode p
     lm = getHeader p "Location"
-    !n' = if n < 5
+    !n' =
+        if n < 5
             then n + 1
             else throw $! TooManyRedirects n
 
-
 splitURI :: URI -> URL -> URL
 splitURI old new' =
-  let
-    new = S.unpack new'
-  in
-    if isAbsoluteURI new
-       then
-            new'
-       else
-         let
-            rel = parseRelativeReference new
-         in
-            case rel of
-                Nothing -> new'
-                Just x  -> S.pack $ uriToString id old {
-                                                    uriPath = uriPath x,
-                                                    uriQuery = uriQuery x,
-                                                    uriFragment = uriFragment x
-                                                   } ""
-
+    let new = S.unpack new'
+     in if isAbsoluteURI new
+            then new'
+            else
+                let rel = parseRelativeReference new
+                 in case rel of
+                        Nothing -> new'
+                        Just x ->
+                            S.pack $
+                                uriToString
+                                    id
+                                    old
+                                        { uriPath = uriPath x
+                                        , uriQuery = uriQuery x
+                                        , uriFragment = uriFragment x
+                                        }
+                                    ""
 
 data TooManyRedirects = TooManyRedirects Int
-        deriving (Typeable, Show, Eq)
+    deriving (Typeable, Show, Eq)
 
 instance Exception TooManyRedirects
 
-
---
--- | Send content to a server via an HTTP POST request. Use this
--- function if you have an 'OutputStream' with the body content.
---
-post :: URL
-    -- ^ Resource to POST to.
-    -> ContentType
-    -- ^ MIME type of the request body being sent.
-    -> (OutputStream Builder -> IO α)
-    -- ^ Handler function to write content to server.
-    -> (Response -> InputStream ByteString -> IO β)
-    -- ^ Handler function to receive the response from the server.
-    -> IO β
+{- |
+Send content to a server via an HTTP POST request. Use this
+function if you have an 'OutputStream' with the body content.
+-}
+post ::
+    -- | Resource to POST to.
+    URL ->
+    -- | MIME type of the request body being sent.
+    ContentType ->
+    -- | Handler function to write content to server.
+    (OutputStream Builder -> IO α) ->
+    -- | Handler function to receive the response from the server.
+    (Response -> InputStream ByteString -> IO β) ->
+    IO β
 post r' t body handler = do
     bracket
         (establish u)
@@ -418,9 +424,9 @@ post r' t body handler = do
     u = parseURL r'
 
     q = buildRequest1 $ do
-            http POST (path u)
-            setAccept "*/*"
-            setContentType t
+        http POST (path u)
+        setAccept "*/*"
+        setContentType t
 
     process c = do
         _ <- sendRequest c q body
@@ -428,22 +434,21 @@ post r' t body handler = do
         x <- receiveResponse c handler
         return x
 
-
---
--- | Send form data to a server via an HTTP POST request. This is the
--- usual use case; most services expect the body to be MIME type
--- @application/x-www-form-urlencoded@ as this is what conventional
--- web browsers send on form submission. If you want to POST to a URL
--- with an arbitrary Content-Type, use 'post'.
---
-postForm
-    :: URL
-    -- ^ Resource to POST to.
-    -> [(ByteString, ByteString)]
-    -- ^ List of name=value pairs. Will be sent URL-encoded.
-    -> (Response -> InputStream ByteString -> IO β)
-    -- ^ Handler function to receive the response from the server.
-    -> IO β
+{- |
+Send form data to a server via an HTTP POST request. This is the
+usual use case; most services expect the body to be MIME type
+@application/x-www-form-urlencoded@ as this is what conventional
+web browsers send on form submission. If you want to POST to a URL
+with an arbitrary Content-Type, use 'post'.
+-}
+postForm ::
+    -- | Resource to POST to.
+    URL ->
+    -- | List of name=value pairs. Will be sent URL-encoded.
+    [(ByteString, ByteString)] ->
+    -- | Handler function to receive the response from the server.
+    (Response -> InputStream ByteString -> IO β) ->
+    IO β
 postForm r' nvs handler = do
     bracket
         (establish u)
@@ -455,9 +460,9 @@ postForm r' nvs handler = do
     u = parseURL r'
 
     q = buildRequest1 $ do
-            http POST (path u)
-            setAccept "*/*"
-            setContentType "application/x-www-form-urlencoded"
+        http POST (path u)
+        setAccept "*/*"
+        setContentType "application/x-www-form-urlencoded"
 
     process c = do
         _ <- sendRequest c q (encodedFormBody nvs)
@@ -465,55 +470,56 @@ postForm r' nvs handler = do
         x <- receiveResponse c handler
         return x
 
+{- |
+Specify name/value pairs to be sent to the server in the manner
+used by web browsers when submitting a form via a POST request.
+Parameters will be URL encoded per RFC 2396 and combined into a
+single string which will be sent as the body of your request.
 
---
--- | Specify name/value pairs to be sent to the server in the manner
--- used by web browsers when submitting a form via a POST request.
--- Parameters will be URL encoded per RFC 2396 and combined into a
--- single string which will be sent as the body of your request.
---
--- You use this partially applied:
---
--- >     let nvs = [("name","Kermit"),
--- >                ("type","frog")]
--- >                ("role","stagehand")]
--- >
--- >     sendRequest c q (encodedFormBody nvs)
---
--- Note that it's going to be up to you to call 'setContentType' with
--- a value of @\"application/x-www-form-urlencoded\"@ when building the
--- Request object; the 'postForm' convenience (which uses this
--- @encodedFormBody@ function) takes care of this for you, obviously.
---
-encodedFormBody :: [(ByteString,ByteString)] -> OutputStream Builder -> IO ()
+You use this partially applied:
+
+>     let nvs = [("name","Kermit"),
+>                ("type","frog")]
+>                ("role","stagehand")]
+>
+>     sendRequest c q (encodedFormBody nvs)
+
+Note that it's going to be up to you to call 'setContentType' with
+a value of @\"application/x-www-form-urlencoded\"@ when building the
+Request object; the 'postForm' convenience (which uses this
+@encodedFormBody@ function) takes care of this for you, obviously.
+-}
+encodedFormBody :: [(ByteString, ByteString)] -> OutputStream Builder -> IO ()
 encodedFormBody nvs o = do
     Streams.write (Just b) o
   where
     b = mconcat $ intersperse (Builder.fromString "&") $ map combine nvs
 
-    combine :: (ByteString,ByteString) -> Builder
-    combine (n',v') = mconcat [urlEncodeBuilder n', Builder.fromString "=", urlEncodeBuilder v']
+    combine :: (ByteString, ByteString) -> Builder
+    combine (n', v') = mconcat [urlEncodeBuilder n', Builder.fromString "=", urlEncodeBuilder v']
 
+--
 
---
--- | Place content on the server at the given URL via an HTTP PUT
--- request, specifying the content type and a function to write the
--- content to the supplied 'OutputStream'. You might see:
---
--- >     put "http://s3.example.com/bucket42/object149" "text/plain"
--- >         (fileBody "hello.txt") (\p i -> do
--- >             putStr $ show p
--- >             Streams.connect i stdout)
---
-put :: URL
-    -- ^ Resource to PUT to.
-    -> ContentType
-    -- ^ MIME type of the request body being sent.
-    -> (OutputStream Builder -> IO α)
-    -- ^ Handler function to write content to server.
-    -> (Response -> InputStream ByteString -> IO β)
-    -- ^ Handler function to receive the response from the server.
-    -> IO β
+{- |
+Place content on the server at the given URL via an HTTP PUT
+request, specifying the content type and a function to write the
+content to the supplied 'OutputStream'. You might see:
+
+>     put "http://s3.example.com/bucket42/object149" "text/plain"
+>         (fileBody "hello.txt") (\p i -> do
+>             putStr $ show p
+>             Streams.connect i stdout)
+-}
+put ::
+    -- | Resource to PUT to.
+    URL ->
+    -- | MIME type of the request body being sent.
+    ContentType ->
+    -- | Handler function to write content to server.
+    (OutputStream Builder -> IO α) ->
+    -- | Handler function to receive the response from the server.
+    (Response -> InputStream ByteString -> IO β) ->
+    IO β
 put r' t body handler = do
     bracket
         (establish u)
@@ -525,9 +531,9 @@ put r' t body handler = do
     u = parseURL r'
 
     q = buildRequest1 $ do
-            http PUT (path u)
-            setAccept "*/*"
-            setHeader "Content-Type" t
+        http PUT (path u)
+        setAccept "*/*"
+        setHeader "Content-Type" t
 
     process c = do
         _ <- sendRequest c q body
@@ -535,12 +541,11 @@ put r' t body handler = do
         x <- receiveResponse c handler
         return x
 
-
---
--- | A special case of 'concatHandler', this function will return the
--- entire response body as a single ByteString, but will throw
--- 'HttpClientError' if the response status code was other than @2xx@.
---
+{- |
+A special case of 'concatHandler', this function will return the
+entire response body as a single ByteString, but will throw
+'HttpClientError' if the response status code was other than @2xx@.
+-}
 simpleHandler' :: Response -> InputStream ByteString -> IO ByteString
 simpleHandler' p i =
     if s >= 300
@@ -554,7 +559,7 @@ concatHandler' :: Response -> InputStream ByteString -> IO ByteString
 concatHandler' = simpleHandler'
 
 data HttpClientError = HttpClientError Int ByteString
-        deriving (Typeable)
+    deriving (Typeable)
 
 instance Exception HttpClientError
 
@@ -568,54 +573,53 @@ instance Show HttpClientError where
     not like we'd want anything different in their Show instances.
 -}
 
-
-{-|
+{- |
 If you've got an object of a type with a 'ToJSON' instance and you need to
 send that object as JSON up to a web service API, this can help.
 
 You use this partially applied:
 
 >    sendRequest c q (jsonBody thing)
-
 -}
 jsonBody :: ToJSON a => a -> OutputStream Builder -> IO ()
 jsonBody thing o = do
     let b = Builder.fromLazyByteString (encode thing)
     Streams.write (Just b) o
 
---
--- | If you're working with a data stream that is in @application/json@,
--- then chances are you're using @aeson@ to handle the JSON to Haskell
--- decoding. If so, then this helper function might be of use.
---
--- >     v <- get "http://api.example.com/v1/" jsonHandler
---
--- This function feeds the input body to the 'Data.Aeson.Parser.json''
--- @attoparsec@ Parser in order to get the aeson Value type. This is then
--- marshalled to your type represeting the source data, via the FromJSON
--- typeclass.
---
--- The above example was actually insufficient; when working with
--- @aeson@ you need to fix the type so it knows what FromJSON instance
--- to use. Let's say you're getting Person objects, then it would be
---
--- >     v <- get "http://api.example.com/v1/person/461" jsonHandler :: IO Person
---
--- assuming your Person type had a FromJSON instance, of course.
---
--- /Note/
---
--- This function parses a single top level JSON object or array, which
--- is all you're supposed to get if it's a valid document. People do
--- all kinds of crazy things though, so beware. Also, this function (like the
--- "concatHander" convenience) loads the entire response into memory; it's
--- not /streaming/; if you're receiving a document which is (say) a very
--- long array of objects then you may want to implement your own
--- handler function, perhaps using "Streams.parserToInputStream" and
--- the 'Data.Aeson.Parser' combinators directly — with a result type of
--- InputStream Value, perhaps — by which you could then iterate over
--- the Values one at a time in constant space.
---
+{- |
+If you're working with a data stream that is in @application/json@,
+then chances are you're using @aeson@ to handle the JSON to Haskell
+decoding. If so, then this helper function might be of use.
+
+>     v <- get "http://api.example.com/v1/" jsonHandler
+
+This function feeds the input body to the 'Data.Aeson.Parser.json''
+@attoparsec@ Parser in order to get the aeson Value type. This is then
+marshalled to your type represeting the source data, via the FromJSON
+typeclass.
+
+The above example was actually insufficient; when working with
+@aeson@ you need to fix the type so it knows what FromJSON instance
+to use. Let's say you're getting Person objects, then it would be
+
+>     v <- get "http://api.example.com/v1/person/461" jsonHandler :: IO Person
+
+assuming your Person type had a FromJSON instance, of course.
+
+/Note/
+
+This function parses a single top level JSON object or array, which
+is all you're supposed to get if it's a valid document. People do
+all kinds of crazy things though, so beware. Also, this function (like the
+"concatHander" convenience) loads the entire response into memory; it's
+not /streaming/; if you're receiving a document which is (say) a very
+long array of objects then you may want to implement your own
+handler function, perhaps using "Streams.parserToInputStream" and
+the 'Data.Aeson.Parser' combinators directly — with a result type of
+InputStream Value, perhaps — by which you could then iterate over
+the Values one at a time in constant space.
+-}
+
 {-
     This looks simple. It wasn't. The types involved are rediculous to
     disentangle. The biggest problem is that the Parser type used in
@@ -633,14 +637,14 @@ jsonBody thing o = do
     Result α). Then finally, pull the result out of it. Why in Bog's
     name this wasn't just Either I'll never know.
 -}
-jsonHandler
-    :: (FromJSON α)
-    => Response
-    -> InputStream ByteString
-    -> IO α
+jsonHandler ::
+    (FromJSON α) =>
+    Response ->
+    InputStream ByteString ->
+    IO α
 jsonHandler _ i = do
-    v <- Streams.parseFromStream json' i        -- Value
-    let r = fromJSON v                          -- Result
+    v <- Streams.parseFromStream json' i -- Value
+    let r = fromJSON v -- Result
     case r of
-        (Success a) ->  return a
-        (Error str) ->  error str
+        (Success a) -> return a
+        (Error str) -> error str
