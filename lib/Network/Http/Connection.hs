@@ -37,6 +37,7 @@ module Network.Http.Connection (
     fileBody,
     inputStreamBody,
     debugHandler,
+    simpleHandler,
     concatHandler
 ) where
 
@@ -614,7 +615,7 @@ debugHandler p i = do
 -- as follows:
 --
 -- >    ...
--- >    x' <- receiveResponse c concatHandler
+-- >    x' <- receiveResponse c simpleHandler
 -- >    ...
 --
 -- The methods in the convenience API all take a function to handle the
@@ -622,7 +623,7 @@ debugHandler p i = do
 -- call underlying the request. Thus this utility function can be used
 -- for 'get' as well:
 --
--- >    x' <- get "http://www.example.com/document.txt" concatHandler
+-- >    x' <- get "http://www.example.com/document.txt" simpleHandler
 --
 -- Either way, the usual caveats about allocating a
 -- single object from streaming I/O apply: do not use this if you are
@@ -633,15 +634,15 @@ debugHandler p i = do
 -- response's HTTP status code. You're almost certainly better off
 -- writing your own handler function.
 --
-{-
-    I'd welcome a better name for this function.
--}
-concatHandler :: Response -> InputStream ByteString -> IO ByteString
-concatHandler _ i1 = do
+simpleHandler :: Response -> InputStream ByteString -> IO ByteString
+simpleHandler _ i1 = do
     i2 <- Streams.map Builder.fromByteString i1
     x <- Streams.fold mappend mempty i2
     return $ Builder.toByteString x
 
+concatHandler :: Response -> InputStream ByteString -> IO ByteString
+concatHandler = simpleHandler
+{-# DEPRECATED concatHandler "Use simpleHandler instead" #-}
 
 --
 -- | Shutdown the connection. You need to call this release the

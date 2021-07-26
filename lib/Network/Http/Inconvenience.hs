@@ -27,6 +27,7 @@ module Network.Http.Inconvenience (
     encodedFormBody,
     put,
     baselineContextSSL,
+    simpleHandler',
     concatHandler',
     jsonBody,
     jsonHandler,
@@ -540,14 +541,17 @@ put r' t body handler = do
 -- entire response body as a single ByteString, but will throw
 -- 'HttpClientError' if the response status code was other than @2xx@.
 --
-concatHandler' :: Response -> InputStream ByteString -> IO ByteString
-concatHandler' p i =
+simpleHandler' :: Response -> InputStream ByteString -> IO ByteString
+simpleHandler' p i =
     if s >= 300
         then throw (HttpClientError s m)
-        else concatHandler p i
+        else simpleHandler p i
   where
     s = getStatusCode p
     m = getStatusMessage p
+
+concatHandler' :: Response -> InputStream ByteString -> IO ByteString
+concatHandler' = simpleHandler'
 
 data HttpClientError = HttpClientError Int ByteString
         deriving (Typeable)

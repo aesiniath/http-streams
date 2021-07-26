@@ -142,8 +142,8 @@ module Network.Http.Client (
     getStatusMessage,
     getHeader,
     debugHandler,
-    concatHandler,
-    concatHandler',
+    simpleHandler,
+    simpleHandler',
     HttpClientError(..),
     jsonHandler,
 
@@ -181,6 +181,8 @@ module Network.Http.Client (
     getHeadersFull,
 
     -- * Deprecated
+    concatHandler,
+    concatHandler',
     getRequestHeaders
 ) where
 
