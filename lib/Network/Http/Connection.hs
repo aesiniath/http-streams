@@ -1,7 +1,7 @@
 --
 -- HTTP client for use with io-streams
 --
--- Copyright © 2012-2018 Operational Dynamics Consulting, Pty Ltd
+-- Copyright © 2012-2021 Athae Eredh Siniath and Others
 --
 -- The code in this file, and the program it is a part of, is
 -- made available to you by its authors as open source software:
