@@ -1,15 +1,15 @@
 --
 -- HTTP client for use with io-streams
 --
--- Copyright © 2012-2014 Operational Dynamics Consulting, Pty Ltd
+-- Copyright © 2012-2021 Athae Eredh Siniath and Others
 --
 -- The code in this file, and the program it is a part of, is made
 -- available to you by its authors as open source software: you can
 -- redistribute it and/or modify it under a BSD licence.
 --
-
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports    #-}
+{-# LANGUAGE PackageImports #-}
+
 {-# OPTIONS -fno-warn-dodgy-imports #-}
 
 module MockServer (runMockServer, localPort) where
@@ -52,13 +52,13 @@ main = go
 go :: IO ()
 go = httpServe c site
   where
-    c = setAccessLog ConfigNoLog $
-        setErrorLog ConfigNoLog $
-        setHostname localHost $
-        setBind localHost $
-        setPort (fromIntegral localPort) $
-        setVerbose False emptyConfig
-
+    c =
+        setAccessLog ConfigNoLog $
+            setErrorLog ConfigNoLog $
+                setHostname localHost $
+                    setBind localHost $
+                        setPort (fromIntegral localPort) $
+                            setVerbose False emptyConfig
 
 runMockServer :: IO ()
 runMockServer = do
@@ -71,27 +71,28 @@ runMockServer = do
 --
 
 site :: Snap ()
-site = catch
-    (routeRequests)
-    (\e -> serveError "Splat\n" e)
+site =
+    catch
+        (routeRequests)
+        (\e -> serveError "Splat\n" e)
 
 routeRequests :: Snap ()
 routeRequests =
     route
-            [("resource/:id", serveResource),
-             ("static/:id", method GET serveStatic),
-             ("time", serveTime),
-             ("", ifTop handleAsText),
-             ("bounce", serveRedirect),
-             ("local", serveLocalRedirect),
-             ("loop", serveRedirectEndlessly),
-             ("empty", serveWithoutContent),
-             ("postbox", method POST handlePostMethod),
-             ("size", handleSizeRequest),
-             ("api", handleRestfulRequest),
-             ("cookies", serveRepeatedResponseHeaders)]
-    <|> serveNotFound
-
+        [ ("resource/:id", serveResource)
+        , ("static/:id", method GET serveStatic)
+        , ("time", serveTime)
+        , ("", ifTop handleAsText)
+        , ("bounce", serveRedirect)
+        , ("local", serveLocalRedirect)
+        , ("loop", serveRedirectEndlessly)
+        , ("empty", serveWithoutContent)
+        , ("postbox", method POST handlePostMethod)
+        , ("size", handleSizeRequest)
+        , ("api", handleRestfulRequest)
+        , ("cookies", serveRepeatedResponseHeaders)
+        ]
+        <|> serveNotFound
 
 serveResource :: Snap ()
 serveResource = do
@@ -99,10 +100,9 @@ serveResource = do
 
     let m = rqMethod r
     case m of
-        GET     -> handleGetMethod
-        PUT     -> handlePutWithExpectation
-        _       -> serveMethodNotAllowed
-
+        GET -> handleGetMethod
+        PUT -> handlePutWithExpectation
+        _ -> serveMethodNotAllowed
 
 serveStatic :: Snap ()
 serveStatic = do
@@ -120,11 +120,9 @@ serveStatic = do
     b' <- liftIO $ S.readFile f
     writeBS b'
 
-
 serveTime :: Snap ()
 serveTime = do
     writeBS "Sun 30 Dec 12, 05:39:56.746Z\n"
-
 
 --
 -- Dispatch normal GET requests based on MIME type.
@@ -136,9 +134,8 @@ handleGetMethod = do
     let mime0 = getHeader "Accept" r
 
     case mime0 of
-        Just "text/html"        -> handleAsBrowser
-        _                       -> handleAsText
-
+        Just "text/html" -> handleAsBrowser
+        _ -> handleAsText
 
 handleAsBrowser :: Snap ()
 handleAsBrowser = do
@@ -147,12 +144,10 @@ handleAsBrowser = do
     modifyResponse $ setHeader "Cache-Control" "max-age=1"
     sendFile "tests/hello.html"
 
-
 handleAsText :: Snap ()
 handleAsText = do
     modifyResponse $ setContentType "text/plain"
     writeBS "Sounds good to me\n"
-
 
 handleRestfulRequest :: Snap ()
 handleRestfulRequest = do
@@ -160,7 +155,6 @@ handleRestfulRequest = do
     modifyResponse $ setContentType "application/json"
 
     sendFile "tests/data-eu-gdp.json"
-
 
 serveRedirect :: Snap ()
 serveRedirect = do
@@ -198,7 +192,6 @@ serveWithoutContent = do
     modifyResponse $ setResponseStatus 204 "No Content"
     modifyResponse $ setHeader "Cache-Control" "no-cache"
 
-
 serveRepeatedResponseHeaders :: Snap ()
 serveRepeatedResponseHeaders = do
     modifyResponse $ addHeader "Set-Cookie" "stone=diamond"
@@ -215,7 +208,6 @@ handlePostMethod = do
     b' <- readRequestBody 1024
     writeLBS b'
 
-
 handlePutWithExpectation :: Snap ()
 handlePutWithExpectation = do
     setTimeout 5
@@ -226,7 +218,6 @@ handlePutWithExpectation = do
     b' <- readRequestBody 1024
     writeLBS b'
 
-
 handleSizeRequest :: Snap ()
 handleSizeRequest = do
     r <- getRequest
@@ -234,7 +225,7 @@ handleSizeRequest = do
 
     t <- case mm of
         Just m -> return m
-        _      -> do
+        _ -> do
             serveUnsupported
             return ""
 
@@ -243,7 +234,6 @@ handleSizeRequest = do
 
     b' <- readRequestBody 65536
     writeBS $ S.pack $ show $ L.length b'
-
 
 updateResource :: Snap ()
 updateResource = do
@@ -262,7 +252,6 @@ updateResource = do
   where
     fromLazy ls' = S.concat $ L.toChunks ls'
 
-
 serveNotFound :: Snap a
 serveNotFound = do
     modifyResponse $ setResponseStatus 404 "Not Found"
@@ -273,12 +262,10 @@ serveNotFound = do
     r <- getResponse
     finishWith r
 
-
 serveBadRequest :: Snap ()
 serveBadRequest = do
     modifyResponse $ setResponseStatus 400 "Bad Request"
     writeBS "400 Bad Request\n"
-
 
 serveMethodNotAllowed :: Snap ()
 serveMethodNotAllowed = do
@@ -289,14 +276,12 @@ serveMethodNotAllowed = do
     r <- getResponse
     finishWith r
 
-
 serveUnsupported :: Snap ()
 serveUnsupported = do
     modifyResponse $ setResponseStatus 415 "Unsupported Media Type"
     writeBS "415 Unsupported Media Type\n"
     r <- getResponse
     finishWith r
-
 
 --
 -- The exception will be dumped to the server's stdout, while the supplied
@@ -314,12 +299,9 @@ serveError x' e = do
   where
     msg = show (e :: SomeException)
 
-
 debug :: String -> Snap ()
 debug cs = do
     liftIO $ do
         hPutStrLn stderr ""
         hPutStrLn stderr cs
         hFlush stderr
-
-
