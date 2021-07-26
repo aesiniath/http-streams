@@ -1,7 +1,7 @@
 --
 -- HTTP client for use with io-streams
 --
--- Copyright © 2012-2018 Operational Dynamics Consulting, Pty Ltd
+-- Copyright © 2012-2021 Athae Eredh Siniath and Others
 --
 -- The code in this file, and the program it is a part of, is
 -- made available to you by its authors as open source software:
@@ -14,20 +14,18 @@
 -- src/Snap/Internal/Http/Parser.hs, and various utility functions
 -- have been cloned from there.
 --
-
-{-# LANGUAGE BangPatterns       #-}
-{-# LANGUAGE CPP                #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_HADDOCK hide, not-home #-}
 
 module Network.Http.ResponseParser (
     readResponseHeader,
     readResponseBody,
-    UnexpectedCompression(..),
-
-        -- for testing
-    readDecimal
+    UnexpectedCompression (..),
+    -- for testing
+    readDecimal,
 ) where
 
 import Prelude hiding (take, takeWhile)
@@ -64,60 +62,59 @@ import Network.Http.Utilities
 __BITE_SIZE__ :: Int
 __BITE_SIZE__ = 32 * 1024
 
-
 {-
     Process the reply from the server up to the end of the headers as
     deliniated by a blank line.
 -}
 readResponseHeader :: InputStream ByteString -> IO Response
 readResponseHeader i = do
-    (sc,sm) <- Streams.parseFromStream parseStatusLine i
+    (sc, sm) <- Streams.parseFromStream parseStatusLine i
 
     hs <- readHeaderFields i
 
-    let h  = buildHeaders hs
+    let h = buildHeaders hs
     let te = case lookupHeader h "Transfer-Encoding" of
-            Just x' -> if mk x' == "chunked"
-                        then Chunked
-                        else None
+            Just x' ->
+                if mk x' == "chunked"
+                    then Chunked
+                    else None
             Nothing -> None
 
     let ce = case lookupHeader h "Content-Encoding" of
-            Just x' -> if mk x' == "gzip"
-                        then Gzip
-                        else Identity
+            Just x' ->
+                if mk x' == "gzip"
+                    then Gzip
+                    else Identity
             Nothing -> Identity
 
     let nm = case lookupHeader h "Content-Length" of
             Just x' -> Just (readDecimal x' :: Int64)
             Nothing -> case sc of
-                        204 -> Just 0
-                        304 -> Just 0
-                        100 -> Just 0
-                        _   -> Nothing
+                204 -> Just 0
+                304 -> Just 0
+                100 -> Just 0
+                _ -> Nothing
 
-    return Response {
-        pStatusCode = sc,
-        pStatusMsg = sm,
-        pTransferEncoding = te,
-        pContentEncoding = ce,
-        pContentLength = nm,
-        pHeaders = h
-    }
+    return
+        Response
+            { pStatusCode = sc
+            , pStatusMsg = sm
+            , pTransferEncoding = te
+            , pContentEncoding = ce
+            , pContentLength = nm
+            , pHeaders = h
+            }
 
-
-parseStatusLine :: Parser (Int,ByteString)
+parseStatusLine :: Parser (Int, ByteString)
 parseStatusLine = do
     sc <- string "HTTP/1." *> satisfy version *> char ' ' *> decimal <* char ' '
     sm <- takeTill (== '\r') <* crlf
-    return (sc,sm)
+    return (sc, sm)
   where
     version c = c == '1' || c == '0'
 
-
 crlf :: Parser ByteString
 crlf = string "\r\n"
-
 
 ---------------------------------------------------------------------
 
@@ -127,24 +124,22 @@ crlf = string "\r\n"
 -}
 readResponseBody :: Response -> InputStream ByteString -> IO (InputStream ByteString)
 readResponseBody p i1 = do
-
     i2 <- case t of
-        None        -> case l of
-                        Just n  -> readFixedLengthBody i1 n
-                        Nothing -> readUnlimitedBody i1
-        Chunked     -> readChunkedBody i1
+        None -> case l of
+            Just n -> readFixedLengthBody i1 n
+            Nothing -> readUnlimitedBody i1
+        Chunked -> readChunkedBody i1
 
     i3 <- case c of
-        Identity    -> return i2
-        Gzip        -> readCompressedBody i2
-        Deflate     -> throwIO (UnexpectedCompression $ show c)
+        Identity -> return i2
+        Gzip -> readCompressedBody i2
+        Deflate -> throwIO (UnexpectedCompression $ show c)
 
     return i3
   where
     t = pTransferEncoding p
     c = pContentEncoding p
     l = pContentLength p
-
 
 readDecimal :: (Enum α, Num α, Bits α) => ByteString -> α
 readDecimal str' =
@@ -156,15 +151,15 @@ readDecimal str' =
 
     {-# INLINE digitToInt #-}
     digitToInt :: (Enum α, Num α, Bits α) => Char -> α
-    digitToInt c | c >= '0' && c <= '9' = toEnum $! ord c - ord '0'
-                 | otherwise = error $ "'" ++ [c] ++ "' is not an ascii digit"
+    digitToInt c
+        | c >= '0' && c <= '9' = toEnum $! ord c - ord '0'
+        | otherwise = error $ "'" ++ [c] ++ "' is not an ascii digit"
 {-# INLINE readDecimal #-}
 
 data UnexpectedCompression = UnexpectedCompression String
-        deriving (Typeable, Show)
+    deriving (Typeable, Show)
 
 instance Exception UnexpectedCompression
-
 
 ---------------------------------------------------------------------
 
@@ -176,7 +171,6 @@ readChunkedBody :: InputStream ByteString -> IO (InputStream ByteString)
 readChunkedBody i1 = do
     i2 <- Streams.fromGenerator (consumeChunks i1)
     return i2
-
 
 {-
     For a response body in chunked transfer encoding, iterate over
@@ -197,11 +191,10 @@ consumeChunks i1 = do
         else do
             -- skip "trailers" and consume final CRLF
             skipEnd
-
   where
     go 0 = return ()
     go !n = do
-        (!x',!r) <- liftIO $ readN n i1
+        (!x', !r) <- liftIO $ readN n i1
         Streams.yield x'
         go r
 
@@ -231,16 +224,17 @@ readN n i1 = do
   where
     !d = n - size
 
-    !p = if d > 0
-        then size
-        else n
+    !p =
+        if d > 0
+            then size
+            else n
 
-    !r = if d > 0
-        then d
-        else 0
+    !r =
+        if d > 0
+            then d
+            else 0
 
     size = __BITE_SIZE__
-
 
 transferChunkSize :: Parser (Int)
 transferChunkSize = do
@@ -248,7 +242,6 @@ transferChunkSize = do
     void (takeTill (== '\r'))
     void crlf
     return n
-
 
 ---------------------------------------------------------------------
 
@@ -271,7 +264,6 @@ readFixedLengthBody i1 n = do
 readUnlimitedBody :: InputStream ByteString -> IO (InputStream ByteString)
 readUnlimitedBody i1 = do
     return i1
-
 
 ---------------------------------------------------------------------
 
