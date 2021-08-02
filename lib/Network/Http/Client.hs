@@ -116,6 +116,11 @@ module Network.Http.Client (
     ContentType,
     setContentType,
     setContentLength,
+    FieldName,
+    Boundary,
+    randomBoundary,
+    packBoundary,
+    setContentMultipart,
     setExpectContinue,
     setTransferEncoding,
     setHeader,
@@ -130,6 +135,9 @@ module Network.Http.Client (
     fileBody,
     inputStreamBody,
     encodedFormBody,
+    multipartFormBody,
+    simplePart,
+    filePart,
     jsonBody,
 
     -- * Processing HTTP response
