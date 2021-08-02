@@ -24,6 +24,11 @@ module Network.Http.Inconvenience (
     post,
     postForm,
     encodedFormBody,
+    multipartFormBody,
+    Part,
+    simplePart,
+    filePart,
+    inputStreamPart,
     put,
     baselineContextSSL,
     simpleHandler',
@@ -75,6 +80,7 @@ import Network.URI (
 import OpenSSL (withOpenSSL)
 import OpenSSL.Session (SSLContext)
 import qualified OpenSSL.Session as SSL
+import System.FilePath.Posix (takeFileName)
 import System.IO.Streams (InputStream, OutputStream)
 import qualified System.IO.Streams as Streams
 import qualified System.IO.Streams.Attoparsec as Streams
@@ -85,8 +91,8 @@ import Data.Monoid (Monoid (..), mappend)
 #endif
 
 import Network.Http.Connection
+import Network.Http.Internal
 import Network.Http.RequestBuilder
-import Network.Http.Types
 
 -- (see also http://downloads.haskell.org/~ghc/8.4.2/docs/html/users_guide/phases.html#standard-cpp-macros
 -- for a list of predefined CPP macros provided by GHC and/or Cabal; see also the cabal user's guide)
@@ -286,8 +292,8 @@ parseURL r' =
     path element, resulting in an illegal HTTP request line.
 -}
 
-path :: URI -> ByteString
-path u = case url of
+pathFrom :: URI -> ByteString
+pathFrom u = case url of
     "" -> "/"
     _ -> url
   where
@@ -337,7 +343,7 @@ getN n r' handler = do
     u = parseURL r'
 
     q = buildRequest1 $ do
-        http GET (path u)
+        http GET (pathFrom u)
         setAccept "*/*"
 
     process c = do
@@ -424,7 +430,7 @@ post r' t body handler = do
     u = parseURL r'
 
     q = buildRequest1 $ do
-        http POST (path u)
+        http POST (pathFrom u)
         setAccept "*/*"
         setContentType t
 
@@ -460,7 +466,7 @@ postForm r' nvs handler = do
     u = parseURL r'
 
     q = buildRequest1 $ do
-        http POST (path u)
+        http POST (pathFrom u)
         setAccept "*/*"
         setContentType "application/x-www-form-urlencoded"
 
@@ -498,7 +504,98 @@ encodedFormBody nvs o = do
     combine :: (ByteString, ByteString) -> Builder
     combine (n', v') = mconcat [urlEncodeBuilder n', Builder.fromString "=", urlEncodeBuilder v']
 
---
+{- |
+Build a list of parts into an upload body.
+
+You use this partially applied:
+
+>     boundary <- randomBoundary
+>
+>     let q = buildRequest1 $ do
+>           http POST "/api/v1/upload"
+>           setContentMultipart boundary
+>
+>     let parts =
+>             [ simplePart "metadata" Nothing metadata
+>             , filePart "submission" (Just "audio/wav") filepath
+>             ]
+>
+>     sendRequest c q (multipartFormBody boundary parts)
+
+You /must/ have called 'setContentMultipart' when forming the request or the
+request body you are sending will be invalid and (obviously) you must pass in
+that same 'Boundary' value when calling this function.
+-}
+multipartFormBody :: Boundary -> [Part] -> OutputStream Builder -> IO ()
+multipartFormBody boundary parts o = do
+    mapM_ handlePart parts
+    handleEnding
+  where
+    handlePart :: Part -> IO ()
+    handlePart (Part field possibleContentType possibleFilename action) = do
+        let h' = composeMultipartBytes boundary field possibleFilename possibleContentType
+        Streams.write (Just h') o
+        action o
+
+    handleEnding :: IO ()
+    handleEnding = do
+        Streams.write (Just (composeMultipartEnding boundary)) o
+
+{- |
+Information about each of the parts of a @multipart/form-data@ form upload.
+Build these with 'simplePart', 'filePart', or 'inputStreamPart'.
+-}
+data Part = Part
+    { partFieldName :: FieldName
+    , partContentType :: Maybe ContentType
+    , partFilename :: Maybe FilePath
+    , partDataHandler :: OutputStream Builder -> IO ()
+    }
+
+{- |
+Given a simple static set of bytes, send them as a part in a multipart form
+upload. You need to specify the name of the field for the form, and optionally
+can supply a MIME content-type.
+-}
+simplePart :: FieldName -> Maybe ContentType -> ByteString -> Part
+simplePart name possibleContentType x' =
+    let action o = do
+            i1 <- Streams.fromByteString x'
+            i2 <- Streams.map Builder.fromByteString i1
+            Streams.supply i2 o
+     in Part name possibleContentType Nothing action
+
+{- |
+The most common case in using multipart form data is to upload a file. Specify
+the name of the field, optionally a MIME content-type, and then the path to
+the file to be transmitted. The filename (without directory) will be used to
+name the file to the server.
+-}
+filePart :: FieldName -> Maybe ContentType -> FilePath -> Part
+filePart name possibleContentType path =
+    let action o = do
+            Streams.withFileAsInput
+                path
+                ( \i1 -> do
+                    i2 <- Streams.map Builder.fromByteString i1
+                    Streams.supply i2 o
+                )
+
+        filename = takeFileName path
+     in Part name possibleContentType (Just filename) action
+
+{- |
+Build a piece of a multipart submission from an 'InputStream'. You need to
+specify a field name for this piece of the submission, and can optionally
+indicate the MIME type and a filename (if what you are sending is going to be
+interpreted as a file).
+-}
+inputStreamPart :: FieldName -> Maybe ContentType -> Maybe FilePath -> InputStream ByteString -> Part
+inputStreamPart name possibleContentType possilbeFilename i1 =
+    let action o = do
+            i2 <- Streams.map Builder.fromByteString i1
+            Streams.supply i2 o
+     in Part name possibleContentType possilbeFilename action
 
 {- |
 Place content on the server at the given URL via an HTTP PUT
@@ -531,7 +628,7 @@ put r' t body handler = do
     u = parseURL r'
 
     q = buildRequest1 $ do
-        http PUT (path u)
+        http PUT (pathFrom u)
         setAccept "*/*"
         setHeader "Content-Type" t
 

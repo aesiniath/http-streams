@@ -116,6 +116,10 @@ module Network.Http.Client (
     ContentType,
     setContentType,
     setContentLength,
+    FieldName,
+    Boundary,
+    randomBoundary,
+    setContentMultipart,
     setExpectContinue,
     setTransferEncoding,
     setHeader,
@@ -130,6 +134,11 @@ module Network.Http.Client (
     fileBody,
     inputStreamBody,
     encodedFormBody,
+    multipartFormBody,
+    Part,
+    simplePart,
+    filePart,
+    inputStreamPart,
     jsonBody,
 
     -- * Processing HTTP response
@@ -179,6 +188,7 @@ module Network.Http.Client (
     Headers,
     getHeaders,
     getHeadersFull,
+    packBoundary,
 
     -- * Deprecated
     concatHandler,

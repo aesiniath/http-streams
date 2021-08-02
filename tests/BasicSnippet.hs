@@ -1,17 +1,15 @@
 --
 -- HTTP client for use with io-streams
 --
--- Copyright © 2012-2014 Operational Dynamics Consulting, Pty Ltd
+-- Copyright © 2012-2021 Athae Eredh Siniath and Others
 --
 -- The code in this file, and the program it is a part of, is made
 -- available to you by its authors as open source software: you can
 -- redistribute it and/or modify it under a BSD licence.
 --
-
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS -fno-warn-unused-imports #-}
 
-module Snippet where
+{-# OPTIONS -fno-warn-unused-imports #-}
 
 import Blaze.ByteString.Builder (Builder)
 import qualified Blaze.ByteString.Builder as Builder
@@ -25,15 +23,31 @@ import qualified System.IO.Streams as Streams
 
 import Network.Http.Client
 
+meta :: ByteString
+meta = S.pack "{}"
+
+path :: FilePath
+path = "Setup.hs"
+
 main :: IO ()
 main = do
-    c <- openConnection "kernel.operationaldynamics.com" 58080
+    c <- openConnection "localhost" 8080
+
+    boundary <- randomBoundary
 
     let q = buildRequest1 $ do
-                http GET "/time"
-                setAccept "text/plain"
+            http POST "/api/v1/upload"
+            setContentLength 1000000
+            setContentMultipart boundary
 
-    sendRequest c q emptyBody
+    print q
+
+    let parts =
+            [ simplePart "metadata" Nothing meta
+            , filePart "files" (Just "audio/wav") path
+            ]
+
+    sendRequest c q (multipartFormBody boundary parts)
 
     receiveResponse c debugHandler
 
