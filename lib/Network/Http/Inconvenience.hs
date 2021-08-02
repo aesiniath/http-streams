@@ -28,6 +28,7 @@ module Network.Http.Inconvenience (
     Part,
     simplePart,
     filePart,
+    inputStreamPart,
     put,
     baselineContextSSL,
     simpleHandler',
@@ -521,29 +522,28 @@ You use this partially applied:
 >
 >     sendRequest c q (multipartFormBody boundary parts)
 
-You need to have called 'setContentMultipart' when forming the request or the
-request body you are sending will be invalid and (obviously) pass in the same
-Boundary value.
+You /must/ have called 'setContentMultipart' when forming the request or the
+request body you are sending will be invalid and (obviously) you must pass in
+that same 'Boundary' value when calling this function.
 -}
 multipartFormBody :: Boundary -> [Part] -> OutputStream Builder -> IO ()
 multipartFormBody boundary parts o = do
     mapM_ handlePart parts
     handleEnding
   where
-    -- boundary = "bEacHV0113YB@ll"
-
     handlePart :: Part -> IO ()
     handlePart (Part field possibleContentType possibleFilename action) = do
         let h' = composeMultipartBytes boundary field possibleFilename possibleContentType
         Streams.write (Just h') o
         action o
-    
+
     handleEnding :: IO ()
     handleEnding = do
         Streams.write (Just (composeMultipartEnding boundary)) o
-    
-{-|
+
+{- |
 Information about each of the parts of a @multipart/form-data@ form upload.
+Build these with 'simplePart', 'filePart', or 'inputStreamPart'.
 -}
 data Part = Part
     { partFieldName :: FieldName
@@ -552,7 +552,7 @@ data Part = Part
     , partDataHandler :: OutputStream Builder -> IO ()
     }
 
-{-|
+{- |
 Given a simple static set of bytes, send them as a part in a multipart form
 upload. You need to specify the name of the field for the form, and optionally
 can supply a MIME content-type.
@@ -565,7 +565,7 @@ simplePart name possibleContentType x' =
             Streams.supply i2 o
      in Part name possibleContentType Nothing action
 
-{-|
+{- |
 The most common case in using multipart form data is to upload a file. Specify
 the name of the field, optionally a MIME content-type, and then the path to
 the file to be transmitted. The filename (without directory) will be used to
@@ -583,6 +583,19 @@ filePart name possibleContentType path =
 
         filename = takeFileName path
      in Part name possibleContentType (Just filename) action
+
+{- |
+Build a piece of a multipart submission from an 'InputStream'. You need to
+specify a field name for this piece of the submission, and can optionally
+indicate the MIME type and a filename (if what you are sending is going to be
+interpreted as a file).
+-}
+inputStreamPart :: FieldName -> Maybe ContentType -> Maybe FilePath -> InputStream ByteString -> Part
+inputStreamPart name possibleContentType possilbeFilename i1 =
+    let action o = do
+            i2 <- Streams.map Builder.fromByteString i1
+            Streams.supply i2 o
+     in Part name possibleContentType possilbeFilename action
 
 {- |
 Place content on the server at the given URL via an HTTP PUT
