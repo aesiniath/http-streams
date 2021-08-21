@@ -791,7 +791,7 @@ testPostWithSimple =
     it "PUT with static data" $ do
         let url = S.concat ["http://", localhost, "/resource/y98"]
 
-        x' <- put url "text/plain" (simpleBody b') concatHandler
+        x' <- put url "text/plain" (simpleBody b') simpleHandler
 
         assertEqual
             "Object was encoded to JSON as expected"
@@ -805,7 +805,7 @@ testPostWithJson =
     it "PUT with json data" $ do
         let url = S.concat ["http://", localhost, "/resource/y99"]
 
-        x' <- put url "application/json" (jsonBody obj) concatHandler
+        x' <- put url "application/json" (jsonBody obj) simpleHandler
 
         assertEqual
             "Object was encoded to JSON as expected"
