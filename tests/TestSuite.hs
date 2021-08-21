@@ -135,8 +135,9 @@ suite = do
         testEstablishConnection
         testParsingJson1
         testParsingJson2
-        testPostWithSimple
-        testPostWithJson
+        testPutWithSimple
+        testPutWithJson
+        testMultipartUpload
 
     describe "Corner cases in protocol compliance" $ do
         testSendBodyFor PUT
@@ -787,7 +788,7 @@ instance ToJSON GrossDomesticProduct where
             , "data" .= d
             ]
 
-testPostWithSimple =
+testPutWithSimple =
     it "PUT with static data" $ do
         let url = S.concat ["http://", localhost, "/resource/y98"]
 
@@ -801,7 +802,7 @@ testPostWithSimple =
     b' :: ByteString
     b' = S.pack "Hello"
 
-testPostWithJson =
+testPutWithJson =
     it "PUT with json data" $ do
         let url = S.concat ["http://", localhost, "/resource/y99"]
 
@@ -821,3 +822,32 @@ testPostWithJson =
 
     obj' :: ByteString
     obj' = L.toStrict (encode obj)
+
+testMultipartUpload =
+    it "PUT with json data" $ do
+        let url = S.concat ["http://", localhost, "/postbox"]
+
+        let boundary = packBoundary "bEacHV0113YB@ll"
+
+        let q = buildRequest1 $ do
+                http POST "/postbox"
+                setContentMultipart boundary
+
+        let parts =
+                [ simplePart "first" Nothing "Old guys in the box."
+                , filePart "second" (Just "text/plain") "tests/hello.txt"
+                ]
+
+        c <- openConnection "localhost" localPort
+
+        sendRequest c q (multipartFormBody boundary parts)
+
+        result <- receiveResponse c simpleHandler
+
+        closeConnection c
+
+        expected <- S.readFile "tests/multipart.bin"
+        assertEqual
+            "Multipart form data was not encoded as expected"
+            expected
+            result
