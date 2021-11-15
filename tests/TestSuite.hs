@@ -40,6 +40,7 @@ import Data.Aeson (
     (.=),
  )
 import Data.Aeson.Encode.Pretty
+import qualified Data.Aeson.KeyMap as KeyMap
 import Data.Bits
 import qualified Data.HashMap.Strict as Map
 import Data.Maybe (fromJust)
@@ -746,7 +747,7 @@ testParsingJson1 =
 
         x <- get url jsonHandler
         let (Object o) = x
-        let (Just v) = Map.lookup "label" o
+        let (Just v) = KeyMap.lookup "label" o
         let (String t) = v
 
         assertEqual "Incorrect response" "Europe (EU27)" t
