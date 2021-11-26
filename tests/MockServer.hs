@@ -29,8 +29,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as S
 import qualified Data.ByteString.Lazy.Char8 as L
 import Data.Maybe (fromMaybe)
-import Filesystem (getSize)
-import Filesystem.Path.CurrentOS (decodeString)
+import System.Directory (getFileSize)
 import Snap.Core
 import Snap.Http.Server
 import Snap.Util.FileServe
@@ -112,7 +111,7 @@ serveStatic = do
     let f' = S.concat ["tests/", i']
     let f = S.unpack f'
 
-    l <- liftIO $ getSize $ decodeString f
+    l <- liftIO $ getFileSize f
 
     let t = fileType defaultMimeTypes f
     modifyResponse $ setContentType t
