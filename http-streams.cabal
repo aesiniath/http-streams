@@ -117,8 +117,6 @@ test-suite           check
                      random,
                      snap-core       >= 1.0    && < 1.2,
                      snap-server     >= 1.1    && < 1.2,
-                     system-fileio   >= 0.3.10 && < 0.4,
-                     system-filepath >= 0.4.1  && < 0.5,
                      text,
                      unordered-containers,
                      aeson,
