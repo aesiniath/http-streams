@@ -1,22 +1,17 @@
-resolver: nightly-2021-11-14
-compiler: ghc-9.2.1
+resolver: lts-18.23
 
 packages:
 - .
 
 extra-deps:
-- aeson-2.0.2.0
-- attoparsec-0.14.2
-- base-compat-0.12.1
-- base-compat-batteries-0.12.1
-- io-streams-haproxy-1.0.1.0
-- snap-server-1.1.2.0
-# https://github.com/snapframework/snap-core/pull/312
-- github: snapframework/snap-core
-  commit: b87aed3ca64b88c7ab71b5bf460a3c4e8cb70a9b
+- aeson-2.0.3.0
+- attoparsec-0.14.4
+- hashable-1.4.0.2
+- OneTuple-0.3.1
+- semialign-1.2.0.1
+- text-short-0.1.5
+- time-compat-1.9.6.1
 
 flags:
   http-streams:
     network-uri: true
-
-allow-newer: true
