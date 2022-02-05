@@ -7,6 +7,7 @@
 -- available to you by its authors as open source software: you can
 -- redistribute it and/or modify it under a BSD licence.
 --
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -40,8 +41,12 @@ import Data.Aeson (
     (.=),
  )
 import Data.Aeson.Encode.Pretty
+#if MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson.KeyMap as KeyMap
+#else
+import qualified Data.HashMap.Strict as KeyMap
+#endif
 import Data.Bits
-import qualified Data.HashMap.Strict as Map
 import Data.Maybe (fromJust)
 import Data.Monoid
 import Data.String
@@ -746,7 +751,7 @@ testParsingJson1 =
 
         x <- get url jsonHandler
         let (Object o) = x
-        let (Just v) = Map.lookup "label" o
+        let (Just v) = KeyMap.lookup "label" o
         let (String t) = v
 
         assertEqual "Incorrect response" "Europe (EU27)" t

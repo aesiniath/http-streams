@@ -140,7 +140,12 @@ hexd c0 =
     !low = toDigit $ fromEnum $ c .&. 0xf
     !hi = toDigit $ (c .&. 0xf0) `shiftr` 4
 
-    shiftr (W8# a#) (I# b#) = I# (word2Int# (uncheckedShiftRL# a# b#))
+    shiftr (W8# a#) (I# b#) = I# (word2Int# (uncheckedShiftRL'# a# b#))
+#if MIN_VERSION_base(4,16,0)
+    uncheckedShiftRL'# a# b# = word8ToWord# (uncheckedShiftRLWord8# a# b#)
+#else
+    uncheckedShiftRL'# = uncheckedShiftRL#
+#endif
 
 urlEncodeTable :: HashSet Char
 urlEncodeTable = HashSet.fromList $! filter f $! map w2c [0 .. 255]

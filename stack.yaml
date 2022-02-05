@@ -1,13 +1,17 @@
 resolver: lts-18.23
 
 packages:
-- ../http-common
 - .
 
 extra-deps:
+- aeson-2.0.3.0
+- attoparsec-0.14.4
+- hashable-1.4.0.2
+- OneTuple-0.3.1
+- semialign-1.2.0.1
+- text-short-0.1.5
+- time-compat-1.9.6.1
 
 flags:
   http-streams:
     network-uri: true
-
-allow-newer: true
