@@ -1,3 +1,6 @@
+* _v0.8.9_
+    Ongoing maintenance continues, including support for GHC 9.2
+
 * _v0.8.6_  
 	Internal modules are exposed. Mostly so the test suite would only
 	depend on the library and not the code directly, but occasionally
