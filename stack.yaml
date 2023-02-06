@@ -1,16 +1,12 @@
-resolver: lts-18.23
+resolver: lts-20.10
 
 packages:
 - .
 
 extra-deps:
-- aeson-2.0.3.0
-- attoparsec-0.14.4
-- hashable-1.4.0.2
-- OneTuple-0.3.1
-- semialign-1.2.0.1
-- text-short-0.1.5
-- time-compat-1.9.6.1
+- readable-0.3.1
+- snap-core-1.0.5.0
+- snap-server-1.1.2.0
 
 flags:
   http-streams:
