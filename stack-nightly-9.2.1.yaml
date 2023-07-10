@@ -7,6 +7,7 @@ packages:
 extra-deps:
 - aeson-2.0.3.0
 - attoparsec-0.14.2
+- attoparsec-aeson-2.1.0.0
 - base-compat-0.12.1
 - base-compat-batteries-0.12.1
 - io-streams-haproxy-1.0.1.0
