@@ -1,12 +1,12 @@
-resolver: lts-20.10
+resolver: lts-21.2
+compiler: ghc-9.4.5
 
 packages:
 - .
 
 extra-deps:
-- readable-0.3.1
-- snap-core-1.0.5.0
-- snap-server-1.1.2.0
+- snap-core-1.0.5.1
+- snap-server-1.1.2.1
 
 flags:
   http-streams:
