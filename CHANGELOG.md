@@ -1,5 +1,5 @@
 * _v0.8.9_
-    Ongoing maintenance continues, including support for GHC 9.2
+    Ongoing maintenance continues, including support for GHC 9.2 and GHC 9.4
 
 * _v0.8.6_  
 	Internal modules are exposed. Mostly so the test suite would only
