@@ -51,12 +51,8 @@ import qualified Blaze.ByteString.Builder as Builder (
  )
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromString)
 import Control.Exception (Exception, bracket, throw)
-#if !MIN_VERSION_aeson(2,2,0)
-import Data.Aeson (FromJSON, Result (..), ToJSON, encode, fromJSON, json')
-#else
 import Data.Aeson (FromJSON, Result (..), ToJSON, encode, fromJSON)
 import Data.Aeson.Parser (json')
-#endif
 import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S
