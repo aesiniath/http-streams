@@ -51,7 +51,8 @@ import qualified Blaze.ByteString.Builder as Builder (
  )
 import qualified Blaze.ByteString.Builder.Char8 as Builder (fromString)
 import Control.Exception (Exception, bracket, throw)
-import Data.Aeson (FromJSON, Result (..), ToJSON, encode, fromJSON, json')
+import Data.Aeson (FromJSON, Result (..), ToJSON, encode, fromJSON)
+import Data.Aeson.Parser (json')
 import Data.Bits (Bits (..))
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as S

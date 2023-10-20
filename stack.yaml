@@ -1,10 +1,11 @@
-resolver: lts-21.2
-compiler: ghc-9.4.5
+resolver: lts-21.15
+compiler: ghc-9.4.6
 
 packages:
 - .
 
 extra-deps:
+- attoparsec-aeson-2.1.0.0
 - snap-core-1.0.5.1
 - snap-server-1.1.2.1
 

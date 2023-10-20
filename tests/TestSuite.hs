@@ -33,7 +33,6 @@ import Data.Aeson (
     ToJSON,
     Value (..),
     encode,
-    json,
     object,
     parseJSON,
     toJSON,
